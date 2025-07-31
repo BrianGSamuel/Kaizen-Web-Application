@@ -1,0 +1,1578 @@
+@model IEnumerable<KaizenWebApp.Models.KaizenForm>
+
+@{
+    ViewData["Title"] = "Kaizen Suggestions Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .kaizen-list-header {
+        background: linear-gradient(135deg, #E31E24 0%, #c41e3a 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(227, 30, 36, 0.3);
+    }
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .search-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .search-form {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .search-input-group {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .status-select-group {
+        min-width: 200px;
+    }
+
+    .btn-search {
+        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(227, 30, 36, 0.4);
+        color: white;
+    }
+
+    .btn-clear {
+        background: var(--secondary-gray);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-clear:hover {
+        background: #555;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .kaizen-table {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .kaizen-table thead {
+        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
+        color: white;
+    }
+
+    .kaizen-table th {
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .kaizen-table td {
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .kaizen-table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .kaizen-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-approve {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+        margin-right: 0.25rem;
+    }
+
+    .btn-approve:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
+
+    .btn-reject {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+        margin-right: 0.25rem;
+    }
+
+    .btn-reject:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        color: white;
+    }
+
+    .btn-approval {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+        margin-right: 0.25rem;
+    }
+
+    .btn-approval:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
+        color: white;
+    }
+
+    .btn-form-b {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+    }
+
+    .btn-form-b:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+        color: white;
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+        margin-right: 0.25rem;
+    }
+
+    .btn-view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+        color: white;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        border: none;
+        color: #212529;
+        font-weight: 700;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+        border: 2px solid #e0a800;
+    }
+
+    .btn-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.5);
+        color: #212529;
+        background: linear-gradient(135deg, #ffca2c 0%, #e0a800 100%);
+        border-color: #d39e00;
+    }
+
+    .btn-executive {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
+        border: none;
+        color: white;
+        font-weight: 700;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 8px rgba(111, 66, 193, 0.3);
+        border: 2px solid #5a2d91;
+    }
+
+    .btn-executive:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(111, 66, 193, 0.5);
+        color: white;
+        background: linear-gradient(135deg, #7c4dcc 0%, #6f42c1 100%);
+        border-color: #5a2d91;
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .status-approved {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .status-rejected {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .cost-saving {
+        font-weight: 600;
+        color: var(--success-green);
+    }
+
+    .no-data-alert {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        color: #1976d2;
+    }
+
+    .success-alert {
+        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+        border: none;
+        border-radius: 10px;
+        color: var(--success-green);
+    }
+
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        border: none;
+    }
+
+    .modal-title {
+        font-weight: 600;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--secondary-gray);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-red);
+        box-shadow: 0 0 0 0.2rem rgba(227, 30, 36, 0.25);
+    }
+
+    .btn-update {
+        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-update:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(227, 30, 36, 0.4);
+        color: white;
+    }
+
+    .image-preview {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.5rem;
+        background: #f8f9fa;
+    }
+
+    @@media (max-width: 768px) {
+        .search-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .search-input-group,
+        .status-select-group {
+            min-width: auto;
+        }
+        
+        .kaizen-table {
+            font-size: 0.875rem;
+        }
+        
+        .kaizen-table th,
+        .kaizen-table td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="kaizen-list-header text-center">
+        <div class="row align-items-center">
+            <div class="col-md-8 mx-auto">
+                <h1 class="display-5 fw-bold mb-3">
+                    <i class="fas fa-tasks me-3"></i>Kaizen Management
+                </h1>
+                <p class="lead mb-0">Review and manage Kaizen suggestions for approval</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+        <div class="row">
+            <div class="col-12">
+                <div class="search-form">
+                    <div class="search-input-group">
+                        <label for="searchString" class="form-label">
+                            <i class="fas fa-search me-2"></i>Search
+                        </label>
+                        <input type="text" id="searchString" class="form-control" 
+                               placeholder="Search by Kaizen No, Employee Name, or Employee No..." />
+                    </div>
+                    <div class="status-select-group">
+                        <label for="status" class="form-label">
+                            <i class="fas fa-info-circle me-2"></i>Status
+                        </label>
+                        <select id="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="clearBtn" class="btn btn-clear">
+                            <i class="fas fa-times me-2"></i>Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert success-alert alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Table Section -->
+    <div class="table-container">
+        <div id="searchResults">
+            @if (!Model?.Any() ?? true)
+            {
+                <div class="no-data-alert">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <h4>No Kaizen suggestions available</h4>
+                    <p class="mb-0">Start typing to search for Kaizen suggestions</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table kaizen-table">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-calendar me-2"></i>Date Submitted</th>
+                                <th><i class="fas fa-hashtag me-2"></i>Kaizen No</th>
+                                <th><i class="fas fa-building me-2"></i>Department Name</th>
+                                <th><i class="fas fa-user me-2"></i>Employee Name</th>
+                                <th><i class="fas fa-id-badge me-2"></i>Employee No</th>
+                                <th><i class="fas fa-coins me-2"></i>Cost Saving</th>
+                                <th><i class="fas fa-info-circle me-2"></i>Status</th>
+                                <th><i class="fas fa-cogs me-2"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="text-center">@item.DateSubmitted.ToString("yyyy-MM-dd")</td>
+                                    <td class="text-center fw-bold">@Html.DisplayFor(modelItem => item.KaizenNo)</td>
+                                    <td class="text-center">@Html.DisplayFor(modelItem => item.Department)</td>
+                                    <td>@Html.DisplayFor(modelItem => item.EmployeeName)</td>
+                                    <td class="text-center">@Html.DisplayFor(modelItem => item.EmployeeNo)</td>
+                                    <td class="text-center cost-saving">
+                                        @(item.CostSaving.HasValue ? $"$ {item.CostSaving.Value:N2}" : "N/A")
+                                    </td>
+                                    <td class="text-center">
+                                        @{
+                                            var statusClass = item.Status switch
+                                            {
+                                                "Approved" => "status-approved",
+                                                "Rejected" => "status-rejected",
+                                                _ => "status-pending"
+                                            };
+                                        }
+                                        <span class="@statusClass">@item.Status</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-view" onclick="viewKaizen(@item.Id)">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </button>
+                                        @if (item.Status == "Pending")
+                                        {
+                                            <button class="btn btn-approval" onclick="showApprovalPopup(@item.Id)">
+                                                <i class="fas fa-gavel me-1"></i>Approval
+                                            </button>
+                                        }
+                                        @if (item.Status != "Rejected" && item.Status != "Pending")
+                                        {
+                                            <button class="btn btn-form-b" onclick="fillFormB(@item.Id)">
+                                                <i class="fas fa-file-alt me-1"></i>Form B
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editKaizenModal" tabindex="-1" aria-labelledby="editKaizenModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center">
+                    <h5 class="modal-title mb-0" id="editKaizenModalLabel">
+                        <i class="fas fa-eye me-2"></i>View Kaizen Suggestion
+                    </h5>
+                    <button type="button" class="btn btn-edit ms-3" id="enableEditBtn" onclick="enableEdit()" style="display: none;">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </button>
+                    <button type="button" class="btn btn-executive ms-2" id="executiveFillingBtn" onclick="executiveFilling()" style="display: none;">
+                        <i class="fas fa-user-tie me-1"></i>Executive Filling
+                    </button>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editKaizenForm" enctype="multipart/form-data">
+                    <input type="hidden" id="editKaizenId" name="Id" />
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editDateSubmitted" class="form-label">
+                                <i class="fas fa-calendar me-2"></i>Date Submitted
+                            </label>
+                            <input type="date" id="editDateSubmitted" name="DateSubmitted" class="form-control" required />
+                            <span class="text-danger field-validation-error" data-valmsg-for="DateSubmitted"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editDateImplemented" class="form-label">
+                                <i class="fas fa-calendar-check me-2"></i>Date Implemented
+                            </label>
+                            <input type="date" id="editDateImplemented" name="DateImplemented" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editKaizenNo" class="form-label">
+                                <i class="fas fa-hashtag me-2"></i>Kaizen No
+                            </label>
+                            <input type="text" id="editKaizenNo" name="KaizenNo" class="form-control" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editDepartment" class="form-label">
+                                <i class="fas fa-building me-2"></i>Department Name
+                            </label>
+                            <input type="text" id="editDepartment" name="Department" class="form-control" required />
+                            <span class="text-danger field-validation-error" data-valmsg-for="Department"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editEmployeeName" class="form-label">
+                                <i class="fas fa-user me-2"></i>Employee Name
+                            </label>
+                            <input type="text" id="editEmployeeName" name="EmployeeName" class="form-control" required />
+                            <span class="text-danger field-validation-error" data-valmsg-for="EmployeeName"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editEmployeeNo" class="form-label">
+                                <i class="fas fa-id-badge me-2"></i>Employee No
+                            </label>
+                            <input type="text" id="editEmployeeNo" name="EmployeeNo" class="form-control" required />
+                            <span class="text-danger field-validation-error" data-valmsg-for="EmployeeNo"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editSuggestionDescription" class="form-label">
+                            <i class="fas fa-lightbulb me-2"></i>Kaizen Suggestion Description
+                        </label>
+                        <textarea id="editSuggestionDescription" name="SuggestionDescription" class="form-control" rows="3" required></textarea>
+                        <span class="text-danger field-validation-error" data-valmsg-for="SuggestionDescription"></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editBeforeKaizenImage" class="form-label">
+                                <i class="fas fa-image me-2"></i>Before Kaizen Image
+                            </label>
+                            <div id="editBeforeKaizenImageContainer" class="mb-2" style="display: none;">
+                                <label class="form-label text-muted">Current Image:</label>
+                                <div class="image-preview text-center">
+                                    <img id="editBeforeKaizenCurrentImage" src="" alt="Before Kaizen" class="img-fluid rounded" style="max-height: 150px; max-width: 100%;" />
+                                </div>
+                            </div>
+                            <input type="file" id="editBeforeKaizenImage" name="BeforeKaizenImage" class="form-control" accept="image/*" />
+                            <small class="form-text text-muted">Leave empty to keep the current image</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editAfterKaizenImage" class="form-label">
+                                <i class="fas fa-image me-2"></i>After Kaizen Image
+                            </label>
+                            <div id="editAfterKaizenImageContainer" class="mb-2" style="display: none;">
+                                <label class="form-label text-muted">Current Image:</label>
+                                <div class="image-preview text-center">
+                                    <img id="editAfterKaizenCurrentImage" src="" alt="After Kaizen" class="img-fluid rounded" style="max-height: 150px; max-width: 100%;" />
+                                </div>
+                            </div>
+                            <input type="file" id="editAfterKaizenImage" name="AfterKaizenImage" class="form-control" accept="image/*" />
+                            <small class="form-text text-muted">Leave empty to keep the current image</small>
+                        </div>
+                    </div>
+
+                    <!-- Cost Saving Section -->
+                    <div class="mb-3" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px; background-color: #f8f9fa;">
+                        <h6 class="mb-3">
+                            <i class="fas fa-coins me-2"></i>Cost Saving Information
+                        </h6>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" id="editNoCostSaving" name="CostSavingType" value="NoCostSaving" />
+                                <label class="form-check-label" for="editNoCostSaving">No Cost Saving</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" id="editHasCostSaving" name="CostSavingType" value="HasCostSaving" />
+                                <label class="form-check-label" for="editHasCostSaving">Has Cost Saving</label>
+                            </div>
+                        </div>
+
+                        <div id="editCostSavingFields" class="row mb-3" style="display: none;">
+                            <div class="col-md-6">
+                                <label for="editCostSaving" class="form-label">
+                                    <i class="fas fa-coins me-2"></i>Cost Saving ($ per year)
+                                </label>
+                                <input type="number" id="editCostSaving" name="CostSaving" class="form-control" step="0.01" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editDollarRate" class="form-label">
+                                    <i class="fas fa-dollar-sign me-2"></i>Current Dollar Rate
+                                </label>
+                                <input type="number" id="editDollarRate" name="DollarRate" class="form-control" step="0.01" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editOtherBenefits" class="form-label">
+                            <i class="fas fa-star me-2"></i>Other Benefits
+                        </label>
+                        <textarea id="editOtherBenefits" name="OtherBenefits" class="form-control" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+                <button type="button" class="btn btn-update" id="saveEditBtn" onclick="saveKaizenEdit()" style="display: none;">
+                    <i class="fas fa-save me-2"></i>Update Suggestion
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Form B Modal -->
+<div class="modal fade" id="formBModal" tabindex="-1" aria-labelledby="formBModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="formBModalLabel">
+                    <i class="fas fa-file-alt me-2"></i>Form B - Kaizen Implementation Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formBForm">
+                    <input type="hidden" id="formBKaizenId" name="Id" />
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="formBKaizenNo" class="form-label">
+                                <i class="fas fa-hashtag me-2"></i>Kaizen No
+                            </label>
+                            <input type="text" id="formBKaizenNo" class="form-control" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="formBEmployeeName" class="form-label">
+                                <i class="fas fa-user me-2"></i>Employee Name
+                            </label>
+                            <input type="text" id="formBEmployeeName" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="formBImplementationDate" class="form-label">
+                                <i class="fas fa-calendar-check me-2"></i>Implementation Date
+                            </label>
+                            <input type="date" id="formBImplementationDate" name="ImplementationDate" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="formBImplementationCost" class="form-label">
+                                <i class="fas fa-dollar-sign me-2"></i>Implementation Cost
+                            </label>
+                            <input type="number" id="formBImplementationCost" name="ImplementationCost" class="form-control" step="0.01" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="formBImplementationDetails" class="form-label">
+                            <i class="fas fa-clipboard-list me-2"></i>Implementation Details
+                        </label>
+                        <textarea id="formBImplementationDetails" name="ImplementationDetails" class="form-control" rows="4" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="formBResults" class="form-label">
+                            <i class="fas fa-chart-line me-2"></i>Results & Benefits
+                        </label>
+                        <textarea id="formBResults" name="Results" class="form-control" rows="4" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="formBRemarks" class="form-label">
+                            <i class="fas fa-comment me-2"></i>Remarks
+                        </label>
+                        <textarea id="formBRemarks" name="Remarks" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-update" onclick="saveFormB()">
+                    <i class="fas fa-save me-2"></i>Save Form B
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Edit Modal -->
+<div class="modal fade" id="enhancedEditModal" tabindex="-1" aria-labelledby="enhancedEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="enhancedEditModalLabel">
+                    <i class="fas fa-edit me-2"></i>To be filled by Executive/Engineer
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="enhancedEditForm" enctype="multipart/form-data">
+                    <input type="hidden" id="enhancedEditKaizenId" name="Id" />
+                    
+                    <!-- Hidden required fields to ensure they're included in form submission -->
+                    <input type="hidden" id="enhancedEditKaizenNoHidden" name="KaizenNo" />
+                    <input type="hidden" id="enhancedEditEmployeeNoHidden" name="EmployeeNo" />
+                    <input type="hidden" id="enhancedEditEmployeeNameHidden" name="EmployeeName" />
+                    <input type="hidden" id="enhancedEditSuggestionDescriptionHidden" name="SuggestionDescription" />
+                    <input type="hidden" id="enhancedEditDateSubmittedHidden" name="DateSubmitted" />
+                    
+                    <!-- Required Fields Section (Read-only) -->
+                    <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #e9ecef;">
+                        <h6 class="mb-3">
+                            <i class="fas fa-info-circle me-2"></i>Kaizen Information
+                        </h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="enhancedEditKaizenNo" class="form-label">
+                                    <i class="fas fa-hashtag me-2"></i>Kaizen No
+                                </label>
+                                <input type="text" id="enhancedEditKaizenNo" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="enhancedEditEmployeeNo" class="form-label">
+                                    <i class="fas fa-id-badge me-2"></i>Employee Number
+                                </label>
+                                <input type="text" id="enhancedEditEmployeeNo" class="form-control" readonly />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="enhancedEditEmployeeName" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Employee Name
+                                </label>
+                                <input type="text" id="enhancedEditEmployeeName" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="enhancedEditDepartment" class="form-label">
+                                    <i class="fas fa-building me-2"></i>Department
+                                </label>
+                                <input type="text" id="enhancedEditDepartment" name="Department" class="form-control" readonly />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="enhancedEditSuggestionDescription" class="form-label">
+                                <i class="fas fa-lightbulb me-2"></i>Suggestion Description
+                            </label>
+                            <textarea id="enhancedEditSuggestionDescription" class="form-control" rows="3" readonly></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Executive/Engineer Form Section -->
+                    <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+                        <h6 class="mb-3">
+                            <i class="fas fa-user-tie me-2"></i>Executive/Engineer Review
+                        </h6>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="enhancedEditCategory" class="form-label">
+                                    <i class="fas fa-folder me-2"></i>Recommended Categories
+                                </label>
+                                <div class="mt-2">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryCostSaving" value="Cost reduction">
+                                        <label class="form-check-label" for="categoryCostSaving">Major Cost reduction by innovation</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryProductivity" value="Productivity Improvement">
+                                        <label class="form-check-label" for="categoryProductivity">Productivity Improvement</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryOHS" value="OHS Improvement">
+                                        <label class="form-check-label" for="categoryOHS">OHS Improvement</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryQuality" value="Quality Improvements">
+                                        <label class="form-check-label" for="categoryQuality">Quality Improvements</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryEnvironment" value="Environmental friendly">
+                                        <label class="form-check-label" for="categoryEnvironment">Environmental friendly Innovation</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="category5S" value="5S Improvement">
+                                        <label class="form-check-label" for="category5S">5S Improvement</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryErgonomics" value="Ergonomics Improvements">
+                                        <label class="form-check-label" for="categoryErgonomics">Ergonomics Improvements</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryEnergySaving" value="Energy Saving Improvement">
+                                        <label class="form-check-label" for="categoryEnergySaving">Energy Saving Improvement</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="enhancedEditApprovedBy" class="form-label">
+                                    <i class="fas fa-signature me-2"></i>Signature (Add Name)
+                                </label>
+                                <input type="text" id="enhancedEditApprovedBy" name="ApprovedBy" class="form-control" placeholder="Enter your name" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="enhancedEditComments" class="form-label">
+                                <i class="fas fa-comments me-2"></i>Comment & Recommendations
+                            </label>
+                            <textarea id="enhancedEditComments" name="Comments" class="form-control" rows="4" placeholder="Enter your comments and recommendations..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-question-circle me-2"></i>Can this suggestion be implemented in other fields?
+                            </label>
+                            <div class="mt-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="implementYes" value="Yes" onchange="toggleImplementationArea()">
+                                    <label class="form-check-label" for="implementYes">Yes</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="implementNo" value="No" onchange="toggleImplementationArea()">
+                                    <label class="form-check-label" for="implementNo">No</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="implementationAreaField" style="display: none;">
+                            <label for="enhancedEditImplementationArea" class="form-label">
+                                <i class="fas fa-map-marker-alt me-2"></i>Specify Area
+                            </label>
+                            <input type="text" id="enhancedEditImplementationArea" name="ImplementationArea" class="form-control" placeholder="Enter the specific area where this can be implemented..." />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-update" onclick="saveEnhancedEdit()">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Popup Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalModalLabel">
+                    <i class="fas fa-gavel me-2"></i>Kaizen Approval
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-question-circle fa-3x text-primary mb-3"></i>
+                    <h5>What would you like to do with this Kaizen suggestion?</h5>
+                    <p class="text-muted">Please select your decision below</p>
+                </div>
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-approve btn-lg" onclick="approveKaizen()">
+                        <i class="fas fa-check me-2"></i>Approve
+                    </button>
+                    <button type="button" class="btn btn-reject btn-lg" onclick="rejectKaizen()">
+                        <i class="fas fa-times me-2"></i>Reject
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script>
+    // Real-time search functionality
+    let searchTimeout;
+    const searchInput = document.getElementById('searchString');
+    const statusSelect = document.getElementById('status');
+    const clearBtn = document.getElementById('clearBtn');
+    const searchResults = document.getElementById('searchResults');
+
+    // Search function with debouncing
+    function performSearch() {
+        const searchTerm = searchInput.value.trim();
+        const status = statusSelect.value;
+
+        // Show loading state
+        searchResults.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Searching...</p>
+            </div>
+        `;
+
+        // Make AJAX request
+        fetch(`/Kaizen/Search?searchString=${encodeURIComponent(searchTerm)}&status=${encodeURIComponent(status)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displaySearchResults(data.kaizens, searchTerm, status);
+                } else {
+                    searchResults.innerHTML = `
+                        <div class="no-data-alert">
+                            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                            <h4>Error occurred</h4>
+                            <p class="mb-0">${data.message}</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                searchResults.innerHTML = `
+                    <div class="no-data-alert">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                        <h4>Search failed</h4>
+                        <p class="mb-0">An error occurred while searching. Please try again.</p>
+                    </div>
+                `;
+            });
+    }
+
+    // Display search results
+    function displaySearchResults(kaizens, searchTerm, status) {
+        if (!kaizens || kaizens.length === 0) {
+            let message = 'No Kaizen suggestions found';
+            if (searchTerm || status) {
+                message += ` for "${searchTerm || status}"`;
+            }
+            searchResults.innerHTML = `
+                <div class="no-data-alert">
+                    <i class="fas fa-search fa-3x mb-3"></i>
+                    <h4>${message}</h4>
+                    <p class="mb-0">Try adjusting your search criteria</p>
+                </div>
+            `;
+            return;
+        }
+
+        const tableHTML = `
+            <div class="table-responsive">
+                <table class="table kaizen-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-calendar me-2"></i>Date Submitted</th>
+                            <th><i class="fas fa-hashtag me-2"></i>Kaizen No</th>
+                            <th><i class="fas fa-building me-2"></i>Department Name</th>
+                            <th><i class="fas fa-user me-2"></i>Employee Name</th>
+                            <th><i class="fas fa-id-badge me-2"></i>Employee No</th>
+                            <th><i class="fas fa-coins me-2"></i>Cost Saving</th>
+                            <th><i class="fas fa-info-circle me-2"></i>Status</th>
+                            <th><i class="fas fa-cogs me-2"></i>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${kaizens.map(item => {
+                            const statusClass = item.status === 'Approved' ? 'status-approved' : 
+                                               item.status === 'Rejected' ? 'status-rejected' : 'status-pending';
+                            return `
+                                <tr>
+                                    <td class="text-center">${new Date(item.dateSubmitted).toLocaleDateString()}</td>
+                                    <td class="text-center fw-bold">${item.kaizenNo}</td>
+                                    <td class="text-center">${item.department}</td>
+                                    <td>${item.employeeName}</td>
+                                    <td class="text-center">${item.employeeNo}</td>
+                                    <td class="text-center cost-saving">
+                                        ${item.costSaving ? `$ ${parseFloat(item.costSaving).toFixed(2)}` : 'N/A'}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="${statusClass}">${item.status || 'Pending'}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-view" onclick="viewKaizen(${item.id})">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </button>
+                                        ${item.status === 'Pending' ? `
+                                            <button class="btn btn-approval" onclick="showApprovalPopup(${item.id})">
+                                                <i class="fas fa-gavel me-1"></i>Approval
+                                            </button>
+                                        ` : ''}
+                                        ${item.status !== 'Rejected' && item.status !== 'Pending' ? `
+                                            <button class="btn btn-form-b" onclick="fillFormB(${item.id})">
+                                                <i class="fas fa-file-alt me-1"></i>Form B
+                                            </button>
+                                        ` : ''}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        searchResults.innerHTML = tableHTML;
+    }
+
+    // Event listeners
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 300); // 300ms delay
+    });
+
+    statusSelect.addEventListener('change', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 300);
+    });
+
+    clearBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        statusSelect.value = '';
+        performSearch();
+    });
+
+    // Load initial data
+    document.addEventListener('DOMContentLoaded', function() {
+        performSearch();
+        
+        // Add event listeners for cost saving radio buttons in edit modal
+        const editNoCostSavingRadio = document.getElementById('editNoCostSaving');
+        const editHasCostSavingRadio = document.getElementById('editHasCostSaving');
+        const editCostSavingFields = document.getElementById('editCostSavingFields');
+        
+        if (editNoCostSavingRadio && editHasCostSavingRadio) {
+            editNoCostSavingRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    editCostSavingFields.style.display = 'none';
+                    // Clear the values when hidden
+                    document.getElementById('editCostSaving').value = '';
+                    document.getElementById('editDollarRate').value = '';
+                }
+            });
+            
+            editHasCostSavingRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    editCostSavingFields.style.display = 'block';
+                }
+            });
+        }
+    });
+
+    function viewKaizen(id) {
+        // Show loading state
+        const modal = new bootstrap.Modal(document.getElementById('editKaizenModal'));
+        modal.show();
+
+        // Reset form to view-only mode
+        setFormReadOnly(true);
+        document.getElementById('saveEditBtn').style.display = 'none';
+        document.getElementById('enableEditBtn').style.display = 'none';
+        document.getElementById('executiveFillingBtn').style.display = 'none';
+
+        // Fetch kaizen data
+        fetch(`/Kaizen/Edit/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Populate form fields
+                    document.getElementById('editKaizenId').value = data.data.id;
+                    document.getElementById('editKaizenNo').value = data.data.kaizenNo;
+                    document.getElementById('editDateSubmitted').value = data.data.dateSubmitted.split('T')[0];
+                    document.getElementById('editDateImplemented').value = data.data.dateImplemented ? data.data.dateImplemented.split('T')[0] : '';
+                    document.getElementById('editDepartment').value = data.data.department;
+                    document.getElementById('editEmployeeName').value = data.data.employeeName;
+                    document.getElementById('editEmployeeNo').value = data.data.employeeNo;
+                    document.getElementById('editSuggestionDescription').value = data.data.suggestionDescription || '';
+                    document.getElementById('editCostSaving').value = data.data.costSaving || '';
+                    document.getElementById('editDollarRate').value = data.data.dollarRate || '';
+                    document.getElementById('editOtherBenefits').value = data.data.otherBenefits || '';
+
+                    // Handle cost saving type radio buttons
+                    const noCostSavingRadio = document.getElementById('editNoCostSaving');
+                    const hasCostSavingRadio = document.getElementById('editHasCostSaving');
+                    const costSavingFields = document.getElementById('editCostSavingFields');
+                    
+                    if (data.data.costSavingType === 'NoCostSaving') {
+                        noCostSavingRadio.checked = true;
+                        costSavingFields.style.display = 'none';
+                    } else if (data.data.costSavingType === 'HasCostSaving') {
+                        hasCostSavingRadio.checked = true;
+                        costSavingFields.style.display = 'block';
+                    } else {
+                        // Default to NoCostSaving if not set
+                        noCostSavingRadio.checked = true;
+                        costSavingFields.style.display = 'none';
+                    }
+
+                    // Handle existing images
+                    const beforeImageContainer = document.getElementById('editBeforeKaizenImageContainer');
+                    const afterImageContainer = document.getElementById('editAfterKaizenImageContainer');
+                    const beforeImage = document.getElementById('editBeforeKaizenCurrentImage');
+                    const afterImage = document.getElementById('editAfterKaizenCurrentImage');
+
+                    // Show/hide before image
+                    if (data.data.beforeKaizenImagePath) {
+                        beforeImage.src = data.data.beforeKaizenImagePath;
+                        beforeImageContainer.style.display = 'block';
+                    } else {
+                        beforeImageContainer.style.display = 'none';
+                    }
+
+                    // Show/hide after image
+                    if (data.data.afterKaizenImagePath) {
+                        afterImage.src = data.data.afterKaizenImagePath;
+                        afterImageContainer.style.display = 'block';
+                    } else {
+                        afterImageContainer.style.display = 'none';
+                    }
+
+                    // Check if kaizen is rejected or pending and hide buttons accordingly
+                    const status = data.data.status;
+                    if (status !== 'Rejected' && status !== 'Pending') {
+                        document.getElementById('enableEditBtn').style.display = 'block';
+                        document.getElementById('executiveFillingBtn').style.display = 'block';
+                    }
+                } else {
+                    alert('Error: ' + data.message);
+                    modal.hide();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while loading the kaizen data.');
+                modal.hide();
+            });
+    }
+
+    function enableEdit() {
+        setFormReadOnly(false);
+        document.getElementById('saveEditBtn').style.display = 'block';
+        document.getElementById('enableEditBtn').style.display = 'none';
+    }
+
+    function executiveFilling() {
+        // Get the current kaizen ID from the edit modal
+        const kaizenId = document.getElementById('editKaizenId').value;
+        
+        // Close the current modal
+        bootstrap.Modal.getInstance(document.getElementById('editKaizenModal')).hide();
+        
+        // Show the enhanced edit modal (Executive/Engineer form)
+        const enhancedModal = new bootstrap.Modal(document.getElementById('enhancedEditModal'));
+        enhancedModal.show();
+
+        // Fetch kaizen data for enhanced edit
+        fetch(`/Kaizen/Edit/${kaizenId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Populate form fields
+                    document.getElementById('enhancedEditKaizenId').value = data.data.id;
+                    
+                    // Populate required fields (read-only) and hidden fields for form submission
+                    document.getElementById('enhancedEditKaizenNo').value = data.data.kaizenNo || '';
+                    document.getElementById('enhancedEditKaizenNoHidden').value = data.data.kaizenNo || '';
+                    document.getElementById('enhancedEditEmployeeNo').value = data.data.employeeNo || '';
+                    document.getElementById('enhancedEditEmployeeNoHidden').value = data.data.employeeNo || '';
+                    document.getElementById('enhancedEditEmployeeName').value = data.data.employeeName || '';
+                    document.getElementById('enhancedEditEmployeeNameHidden').value = data.data.employeeName || '';
+                    document.getElementById('enhancedEditDepartment').value = data.data.department || '';
+                    document.getElementById('enhancedEditSuggestionDescription').value = data.data.suggestionDescription || '';
+                    document.getElementById('enhancedEditSuggestionDescriptionHidden').value = data.data.suggestionDescription || '';
+                    document.getElementById('enhancedEditDateSubmittedHidden').value = data.data.dateSubmitted || '';
+                    
+                    // Set category checkboxes (handle multiple selections)
+                    const category = data.data.category || '';
+                    if (category) {
+                        // Split comma-separated categories and check corresponding checkboxes
+                        const categories = category.split(',').map(cat => cat.trim());
+                        categories.forEach(cat => {
+                            const checkbox = document.querySelector(`input[name="Category"][value="${cat}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+                    
+                    // Set signature field
+                    document.getElementById('enhancedEditApprovedBy').value = data.data.approvedBy || '';
+                    
+                    // Set comments field
+                    document.getElementById('enhancedEditComments').value = data.data.comments || '';
+                    
+                    // Set implementation area fields
+                    const canImplement = data.data.canImplementInOtherFields || '';
+                    if (canImplement === 'Yes') {
+                        document.getElementById('implementYes').checked = true;
+                        document.getElementById('implementationAreaField').style.display = 'block';
+                        document.getElementById('enhancedEditImplementationArea').value = data.data.implementationArea || '';
+                    } else if (canImplement === 'No') {
+                        document.getElementById('implementNo').checked = true;
+                        document.getElementById('implementationAreaField').style.display = 'none';
+                    }
+                } else {
+                    alert('Error: ' + data.message);
+                    enhancedModal.hide();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while loading the kaizen data.');
+                enhancedModal.hide();
+            });
+    }
+
+    function setFormReadOnly(readonly) {
+        const form = document.getElementById('editKaizenForm');
+        const inputs = form.querySelectorAll('input, textarea, select');
+        
+        inputs.forEach(input => {
+            if (input.id !== 'editKaizenId' && input.id !== 'editKaizenNo') {
+                input.readOnly = readonly;
+                input.disabled = readonly;
+            }
+        });
+
+        // Handle radio buttons and file inputs separately
+        const radioButtons = form.querySelectorAll('input[type="radio"]');
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        
+        radioButtons.forEach(radio => {
+            radio.disabled = readonly;
+        });
+        
+        fileInputs.forEach(fileInput => {
+            fileInput.disabled = readonly;
+        });
+    }
+
+    function saveKaizenEdit() {
+        const form = document.getElementById('editKaizenForm');
+        const formData = new FormData(form);
+        const id = document.getElementById('editKaizenId').value;
+
+        // Add antiforgery token
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        formData.append('__RequestVerificationToken', token);
+
+        fetch(`/Kaizen/Edit/${id}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                bootstrap.Modal.getInstance(document.getElementById('editKaizenModal')).hide();
+                // Reload the page to show updated data
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the changes.');
+        });
+    }
+
+    // Global variable to store current kaizen ID for approval
+    let currentKaizenId = null;
+
+    function showApprovalPopup(id) {
+        currentKaizenId = id;
+        const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+        modal.show();
+    }
+
+    function approveKaizen(id) {
+        const kaizenId = id || currentKaizenId;
+        if (!kaizenId) return;
+        
+        if (confirm('Are you sure you want to approve this Kaizen suggestion?')) {
+            fetch(`/Kaizen/UpdateStatus/${kaizenId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: 'Approved' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Kaizen suggestion approved successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while approving the suggestion.');
+            });
+        }
+    }
+
+    function rejectKaizen(id) {
+        const kaizenId = id || currentKaizenId;
+        if (!kaizenId) return;
+        
+        if (confirm('Are you sure you want to reject this Kaizen suggestion?')) {
+            fetch(`/Kaizen/UpdateStatus/${kaizenId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: 'Rejected' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Kaizen suggestion rejected successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while rejecting the suggestion.');
+            });
+        }
+    }
+
+    function fillFormB(id) {
+        // Show Form B modal
+        const modal = new bootstrap.Modal(document.getElementById('formBModal'));
+        modal.show();
+
+        // Fetch kaizen data for Form B
+        fetch(`/Kaizen/Details/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('formBKaizenId').value = data.data.id;
+                    document.getElementById('formBKaizenNo').value = data.data.kaizenNo;
+                    document.getElementById('formBEmployeeName').value = data.data.employeeName;
+                } else {
+                    alert('Error: ' + data.message);
+                    modal.hide();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while loading the kaizen data.');
+                modal.hide();
+            });
+    }
+
+    function saveFormB() {
+        const form = document.getElementById('formBForm');
+        const formData = new FormData(form);
+
+        // Add antiforgery token
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        formData.append('__RequestVerificationToken', token);
+
+        fetch('/Kaizen/SaveFormB', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                bootstrap.Modal.getInstance(document.getElementById('formBModal')).hide();
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving Form B.');
+        });
+    }
+
+    function editKaizen(id) {
+        // Show enhanced edit modal
+        const modal = new bootstrap.Modal(document.getElementById('enhancedEditModal'));
+        modal.show();
+
+        // Fetch kaizen data for enhanced edit
+        fetch(`/Kaizen/Edit/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Populate form fields
+                    document.getElementById('enhancedEditKaizenId').value = data.data.id;
+                    
+                    // Populate required fields (read-only) and hidden fields for form submission
+                    document.getElementById('enhancedEditKaizenNo').value = data.data.kaizenNo || '';
+                    document.getElementById('enhancedEditKaizenNoHidden').value = data.data.kaizenNo || '';
+                    document.getElementById('enhancedEditEmployeeNo').value = data.data.employeeNo || '';
+                    document.getElementById('enhancedEditEmployeeNoHidden').value = data.data.employeeNo || '';
+                    document.getElementById('enhancedEditEmployeeName').value = data.data.employeeName || '';
+                    document.getElementById('enhancedEditEmployeeNameHidden').value = data.data.employeeName || '';
+                    document.getElementById('enhancedEditDepartment').value = data.data.department || '';
+                    document.getElementById('enhancedEditSuggestionDescription').value = data.data.suggestionDescription || '';
+                    document.getElementById('enhancedEditSuggestionDescriptionHidden').value = data.data.suggestionDescription || '';
+                    document.getElementById('enhancedEditDateSubmittedHidden').value = data.data.dateSubmitted || '';
+                    
+                    // Set category checkboxes (handle multiple selections)
+                    const category = data.data.category || '';
+                    if (category) {
+                        // Split comma-separated categories and check corresponding checkboxes
+                        const categories = category.split(',').map(cat => cat.trim());
+                        categories.forEach(cat => {
+                            const checkbox = document.querySelector(`input[name="Category"][value="${cat}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+                    
+                    // Set signature field
+                    document.getElementById('enhancedEditApprovedBy').value = data.data.approvedBy || '';
+                    
+                    // Set comments field
+                    document.getElementById('enhancedEditComments').value = data.data.comments || '';
+                    
+                    // Set implementation area fields
+                    const canImplement = data.data.canImplementInOtherFields || '';
+                    if (canImplement === 'Yes') {
+                        document.getElementById('implementYes').checked = true;
+                        document.getElementById('implementationAreaField').style.display = 'block';
+                        document.getElementById('enhancedEditImplementationArea').value = data.data.implementationArea || '';
+                    } else if (canImplement === 'No') {
+                        document.getElementById('implementNo').checked = true;
+                        document.getElementById('implementationAreaField').style.display = 'none';
+                    }
+                } else {
+                    alert('Error: ' + data.message);
+                    modal.hide();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while loading the kaizen data.');
+                modal.hide();
+            });
+    }
+
+    function toggleImplementationArea() {
+        const yesRadio = document.getElementById('implementYes');
+        const areaField = document.getElementById('implementationAreaField');
+        
+        if (yesRadio.checked) {
+            areaField.style.display = 'block';
+        } else {
+            areaField.style.display = 'none';
+            document.getElementById('enhancedEditImplementationArea').value = '';
+        }
+    }
+
+    function saveEnhancedEdit() {
+        const form = document.getElementById('enhancedEditForm');
+        const formData = new FormData(form);
+        const id = document.getElementById('enhancedEditKaizenId').value;
+
+        // Handle multiple category selections
+        const selectedCategories = [];
+        const categoryCheckboxes = document.querySelectorAll('input[name="Category"]:checked');
+        categoryCheckboxes.forEach(checkbox => {
+            selectedCategories.push(checkbox.value);
+        });
+        
+        // Remove existing Category entries and add the combined one
+        formData.delete('Category');
+        if (selectedCategories.length > 0) {
+            formData.append('Category', selectedCategories.join(', '));
+        }
+
+        // Add antiforgery token
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        formData.append('__RequestVerificationToken', token);
+
+        fetch(`/Kaizen/Edit/${id}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                bootstrap.Modal.getInstance(document.getElementById('enhancedEditModal')).hide();
+                // Reload the page to show updated data
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the changes.');
+        });
+    }
+</script> 

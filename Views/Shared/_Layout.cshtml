@@ -1,0 +1,368 @@
+﻿@*
+    File: Views/Shared/_Layout.cshtml
+*@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Kaizen Web Application</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/UsersApp.styles.css" asp-append-version="true" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #E31E24;
+            --secondary-gray: #333333;
+            --light-gray: #f8f9fa;
+            --dark-gray: #495057;
+            --success-green: #28a745;
+            --kaizen-blue: #007bff;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-gray);
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
+            box-shadow: 0 2px 10px rgba(227, 30, 36, 0.3);
+            padding: 0.8rem 0;
+            border: none;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            color: white !important;
+            font-weight: 600;
+            font-size: 1.4rem;
+            text-decoration: none;
+        }
+
+            .navbar-brand:hover {
+                color: #f8f9fa !important;
+            }
+
+        .company-logo {
+            height: 45px;
+            width: auto;
+            margin-right: 15px;
+            filter: brightness(0) invert(1);
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            margin: 0 10px;
+            padding: 8px 16px !important;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+            .navbar-nav .nav-link:hover {
+                color: white !important;
+                background-color: rgba(255, 255, 255, 0.1);
+                transform: translateY(-1px);
+            }
+
+        .navbar-toggler {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        .main-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .kaizen-card {
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+            .kaizen-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            }
+
+        .kaizen-badge {
+            background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .footer {
+            background: var(--secondary-gray);
+            color: #adb5bd;
+            padding: 20px 0;
+            margin-top: 40px;
+        }
+
+            .footer a {
+                color: #dee2e6;
+                text-decoration: none;
+            }
+
+                .footer a:hover {
+                    color: var(--primary-red);
+                }
+
+        @@media (max-width: 768px) {
+            .company-logo
+
+        {
+            height: 35px;
+            margin-right: 10px;
+        }
+
+        .navbar-brand {
+            font-size: 1.2rem;
+        }
+
+        .main-container {
+            padding: 20px;
+        }
+
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @@keyframes fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        .btn-kaizen {
+            background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 10px 25px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+            .btn-kaizen:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(227, 30, 36, 0.4);
+                color: white;
+            }
+
+        .btn-kaizen-outline {
+            border: 2px solid var(--primary-red);
+            color: var(--primary-red);
+            background: transparent;
+            font-weight: 600;
+            padding: 8px 23px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+                    .btn-kaizen-outline:hover {
+            background: var(--primary-red);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* User dropdown styling */
+        .dropdown-menu {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            margin-top: 10px;
+        }
+
+        .dropdown-item {
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .dropdown-item.text-danger:hover {
+            background-color: #f8d7da;
+        }
+
+        .dropdown-divider {
+            margin: 8px 0;
+            border-color: #e9ecef;
+        }
+
+        .nav-link.dropdown-toggle::after {
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    @Html.AntiForgeryToken()
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm">
+            <div class="container-fluid">
+                @{
+                    var username = Context.User.Identity?.Name;
+                    var isUser = username?.ToLower().Contains("user") == true;
+                    var dashboardAction = isUser ? "Kaizenform" : "KaizenListManager";
+                }
+                <a class="navbar-brand" asp-controller="Kaizen" asp-action="@dashboardAction">
+                    <img src="~/images/flintec-logo.png" alt="Flintec Logo" class="company-logo" />
+                    <span>Kaizen Platform</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        
+                        @if (isUser)
+                        {
+                            <!-- Navigation for users with "user" in username -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Kaizen" asp-action="Kaizenform">
+                                    <i class="fas fa-edit me-2"></i>Fill Form
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Kaizen" asp-action="UserKaizenList">
+                                    <i class="fas fa-eye me-2"></i>View Kaizens
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <!-- Navigation for managers (usernames without "user") -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Kaizen" asp-action="KaizenListManager">
+                                    <i class="fas fa-list me-2"></i>View Kaizens
+                                </a>
+                            </li>
+                        }
+                        
+                        @if (!isUser)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Analytics">
+                                    <i class="fas fa-chart-bar me-2"></i>Analytics
+                                </a>
+                            </li>
+                        }
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-users me-2"></i>Team
+                            </a>
+                        </li>
+                    </ul>
+
+                    <ul class="navbar-nav">
+                        @if (Context.User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-circle me-2"></i>Hello, @Context.User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    @if (!isUser)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Account" asp-action="ChangeMyPassword">
+                                                <i class="fas fa-key me-2"></i>Change Password
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="Register">
+                                    <i class="fas fa-user-plus me-1"></i>Register
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid">
+        <div class="main-container fade-in">
+            <main role="main">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <footer class="footer text-center">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 text-md-start">
+                    &copy; 2024 Flintec - Kaizen Web Application
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="#" class="me-3">Privacy Policy</a>
+                    <a href="#" class="me-3">Support</a>
+                    <a href="#">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

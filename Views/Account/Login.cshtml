@@ -1,0 +1,47 @@
+﻿@using KaizenWebApp.ViewModels;
+@model LoginViewModel;
+@{
+    ViewData["Title"] = "Kaizen Login";
+    Layout = "~/Views/Shared/_AccountLayout.cshtml";
+}
+
+<div class="logo-container">
+    <img src="~/images/flintec-logo.png" alt="Flintec Logo" class="company-logo" />
+</div>
+
+<div class="account-container">
+    <div class="account-box">
+        <h2 class="text-center mb-4">Kaizen Login</h2>
+        <form asp-action="Login" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label"></label>
+                <input asp-for="Username" class="form-control" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="form-check mb-3">
+                <label class="form-check-label">
+                    <input asp-for="RememberMe" class="form-check-input" />
+                    @Html.DisplayNameFor(a => a.RememberMe)
+                </label>
+            </div>
+            <input type="submit" value="Login" class="btn btn-danger w-100 p-2" />
+            <p class="text-center mt-2">
+                Don't have an account? <a asp-controller="Account" asp-action="Register" class="text-decoration-none">Register</a>
+            </p>
+            
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
+    }
+}
