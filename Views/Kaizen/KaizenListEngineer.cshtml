@@ -236,27 +236,6 @@
             border-color: #5a2d91;
         }
 
-    .btn-manager {
-        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-        border: none;
-        color: white;
-        font-weight: 700;
-        padding: 0.6rem 1.2rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        font-size: 0.9rem;
-        box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
-        border: 2px solid #138496;
-    }
-
-        .btn-manager:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(23, 162, 184, 0.5);
-            color: white;
-            background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
-            border-color: #138496;
-        }
-
     .status-pending {
         background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
         color: #212529;
@@ -363,24 +342,6 @@
         background: #f8f9fa;
     }
 
-    /* Read-only styling for executive filling form */
-    .form-control[readonly], .form-control[disabled] {
-        background-color: #f8f9fa;
-        color: #495057;
-        border-color: #ced4da;
-        cursor: not-allowed;
-    }
-
-    .form-check-input[disabled] {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .form-check-input[disabled]:checked {
-        background-color: #6c757d;
-        border-color: #6c757d;
-    }
-
     @@media (max-width: 768px) {
         .search-form {
             flex-direction: column;
@@ -434,7 +395,9 @@
                         </label>
                         <select id="status" class="form-select">
                             <option value="">All Status</option>
+                            <option value="Pending">Pending</option>
                             <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
                         </select>
                     </div>
                     <div class="d-flex gap-2">
@@ -503,10 +466,10 @@
                                         <button class="btn btn-view" onclick="viewKaizen(@item.Id)">
                                             <i class="fas fa-eye me-1"></i>View
                                         </button>
-                                        @if (item.Status == "Approved")
+                                        @if (item.Status == "Pending")
                                         {
-                                            <button class="btn btn-reject" onclick="showRejectionPopup(@item.Id)">
-                                                <i class="fas fa-times me-1"></i>Reject
+                                            <button class="btn btn-approval" onclick="showApprovalPopup(@item.Id)">
+                                                <i class="fas fa-gavel me-1"></i>Approval
                                             </button>
                                         }
 
@@ -530,11 +493,11 @@
                     <h5 class="modal-title mb-0" id="editKaizenModalLabel">
                         <i class="fas fa-eye me-2"></i>View Kaizen Suggestion
                     </h5>
+                    <button type="button" class="btn btn-edit ms-3" id="enableEditBtn" onclick="enableEdit()" style="display: none;">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </button>
                     <button type="button" class="btn btn-executive ms-2" id="executiveFillingBtn" onclick="executiveFilling()" style="display: none;">
                         <i class="fas fa-user-tie me-1"></i>Executive Filling
-                    </button>
-                    <button type="button" class="btn btn-manager ms-2" id="managerCommentBtn" onclick="managerComment()" style="display: none;">
-                        <i class="fas fa-comments me-1"></i>Add Manager Comment
                     </button>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -637,11 +600,11 @@
 
                         <div class="mb-3">
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" id="editNoCostSaving" name="CostSavingTypeManager" value="NoCostSaving" />
+                                <input class="form-check-input" type="radio" id="editNoCostSaving" name="CostSavingTypeEngineer" value="NoCostSaving" />
                                 <label class="form-check-label" for="editNoCostSaving">No Cost Saving</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" id="editHasCostSaving" name="CostSavingTypeManager" value="HasCostSaving" />
+                                <input class="form-check-input" type="radio" id="editHasCostSaving" name="CostSavingTypeEngineer" value="HasCostSaving" />
                                 <label class="form-check-label" for="editHasCostSaving">Has Cost Saving</label>
                             </div>
                         </div>
@@ -690,13 +653,12 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="enhancedEditModalLabel">
-                    <i class="fas fa-user-tie me-2"></i>Executive/Engineer Review
+                    <i class="fas fa-edit me-2"></i>To be filled by Executive/Engineer
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="enhancedEditForm" enctype="multipart/form-data">
-                    @Html.AntiForgeryToken()
                     <input type="hidden" id="enhancedEditKaizenId" name="Id" />
 
                     <!-- Hidden required fields to ensure they're included in form submission -->
@@ -706,7 +668,46 @@
                     <input type="hidden" id="enhancedEditSuggestionDescriptionHidden" name="SuggestionDescription" />
                     <input type="hidden" id="enhancedEditDateSubmittedHidden" name="DateSubmitted" />
 
-
+                    <!-- Required Fields Section (Read-only) -->
+                    <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #e9ecef;">
+                        <h6 class="mb-3">
+                            <i class="fas fa-info-circle me-2"></i>Kaizen Information
+                        </h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="enhancedEditKaizenNo" class="form-label">
+                                    <i class="fas fa-hashtag me-2"></i>Kaizen No
+                                </label>
+                                <input type="text" id="enhancedEditKaizenNo" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="enhancedEditEmployeeNo" class="form-label">
+                                    <i class="fas fa-id-badge me-2"></i>Employee Number
+                                </label>
+                                <input type="text" id="enhancedEditEmployeeNo" class="form-control" readonly />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="enhancedEditEmployeeName" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Employee Name
+                                </label>
+                                <input type="text" id="enhancedEditEmployeeName" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="enhancedEditDepartment" class="form-label">
+                                    <i class="fas fa-building me-2"></i>Department
+                                </label>
+                                <input type="text" id="enhancedEditDepartment" name="Department" class="form-control" readonly />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="enhancedEditSuggestionDescription" class="form-label">
+                                <i class="fas fa-lightbulb me-2"></i>Suggestion Description
+                            </label>
+                            <textarea id="enhancedEditSuggestionDescription" class="form-control" rows="3" readonly></textarea>
+                        </div>
+                    </div>
 
                     <!-- Executive/Engineer Form Section -->
                     <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
@@ -720,45 +721,45 @@
                                     <i class="fas fa-folder me-2"></i>Recommended Categories
                                 </label>
                                 <div class="mt-2">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryCostSaving" value="Cost reduction" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryCostSaving">Major Cost reduction by innovation</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryProductivity" value="Productivity Improvement" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryProductivity">Productivity Improvement</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryOHS" value="OHS Improvement" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryOHS">OHS Improvement</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryQuality" value="Quality Improvements" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryQuality">Quality Improvements</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryEnvironment" value="Environmental friendly" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryEnvironment">Environmental friendly Innovation</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_category5S" value="5S Improvement" disabled>
-                                    <label class="form-check-label" for="enhanced_category5S">5S Improvement</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryErgonomics" value="Ergonomics Improvements" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryErgonomics">Ergonomics Improvements</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryEnergySaving" value="Energy Saving Improvement" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryEnergySaving">Energy Saving Improvement</label>
-                                </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryCostSaving" value="Cost reduction">
+                                        <label class="form-check-label" for="categoryCostSaving">Major Cost reduction by innovation</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryProductivity" value="Productivity Improvement">
+                                        <label class="form-check-label" for="categoryProductivity">Productivity Improvement</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryOHS" value="OHS Improvement">
+                                        <label class="form-check-label" for="categoryOHS">OHS Improvement</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryQuality" value="Quality Improvements">
+                                        <label class="form-check-label" for="categoryQuality">Quality Improvements</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryEnvironment" value="Environmental friendly">
+                                        <label class="form-check-label" for="categoryEnvironment">Environmental friendly Innovation</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="category5S" value="5S Improvement">
+                                        <label class="form-check-label" for="category5S">5S Improvement</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryErgonomics" value="Ergonomics Improvements">
+                                        <label class="form-check-label" for="categoryErgonomics">Ergonomics Improvements</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryEnergySaving" value="Energy Saving Improvement">
+                                        <label class="form-check-label" for="categoryEnergySaving">Energy Saving Improvement</label>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label for="enhancedEditApprovedBy" class="form-label">
                                     <i class="fas fa-signature me-2"></i>Signature (Add Name)
                                 </label>
-                                <input type="text" id="enhancedEditApprovedBy" name="ApprovedBy" class="form-control" placeholder="Enter your name" readonly />
+                                <input type="text" id="enhancedEditApprovedBy" name="ApprovedBy" class="form-control" placeholder="Enter your name" />
                             </div>
                         </div>
 
@@ -766,7 +767,7 @@
                             <label for="enhancedEditComments" class="form-label">
                                 <i class="fas fa-comments me-2"></i>Comment & Recommendations
                             </label>
-                            <textarea id="enhancedEditComments" name="Comments" class="form-control" rows="4" placeholder="Enter your comments and recommendations..." readonly></textarea>
+                            <textarea id="enhancedEditComments" name="Comments" class="form-control" rows="4" placeholder="Enter your comments and recommendations..."></textarea>
                         </div>
 
                         <div class="mb-3">
@@ -775,12 +776,12 @@
                             </label>
                             <div class="mt-2">
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="enhanced_implementYes" value="Yes" onchange="toggleEnhancedImplementationArea()" disabled>
-                                    <label class="form-check-label" for="enhanced_implementYes">Yes</label>
+                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="implementYes" value="Yes" onchange="toggleImplementationArea()">
+                                    <label class="form-check-label" for="implementYes">Yes</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="enhanced_implementNo" value="No" onchange="toggleEnhancedImplementationArea()" disabled>
-                                    <label class="form-check-label" for="enhanced_implementNo">No</label>
+                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="implementNo" value="No" onchange="toggleImplementationArea()">
+                                    <label class="form-check-label" for="implementNo">No</label>
                                 </div>
                             </div>
                         </div>
@@ -789,17 +790,17 @@
                             <label for="enhancedEditImplementationArea" class="form-label">
                                 <i class="fas fa-map-marker-alt me-2"></i>Specify Area
                             </label>
-                            <input type="text" id="enhancedEditImplementationArea" name="ImplementationArea" class="form-control" placeholder="Enter the specific area where this can be implemented..." readonly />
+                            <input type="text" id="enhancedEditImplementationArea" name="ImplementationArea" class="form-control" placeholder="Enter the specific area where this can be implemented..." />
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Close
+                    <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <button type="button" class="btn btn-executive" id="saveExecutiveBtn" onclick="saveExecutiveFilling()" style="display: none;">
-                    <i class="fas fa-save me-2"></i>Save Executive Review
+                <button type="button" class="btn btn-update" onclick="saveEnhancedEdit()">
+                    <i class="fas fa-save me-2"></i>Save Changes
                 </button>
             </div>
         </div>
@@ -812,17 +813,20 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="approvalModalLabel">
-                    <i class="fas fa-times me-2"></i>Kaizen Rejection
+                    <i class="fas fa-gavel me-2"></i>Kaizen Approval
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
                 <div class="mb-4">
-                    <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
-                    <h5>Reject Kaizen Suggestion</h5>
-                    <p class="text-muted">Are you sure you want to reject this approved Kaizen suggestion?</p>
+                    <i class="fas fa-question-circle fa-3x text-primary mb-3"></i>
+                    <h5>What would you like to do with this Kaizen suggestion?</h5>
+                    <p class="text-muted">Please select your decision below</p>
                 </div>
                 <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-approve btn-lg" onclick="approveKaizen()">
+                        <i class="fas fa-check me-2"></i>Approve
+                    </button>
                     <button type="button" class="btn btn-reject btn-lg" onclick="rejectKaizen()">
                         <i class="fas fa-times me-2"></i>Reject
                     </button>
@@ -831,99 +835,6 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Manager Comment Modal -->
-<div class="modal fade" id="managerCommentModal" tabindex="-1" aria-labelledby="managerCommentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="managerCommentModalLabel">
-                    <i class="fas fa-comments me-2"></i>Manager Comment
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="managerCommentForm">
-                    <input type="hidden" id="managerCommentKaizenId" name="KaizenId" />
-                    
-                    <div class="mb-3">
-                        <label for="managerCommentText" class="form-label">
-                            <i class="fas fa-comment-dots me-2"></i>Comments & Recommendations
-                        </label>
-                        <textarea id="managerCommentText" name="Comments" class="form-control" rows="4" 
-                                  placeholder="Enter your comments and recommendations..." required></textarea>
-                        <div class="invalid-feedback">
-                            Please provide comments and recommendations.
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="managerSignature" class="form-label">
-                            <i class="fas fa-signature me-2"></i>Enter Name for Signature
-                        </label>
-                        <input type="text" id="managerSignature" name="Signature" class="form-control" 
-                               placeholder="Enter your name for signature" required />
-                        <div class="invalid-feedback">
-                            Please enter your name for signature.
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancel
-                </button>
-                <button type="button" class="btn btn-manager" onclick="saveManagerComment()">
-                    <i class="fas fa-save me-2"></i>Save Comment
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Manager Comment Display Modal -->
-<div class="modal fade" id="managerCommentDisplayModal" tabindex="-1" aria-labelledby="managerCommentDisplayModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="managerCommentDisplayModalLabel">
-                    <i class="fas fa-comments me-2"></i>Manager Comments
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
-                    <h6 class="mb-3">
-                        <i class="fas fa-user-tie me-2"></i>Manager Review
-                    </h6>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="fas fa-comment-dots me-2"></i>Comments & Recommendations
-                        </label>
-                        <div class="form-control" style="background-color: white; min-height: 100px; border: 1px solid #ced4da;">
-                            <p id="displayManagerComments" class="mb-0"></p>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="fas fa-signature me-2"></i>Manager Signature
-                        </label>
-                        <div class="form-control" style="background-color: white; border: 1px solid #ced4da;">
-                            <p id="displayManagerSignature" class="mb-0 fw-bold"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Close
                 </button>
             </div>
         </div>
@@ -1038,9 +949,9 @@
                                         <button class="btn btn-view" onclick="viewKaizen(${item.id})">
                                             <i class="fas fa-eye me-1"></i>View
                                         </button>
-                                        ${item.status === 'Approved' ? `
-                                            <button class="btn btn-reject" onclick="showRejectionPopup(${item.id})">
-                                                <i class="fas fa-times me-1"></i>Reject
+                                        ${item.status === 'Pending' ? `
+                                            <button class="btn btn-approval" onclick="showApprovalPopup(${item.id})">
+                                                <i class="fas fa-gavel me-1"></i>Approval
                                             </button>
                                         ` : ''}
 
@@ -1108,8 +1019,8 @@
         // Reset form to view-only mode
         setFormReadOnly(true);
         document.getElementById('saveEditBtn').style.display = 'none';
+        document.getElementById('enableEditBtn').style.display = 'none';
         document.getElementById('executiveFillingBtn').style.display = 'none';
-        document.getElementById('managerCommentBtn').style.display = 'none';
 
         // Fetch kaizen data
         fetch(`/Kaizen/Edit/${id}`)
@@ -1171,26 +1082,8 @@
                     // Check if kaizen is rejected or pending and hide buttons accordingly
                     const status = data.data.status;
                     if (status !== 'Rejected' && status !== 'Pending') {
+                        document.getElementById('enableEditBtn').style.display = 'block';
                         document.getElementById('executiveFillingBtn').style.display = 'block';
-                        document.getElementById('managerCommentBtn').style.display = 'block';
-                    }
-
-                    // Check if manager comments exist and update button accordingly
-                    const managerCommentBtn = document.getElementById('managerCommentBtn');
-                    if (data.data.managerComments && data.data.managerComments.trim() !== '') {
-                        // Manager comments exist - show "View Manager Comments" button
-                        managerCommentBtn.innerHTML = '<i class="fas fa-comments me-1"></i>View Manager Comments';
-                        managerCommentBtn.onclick = function() {
-                            showManagerCommentDisplay(data.data.managerComments, data.data.managerSignature);
-                        };
-                        managerCommentBtn.style.display = 'block';
-                    } else {
-                        // No manager comments - show "Add Manager Comment" button
-                        managerCommentBtn.innerHTML = '<i class="fas fa-comments me-1"></i>Add Manager Comment';
-                        managerCommentBtn.onclick = function() {
-                            managerComment();
-                        };
-                        managerCommentBtn.style.display = 'block';
                     }
                 } else {
                     alert('Error: ' + data.message);
@@ -1204,7 +1097,11 @@
             });
     }
 
-
+    function enableEdit() {
+        setFormReadOnly(false);
+        document.getElementById('saveEditBtn').style.display = 'block';
+        document.getElementById('enableEditBtn').style.display = 'none';
+    }
 
     function executiveFilling() {
         // Get the current kaizen ID from the edit modal
@@ -1228,10 +1125,15 @@
                     // Populate form fields
                     document.getElementById('enhancedEditKaizenId').value = data.data.id;
 
-                    // Populate hidden fields for form submission
+                    // Populate required fields (read-only) and hidden fields for form submission
+                    document.getElementById('enhancedEditKaizenNo').value = data.data.kaizenNo || '';
                     document.getElementById('enhancedEditKaizenNoHidden').value = data.data.kaizenNo || '';
+                    document.getElementById('enhancedEditEmployeeNo').value = data.data.employeeNo || '';
                     document.getElementById('enhancedEditEmployeeNoHidden').value = data.data.employeeNo || '';
+                    document.getElementById('enhancedEditEmployeeName').value = data.data.employeeName || '';
                     document.getElementById('enhancedEditEmployeeNameHidden').value = data.data.employeeName || '';
+                    document.getElementById('enhancedEditDepartment').value = data.data.department || '';
+                    document.getElementById('enhancedEditSuggestionDescription').value = data.data.suggestionDescription || '';
                     document.getElementById('enhancedEditSuggestionDescriptionHidden').value = data.data.suggestionDescription || '';
                     document.getElementById('enhancedEditDateSubmittedHidden').value = data.data.dateSubmitted || '';
 
@@ -1241,8 +1143,7 @@
                         // Split comma-separated categories and check corresponding checkboxes
                         const categories = category.split(',').map(cat => cat.trim());
                         categories.forEach(cat => {
-                            // Use the enhanced modal checkboxes
-                            const checkbox = document.querySelector(`#enhancedEditModal input[name="Category"][value="${cat}"]`);
+                            const checkbox = document.querySelector(`input[name="Category"][value="${cat}"]`);
                             if (checkbox) {
                                 checkbox.checked = true;
                             }
@@ -1258,16 +1159,13 @@
                     // Set implementation area fields
                     const canImplement = data.data.canImplementInOtherFields || '';
                     if (canImplement === 'Yes') {
-                        document.getElementById('enhanced_implementYes').checked = true;
+                        document.getElementById('implementYes').checked = true;
                         document.getElementById('implementationAreaField').style.display = 'block';
                         document.getElementById('enhancedEditImplementationArea').value = data.data.implementationArea || '';
                     } else if (canImplement === 'No') {
-                        document.getElementById('enhanced_implementNo').checked = true;
+                        document.getElementById('implementNo').checked = true;
                         document.getElementById('implementationAreaField').style.display = 'none';
                     }
-
-                    // Hide save button since form is read-only
-                    document.getElementById('saveExecutiveBtn').style.display = 'none';
                 } else {
                     alert('Error: ' + data.message);
                     enhancedModal.hide();
@@ -1337,19 +1235,46 @@
     // Global variable to store current kaizen ID for approval
     let currentKaizenId = null;
 
-    function showRejectionPopup(id) {
+    function showApprovalPopup(id) {
         currentKaizenId = id;
         const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
         modal.show();
     }
 
+    function approveKaizen(id) {
+        const kaizenId = id || currentKaizenId;
+        if (!kaizenId) return;
 
+        if (confirm('Are you sure you want to approve this Kaizen suggestion?')) {
+            fetch(`/Kaizen/UpdateStatus/${kaizenId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: 'Approved' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Kaizen suggestion approved successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while approving the suggestion.');
+            });
+        }
+    }
 
     function rejectKaizen(id) {
         const kaizenId = id || currentKaizenId;
         if (!kaizenId) return;
 
-        if (confirm('Are you sure you want to reject this approved Kaizen suggestion?')) {
+        if (confirm('Are you sure you want to reject this Kaizen suggestion?')) {
             fetch(`/Kaizen/UpdateStatus/${kaizenId}`, {
                 method: 'POST',
                 headers: {
@@ -1374,221 +1299,72 @@
         }
     }
 
-    // Manager Comment functionality
-    function managerComment() {
-        // Get the current kaizen ID from the edit modal
-        const kaizenId = document.getElementById('editKaizenId').value;
-        if (!kaizenId) {
-            alert('No Kaizen selected. Please select a Kaizen first.');
-            return;
-        }
 
-        // Fetch current kaizen data to check for existing manager comments
-        fetch(`/Kaizen/Edit/${kaizenId}`)
+
+    function editKaizen(id) {
+        // Show enhanced edit modal
+        const modal = new bootstrap.Modal(document.getElementById('enhancedEditModal'));
+        modal.show();
+
+        // Fetch kaizen data for enhanced edit
+        fetch(`/Kaizen/Edit/${id}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Check if manager comments already exist for this specific kaizen
-                    if (data.data.managerComments && data.data.managerComments.trim() !== '') {
-                        // Show existing manager comments in display modal for this specific kaizen
-                        showManagerCommentDisplay(data.data.managerComments, data.data.managerSignature);
-                    } else {
-                        // Show input form for new manager comments for this specific kaizen
-                        document.getElementById('managerCommentKaizenId').value = kaizenId;
-                        bootstrap.Modal.getInstance(document.getElementById('editKaizenModal')).hide();
-                        const managerModal = new bootstrap.Modal(document.getElementById('managerCommentModal'));
-                        managerModal.show();
+                    // Populate form fields
+                    document.getElementById('enhancedEditKaizenId').value = data.data.id;
+
+                    // Populate required fields (read-only) and hidden fields for form submission
+                    document.getElementById('enhancedEditKaizenNo').value = data.data.kaizenNo || '';
+                    document.getElementById('enhancedEditKaizenNoHidden').value = data.data.kaizenNo || '';
+                    document.getElementById('enhancedEditEmployeeNo').value = data.data.employeeNo || '';
+                    document.getElementById('enhancedEditEmployeeNoHidden').value = data.data.employeeNo || '';
+                    document.getElementById('enhancedEditEmployeeName').value = data.data.employeeName || '';
+                    document.getElementById('enhancedEditEmployeeNameHidden').value = data.data.employeeName || '';
+                    document.getElementById('enhancedEditDepartment').value = data.data.department || '';
+                    document.getElementById('enhancedEditSuggestionDescription').value = data.data.suggestionDescription || '';
+                    document.getElementById('enhancedEditSuggestionDescriptionHidden').value = data.data.suggestionDescription || '';
+                    document.getElementById('enhancedEditDateSubmittedHidden').value = data.data.dateSubmitted || '';
+
+                    // Set category checkboxes (handle multiple selections)
+                    const category = data.data.category || '';
+                    if (category) {
+                        // Split comma-separated categories and check corresponding checkboxes
+                        const categories = category.split(',').map(cat => cat.trim());
+                        categories.forEach(cat => {
+                            const checkbox = document.querySelector(`input[name="Category"][value="${cat}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+
+                    // Set signature field
+                    document.getElementById('enhancedEditApprovedBy').value = data.data.approvedBy || '';
+
+                    // Set comments field
+                    document.getElementById('enhancedEditComments').value = data.data.comments || '';
+
+                    // Set implementation area fields
+                    const canImplement = data.data.canImplementInOtherFields || '';
+                    if (canImplement === 'Yes') {
+                        document.getElementById('implementYes').checked = true;
+                        document.getElementById('implementationAreaField').style.display = 'block';
+                        document.getElementById('enhancedEditImplementationArea').value = data.data.implementationArea || '';
+                    } else if (canImplement === 'No') {
+                        document.getElementById('implementNo').checked = true;
+                        document.getElementById('implementationAreaField').style.display = 'none';
                     }
                 } else {
                     alert('Error: ' + data.message);
+                    modal.hide();
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred while loading the kaizen data.');
+                modal.hide();
             });
-    }
-
-    function showManagerCommentDisplay(comments, signature) {
-        // Populate the display modal with manager comment data for this specific kaizen
-        document.getElementById('displayManagerComments').textContent = comments || 'No comments available';
-        document.getElementById('displayManagerSignature').textContent = signature || 'No signature available';
-        
-        // Show the display modal
-        const displayModal = new bootstrap.Modal(document.getElementById('managerCommentDisplayModal'));
-        displayModal.show();
-    }
-
-
-
-    function saveManagerComment() {
-        // Get the kaizen ID
-        const kaizenId = document.getElementById('managerCommentKaizenId').value;
-        
-        // Validate form
-        const comments = document.getElementById('managerCommentText').value.trim();
-        const signature = document.getElementById('managerSignature').value.trim();
-        
-        if (!comments) {
-            alert('Please provide comments and recommendations.');
-            document.getElementById('managerCommentText').focus();
-            return;
-        }
-        
-        if (!signature) {
-            alert('Please enter your name for signature.');
-            document.getElementById('managerSignature').focus();
-            return;
-        }
-
-        // Show loading state
-        const saveBtn = document.querySelector('#managerCommentModal .btn-manager');
-        const originalText = saveBtn.innerHTML;
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-        saveBtn.disabled = true;
-
-        // Prepare form data
-        const formData = new FormData();
-        formData.append('Comments', comments);
-        formData.append('Signature', signature);
-        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
-
-        // Send the data to the server
-        fetch(`/Kaizen/SaveManagerComment/${kaizenId}`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Manager comment saved successfully!');
-                bootstrap.Modal.getInstance(document.getElementById('managerCommentModal')).hide();
-                
-                // Clear the form
-                document.getElementById('managerCommentText').value = '';
-                document.getElementById('managerSignature').value = '';
-                
-                // Update the button text to "View Manager Comments" for this specific kaizen
-                const managerCommentBtn = document.getElementById('managerCommentBtn');
-                managerCommentBtn.innerHTML = '<i class="fas fa-comments me-1"></i>View Manager Comments';
-                managerCommentBtn.onclick = function() {
-                    showManagerCommentDisplay(comments, signature);
-                };
-                
-                // Reload the page to show updated data
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while saving the manager comment.');
-        })
-        .finally(() => {
-            // Restore button state
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-        });
-    }
-
-    function saveExecutiveFilling() {
-        // Get the kaizen ID
-        const kaizenId = document.getElementById('enhancedEditKaizenId').value;
-        
-        // Validate form
-        const approvedBy = document.getElementById('enhancedEditApprovedBy').value.trim();
-        const comments = document.getElementById('enhancedEditComments').value.trim();
-        const canImplementInOtherFields = document.querySelector('input[name="CanImplementInOtherFields"]:checked')?.value;
-        const selectedCategories = document.querySelectorAll('#enhancedEditModal input[name="Category"]:checked');
-        
-        if (!approvedBy) {
-            alert('Please enter your name for signature.');
-            document.getElementById('enhancedEditApprovedBy').focus();
-            return;
-        }
-        
-        if (!comments) {
-            alert('Please provide comments and recommendations.');
-            document.getElementById('enhancedEditComments').focus();
-            return;
-        }
-
-        if (selectedCategories.length === 0) {
-            alert('Please select at least one recommended category.');
-            return;
-        }
-
-        if (!canImplementInOtherFields) {
-            alert('Please select whether this suggestion can be implemented in other fields.');
-            return;
-        }
-
-        // Show loading state
-        const saveBtn = document.getElementById('saveExecutiveBtn');
-        const originalText = saveBtn.innerHTML;
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-        saveBtn.disabled = true;
-
-        // Prepare form data
-        const formData = new FormData();
-        
-        // Add category checkboxes from enhanced modal
-        const categoryCheckboxes = document.querySelectorAll('#enhancedEditModal input[name="Category"]:checked');
-        categoryCheckboxes.forEach(checkbox => {
-            formData.append('Category', checkbox.value);
-        });
-        
-        formData.append('ApprovedBy', approvedBy);
-        formData.append('Comments', comments);
-        formData.append('CanImplementInOtherFields', canImplementInOtherFields);
-        
-        // Add implementation area if "Yes" is selected
-        if (canImplementInOtherFields === 'Yes') {
-            const implementationArea = document.getElementById('enhancedEditImplementationArea').value.trim();
-            formData.append('ImplementationArea', implementationArea);
-        }
-        
-        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
-
-        // Send the data to the server
-        fetch(`/Kaizen/SaveExecutiveFilling/${kaizenId}`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Executive review saved successfully!');
-                bootstrap.Modal.getInstance(document.getElementById('enhancedEditModal')).hide();
-                
-                // Reload the page to show updated data
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while saving the executive review.');
-        })
-        .finally(() => {
-            // Restore button state
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-        });
-    }
-
-    function toggleImplementationArea() {
-        const implementYes = document.getElementById('implementYes');
-        const implementationAreaField = document.getElementById('implementationAreaField');
-        
-        if (implementYes.checked) {
-            implementationAreaField.style.display = 'block';
-        } else {
-            implementationAreaField.style.display = 'none';
-            document.getElementById('enhancedEditImplementationArea').value = '';
-        }
     }
 
     function clearExecutiveForm() {
@@ -1615,19 +1391,85 @@
         document.getElementById('enhancedEditImplementationArea').value = '';
     }
 
-    function toggleEnhancedImplementationArea() {
-        const implementYes = document.getElementById('enhanced_implementYes');
-        const implementationAreaField = document.getElementById('implementationAreaField');
-        
-        if (implementYes.checked) {
-            implementationAreaField.style.display = 'block';
+    function toggleImplementationArea() {
+        const yesRadio = document.getElementById('implementYes');
+        const areaField = document.getElementById('implementationAreaField');
+
+        if (yesRadio.checked) {
+            areaField.style.display = 'block';
         } else {
-            implementationAreaField.style.display = 'none';
+            areaField.style.display = 'none';
             document.getElementById('enhancedEditImplementationArea').value = '';
         }
     }
 
+    function saveEnhancedEdit() {
+        const form = document.getElementById('enhancedEditForm');
+        const formData = new FormData(form);
+        const id = document.getElementById('enhancedEditKaizenId').value;
 
+        // Validate required fields
+        const approvedBy = document.getElementById('enhancedEditApprovedBy').value.trim();
+        const comments = document.getElementById('enhancedEditComments').value.trim();
+        const canImplementInOtherFields = document.querySelector('input[name="CanImplementInOtherFields"]:checked')?.value;
+        const selectedCategories = document.querySelectorAll('input[name="Category"]:checked');
 
+        if (!approvedBy) {
+            alert('Please enter your name for signature.');
+            document.getElementById('enhancedEditApprovedBy').focus();
+            return;
+        }
+        
+        if (!comments) {
+            alert('Please provide comments and recommendations.');
+            document.getElementById('enhancedEditComments').focus();
+            return;
+        }
 
+        if (selectedCategories.length === 0) {
+            alert('Please select at least one recommended category.');
+            return;
+        }
+
+        if (!canImplementInOtherFields) {
+            alert('Please select whether this suggestion can be implemented in other fields.');
+            return;
+        }
+
+        // Handle multiple category selections
+        const selectedCategoriesArray = [];
+        selectedCategories.forEach(checkbox => {
+            selectedCategoriesArray.push(checkbox.value);
+        });
+
+        // Remove existing Category entries and add the combined one
+        formData.delete('Category');
+        if (selectedCategoriesArray.length > 0) {
+            formData.append('Category', selectedCategoriesArray.join(', '));
+        }
+
+        // Add antiforgery token
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        formData.append('__RequestVerificationToken', token);
+
+        fetch(`/Kaizen/Edit/${id}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                bootstrap.Modal.getInstance(document.getElementById('enhancedEditModal')).hide();
+                // Reload the page to show updated data
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the changes.');
+        });
+    }
 </script> 

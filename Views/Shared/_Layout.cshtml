@@ -239,7 +239,26 @@
                 @{
                     var username = Context.User.Identity?.Name;
                     var isUser = username?.ToLower().Contains("user") == true;
-                    var dashboardAction = isUser ? "Kaizenform" : "KaizenListManager";
+                    var isEngineer = username?.ToLower().Contains("engineer") == true;
+                    var isManager = username?.ToLower().Contains("manager") == true;
+                    
+                    string dashboardAction;
+                    if (isEngineer)
+                    {
+                        dashboardAction = "KaizenListEngineer";
+                    }
+                    else if (isManager)
+                    {
+                        dashboardAction = "KaizenListManager";
+                    }
+                    else if (isUser)
+                    {
+                        dashboardAction = "Kaizenform";
+                    }
+                    else
+                    {
+                        dashboardAction = "KaizenListEngineer"; // Default fallback
+                    }
                 }
                 <a class="navbar-brand" asp-controller="Kaizen" asp-action="@dashboardAction">
                     <img src="~/images/flintec-logo.png" alt="Flintec Logo" class="company-logo" />
@@ -266,11 +285,29 @@
                                 </a>
                             </li>
                         }
-                        else
+                        else if (isEngineer)
                         {
-                            <!-- Navigation for managers (usernames without "user") -->
+                            <!-- Navigation for engineers -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Kaizen" asp-action="KaizenListEngineer">
+                                    <i class="fas fa-list me-2"></i>View Kaizens
+                                </a>
+                            </li>
+                        }
+                        else if (isManager)
+                        {
+                            <!-- Navigation for managers -->
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Kaizen" asp-action="KaizenListManager">
+                                    <i class="fas fa-list me-2"></i>View Kaizens
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <!-- Default navigation for other users -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Kaizen" asp-action="KaizenListEngineer">
                                     <i class="fas fa-list me-2"></i>View Kaizens
                                 </a>
                             </li>
@@ -309,12 +346,13 @@
                                         <li><hr class="dropdown-divider"></li>
                                     }
                                     <li>
-                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline" onsubmit="return confirmLogout()">
                                             <button type="submit" class="dropdown-item text-danger">
                                                 <i class="fas fa-sign-out-alt me-2"></i>Logout
                                             </button>
                                         </form>
                                     </li>
+                                   
                                 </ul>
                             </li>
                         }
@@ -363,6 +401,13 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        function confirmLogout() {
+            return confirm('Are you sure you want to logout?');
+        }
+    </script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

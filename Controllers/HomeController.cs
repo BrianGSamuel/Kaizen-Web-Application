@@ -31,6 +31,13 @@ namespace KaizenWebApp.Controllers
         // Method to check if request is direct URL access and end session if so
         private async Task<bool> CheckAndEndSessionIfDirectAccess()
         {
+            // Skip this check for logout-related actions to allow normal logout
+            var currentAction = ControllerContext.RouteData.Values["action"]?.ToString();
+            if (currentAction == "Logout" || currentAction == "Login")
+            {
+                return false;
+            }
+
             // Check if this is a direct URL access (no referrer or external referrer)
             var referrer = Request.Headers["Referer"].ToString();
             var isDirectAccess = string.IsNullOrEmpty(referrer) || 
@@ -38,9 +45,12 @@ namespace KaizenWebApp.Controllers
                                 referrer.Contains("newtab") ||
                                 referrer.Contains("new-window");
 
-            if (isDirectAccess && User.Identity?.IsAuthenticated == true)
+            // Only end session for very obvious direct access cases
+            // Be more lenient to allow normal navigation
+            if (isDirectAccess && User.Identity?.IsAuthenticated == true && 
+                string.IsNullOrEmpty(referrer) && Request.Method == "GET")
             {
-                // Immediately end the session
+                // Only end session for GET requests with no referrer at all
                 await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                 return true; // Session was ended
             }
@@ -66,7 +76,7 @@ namespace KaizenWebApp.Controllers
             }
             else
             {
-                return RedirectToAction("KaizenListManager", "Kaizen");
+                return RedirectToAction("KaizenListEngineer", "Kaizen");
             }
         }
 

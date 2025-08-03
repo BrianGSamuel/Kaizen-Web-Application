@@ -23,16 +23,32 @@ namespace KaizenWebApp.Controllers
         // Method to check if request is direct URL access and end session if so
         private async Task<bool> CheckAndEndSessionIfDirectAccess()
         {
-            // Check if this is a direct URL access (no referrer or external referrer)
+            // Skip this check for logout-related actions to allow normal logout
+            var currentAction = ControllerContext.RouteData.Values["action"]?.ToString();
+            if (currentAction == "Logout" || currentAction == "Login")
+            {
+                return false;
+            }
+
+            // Skip this check for logout-related requests
             var referrer = Request.Headers["Referer"].ToString();
+            if (referrer.Contains("Logout") || referrer.Contains("logout"))
+            {
+                return false;
+            }
+
+            // Check if this is a direct URL access (no referrer or external referrer)
             var isDirectAccess = string.IsNullOrEmpty(referrer) || 
                                 !referrer.Contains(Request.Host.Value) ||
                                 referrer.Contains("newtab") ||
                                 referrer.Contains("new-window");
 
-            if (isDirectAccess && User.Identity?.IsAuthenticated == true)
+            // Only end session for very obvious direct access cases
+            // Be more lenient to allow normal navigation
+            if (isDirectAccess && User.Identity?.IsAuthenticated == true && 
+                string.IsNullOrEmpty(referrer) && Request.Method == "GET")
             {
-                // Immediately end the session
+                // Only end session for GET requests with no referrer at all
                 await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                 return true; // Session was ended
             }
@@ -83,14 +99,18 @@ namespace KaizenWebApp.Controllers
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-            // Check if username contains "user" to determine navigation
+            // Check if username contains "user" or "manager" to determine navigation
             if (user.UserName.ToLower().Contains("user"))
             {
                 return RedirectToAction("Kaizenform", "Kaizen");
             }
-            else
+            else if (user.UserName.ToLower().Contains("manager"))
             {
                 return RedirectToAction("KaizenListManager", "Kaizen");
+            }
+            else
+            {
+                return RedirectToAction("KaizenListEngineer", "Kaizen");
             }
         }
 
@@ -136,8 +156,17 @@ namespace KaizenWebApp.Controllers
 
         // ------------------- LOGOUT -------------------
 
+        [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Login");
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> LogoutGet()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
@@ -285,7 +314,7 @@ namespace KaizenWebApp.Controllers
             }
             else
             {
-                return RedirectToAction("KaizenListManager", "Kaizen");
+                return RedirectToAction("KaizenListEngineer", "Kaizen");
             }
         }
     }

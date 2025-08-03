@@ -54,6 +54,21 @@
     .conditional-field.show {
         display: block;
     }
+
+    .is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    .field-error-message {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .summary-error {
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+    }
 </style>
 
 <div class="container mt-5">
@@ -82,7 +97,7 @@
                     <div class="alert alert-success text-center">@TempData["Success"]</div>
                 }
 
-                <form asp-action="Kaizenform" asp-controller="Kaizen" method="post" enctype="multipart/form-data">
+                <form asp-action="Kaizenform" asp-controller="Kaizen" method="post" enctype="multipart/form-data" id="kaizenForm">
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label asp-for="DateSubmitted" class="form-label" data-lang-key="dateSubmitted"></label>
@@ -121,6 +136,13 @@
                             <input asp-for="EmployeeNo" class="form-control" />
                             <span asp-validation-for="EmployeeNo" class="text-danger"></span>
                         </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="EmployeePhoto" class="form-label" data-lang-key="employeePhoto">Employee Photo</label>
+                        <input asp-for="EmployeePhoto" type="file" class="form-control" accept="image/*" />
+                        <span asp-validation-for="EmployeePhoto" class="text-danger"></span>
+                                                    <small class="form-text text-muted">Upload a photo of the employee (PNG, JPG, JPEG, WebP up to 5MB)</small>
                     </div>
 
                     <div class="mb-3">
@@ -204,6 +226,7 @@
             suggestionDescription: "Kaizen Suggestion Description",
             beforeKaizenImage: "Before Kaizen Image (Upload QR/Image)",
             afterKaizenImage: "After Kaizen Image (Upload QR/Image)",
+            employeePhoto: "Employee Photo",
 
             costSavingTitle: "Cost Saving Information",
             noCostSaving: "No Cost Saving",
@@ -224,6 +247,7 @@
             suggestionDescription: "කයිසන් යෝජනා විස්තරය",
             beforeKaizenImage: "කයිසන් පෙර රූපය (QR/රූපය උඩුගත කරන්න)",
             afterKaizenImage: "කයිසන් පසු රූපය (QR/රූපය උඩුගත කරන්න)",
+            employeePhoto: "සේවක රූපය",
 
             costSavingTitle: "පිරිවැය ඉතිරිකිරීමේ තොරතුරු",
             noCostSaving: "පිරිවැය ඉතිරිකිරීමක් නැත",
@@ -244,6 +268,7 @@
             suggestionDescription: "கைசென் பரிந்துரை விளக்கம்",
             beforeKaizenImage: "கைசென் முன் படம் (QR/படம் பதிவேற்றவும்)",
             afterKaizenImage: "கைசென் பின் படம் (QR/படம் பதிவேற்றவும்)",
+            employeePhoto: "பணியாளர் படம்",
 
             costSavingTitle: "செலவு சேமிப்பு தகவல்",
             noCostSaving: "செலவு சேமிப்பு இல்லை",
@@ -301,5 +326,106 @@
         // Add event listeners for cost saving radio buttons
         document.getElementById('noCostSaving').addEventListener('change', handleCostSavingChange);
         document.getElementById('hasCostSaving').addEventListener('change', handleCostSavingChange);
+        
+        // Add form validation - only for the Kaizen form
+        const kaizenForm = document.getElementById('kaizenForm');
+        if (kaizenForm) {
+            kaizenForm.addEventListener('submit', validateForm);
+        }
     });
+    
+    function validateForm(event) {
+        let isValid = true;
+        const errorMessages = [];
+        
+        // Clear previous error messages
+        clearValidationErrors();
+        
+        // Validate Employee Name
+        const employeeName = document.getElementById('EmployeeName').value.trim();
+        if (!employeeName) {
+            showFieldError('EmployeeName', 'Employee Name is required.');
+            isValid = false;
+        }
+        
+        // Validate Employee Number
+        const employeeNo = document.getElementById('EmployeeNo').value.trim();
+        if (!employeeNo) {
+            showFieldError('EmployeeNo', 'Employee Number is required.');
+            isValid = false;
+        }
+        
+        // Validate Suggestion Description
+        const suggestionDescription = document.getElementById('SuggestionDescription').value.trim();
+        if (!suggestionDescription) {
+            showFieldError('SuggestionDescription', 'Suggestion Description is required.');
+            isValid = false;
+        }
+        
+        // Validate conditional fields for cost saving
+        const hasCostSaving = document.getElementById('hasCostSaving').checked;
+        if (hasCostSaving) {
+            const costSaving = document.getElementById('CostSaving').value.trim();
+            if (!costSaving || parseFloat(costSaving) <= 0) {
+                showFieldError('CostSaving', 'Cost Saving amount is required when "Has Cost Saving" is selected.');
+                isValid = false;
+            }
+            
+            const dollarRate = document.getElementById('DollarRate').value.trim();
+            if (!dollarRate || parseFloat(dollarRate) <= 0) {
+                showFieldError('DollarRate', 'Dollar Rate is required when "Has Cost Saving" is selected.');
+                isValid = false;
+            }
+        }
+        
+        if (!isValid) {
+            event.preventDefault();
+            // Show summary error message
+            showSummaryError('Please fill in all required fields before submitting the form.');
+        }
+        
+        return isValid;
+    }
+    
+    function showFieldError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.classList.add('is-invalid');
+            
+            // Create or update error message
+            let errorSpan = field.parentNode.querySelector('.field-error-message');
+            if (!errorSpan) {
+                errorSpan = document.createElement('div');
+                errorSpan.className = 'field-error-message text-danger mt-1';
+                field.parentNode.appendChild(errorSpan);
+            }
+            errorSpan.textContent = message;
+        }
+    }
+    
+    function clearValidationErrors() {
+        // Remove all custom error messages
+        document.querySelectorAll('.field-error-message').forEach(el => el.remove());
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.summary-error').forEach(el => el.remove());
+    }
+    
+    function showSummaryError(message) {
+        // Remove existing summary error
+        const existingError = document.querySelector('.summary-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Create summary error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger summary-error mt-3';
+        errorDiv.textContent = message;
+        
+        // Insert before the submit button
+        const submitButton = document.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.parentNode.insertBefore(errorDiv, submitButton);
+        }
+    }
 </script>

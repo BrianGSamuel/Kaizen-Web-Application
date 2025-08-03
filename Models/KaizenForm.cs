@@ -30,6 +30,9 @@ namespace KaizenWebApp.Models
         [StringLength(20)]
         public string EmployeeNo { get; set; }
 
+        [StringLength(255)]
+        public string? EmployeePhotoPath { get; set; }
+
         [Required]
         [StringLength(1000)]
         public string SuggestionDescription { get; set; }
@@ -68,5 +71,12 @@ namespace KaizenWebApp.Models
 
         [StringLength(500)]
         public string? ImplementationArea { get; set; }
+
+        // New fields for manager comments
+        [StringLength(1000)]
+        public string? ManagerComments { get; set; }
+
+        [StringLength(100)]
+        public string? ManagerSignature { get; set; }
     }
 }

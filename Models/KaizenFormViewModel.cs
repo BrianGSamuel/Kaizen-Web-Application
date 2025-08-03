@@ -32,6 +32,9 @@ namespace KaizenWebApp.Models
         [Display(Name = "Employee Number")]
         public string EmployeeNo { get; set; }
 
+        [Display(Name = "Employee Photo")]
+        public IFormFile? EmployeePhoto { get; set; }
+
         [Required]
         [StringLength(1000)]
         [Display(Name = "Suggestion Description")]
@@ -63,6 +66,7 @@ namespace KaizenWebApp.Models
         // Properties for existing image paths
         public string? BeforeKaizenImagePath { get; set; }
         public string? AfterKaizenImagePath { get; set; }
+        public string? EmployeePhotoPath { get; set; }
 
         [StringLength(500)]
         [Display(Name = "Category")]
@@ -84,5 +88,14 @@ namespace KaizenWebApp.Models
         [StringLength(500)]
         [Display(Name = "Implementation Area")]
         public string? ImplementationArea { get; set; }
+
+        // Manager comment fields
+        [StringLength(1000)]
+        [Display(Name = "Manager Comments")]
+        public string? ManagerComments { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Manager Signature")]
+        public string? ManagerSignature { get; set; }
     }
 }
