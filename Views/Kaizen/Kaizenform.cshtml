@@ -1,4 +1,4 @@
-﻿@model KaizenWebApp.Models.KaizenFormViewModel
+@model KaizenWebApp.Models.KaizenFormViewModel
 @{
     ViewData["Title"] = "Kaizen Suggestion Form";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -12,11 +12,11 @@
         cursor: not-allowed;
     }
 
-    .form-control[readonly]:focus {
-        background-color: #f8f9fa;
-        border-color: #dee2e6;
-        box-shadow: none;
-    }
+        .form-control[readonly]:focus {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            box-shadow: none;
+        }
 
     .cost-saving-section {
         border: 1px solid #dee2e6;
@@ -38,9 +38,9 @@
         gap: 8px;
     }
 
-    .radio-item input[type="radio"] {
-        margin: 0;
-    }
+        .radio-item input[type="radio"] {
+            margin: 0;
+        }
 
     .conditional-field {
         display: none;
@@ -51,9 +51,9 @@
         border: 1px solid #ced4da;
     }
 
-    .conditional-field.show {
-        display: block;
-    }
+        .conditional-field.show {
+            display: block;
+        }
 
     .is-invalid {
         border-color: #dc3545 !important;
@@ -92,9 +92,20 @@
 
                 <h2 class="text-center text-danger mb-4" data-lang-key="title">@ViewData["Title"]</h2>
 
-                @if (TempData["Success"] != null)
+                <div class="alert alert-info text-center mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span data-lang-key="requiredFieldsNote">Fields marked with * are required</span>
+                </div>
+
+
+
+                @if (TempData["AlertMessage"] != null)
                 {
-                    <div class="alert alert-success text-center">@TempData["Success"]</div>
+                    <script>
+                        window.onload = function() {
+                            alert('@TempData["AlertMessage"]');
+                        };
+                    </script>
                 }
 
                 <form asp-action="Kaizenform" asp-controller="Kaizen" method="post" enctype="multipart/form-data" id="kaizenForm">
@@ -105,8 +116,8 @@
                             <span asp-validation-for="DateSubmitted" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="DateImplemented" class="form-label" data-lang-key="dateImplemented"></label>
-                            <input asp-for="DateImplemented" type="date" class="form-control" />
+                            <label asp-for="DateImplemented" class="form-label" data-lang-key="dateImplemented">Date Implemented *</label>
+                            <input asp-for="DateImplemented" type="date" class="form-control" required />
                             <span asp-validation-for="DateImplemented" class="text-danger"></span>
                         </div>
                     </div>
@@ -122,6 +133,15 @@
                             <input asp-for="Department" class="form-control" readonly />
                             <span asp-validation-for="Department" class="text-danger"></span>
                             <small class="form-text text-muted">Department Name is automatically set based on your registration</small>
+
+                            @if (Model?.Department == null || string.IsNullOrEmpty(Model.Department))
+                            {
+                                <small class="form-text text-warning">No department found for current user: @User.Identity?.Name</small>
+                            }
+                            else
+                            {
+                                <small class="form-text text-success">Department Name loaded: @Model.Department</small>
+                            }
                         </div>
                     </div>
 
@@ -138,11 +158,16 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label asp-for="EmployeePhoto" class="form-label" data-lang-key="employeePhoto">Employee Photo</label>
-                        <input asp-for="EmployeePhoto" type="file" class="form-control" accept="image/*" />
-                        <span asp-validation-for="EmployeePhoto" class="text-danger"></span>
-                                                    <small class="form-text text-muted">Upload a photo of the employee (PNG, JPG, JPEG, WebP up to 5MB)</small>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="EmployeePhoto" class="form-label" data-lang-key="employeePhoto">Employee Photo *</label>
+                            <input asp-for="EmployeePhoto" type="file" class="form-control" accept="image/*" required />
+                            <span asp-validation-for="EmployeePhoto" class="text-danger"></span>
+                            <small class="form-text text-muted">Upload employee photo (PNG, JPG, JPEG, WebP up to 5MB)</small>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Empty column for layout balance -->
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -152,14 +177,14 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="BeforeKaizenImage" class="form-label" data-lang-key="beforeKaizenImage">Before Kaizen Image (Upload QR/Image)</label>
-                        <input asp-for="BeforeKaizenImage" type="file" class="form-control" accept="image/*" />
+                        <label asp-for="BeforeKaizenImage" class="form-label" data-lang-key="beforeKaizenImage">Before Kaizen Image (Upload QR/Image) *</label>
+                        <input asp-for="BeforeKaizenImage" type="file" class="form-control" accept="image/*" required />
                         <span asp-validation-for="BeforeKaizenImage" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="AfterKaizenImage" class="form-label" data-lang-key="afterKaizenImage">After Kaizen Image (Upload QR/Image)</label>
-                        <input asp-for="AfterKaizenImage" type="file" class="form-control" accept="image/*" />
+                        <label asp-for="AfterKaizenImage" class="form-label" data-lang-key="afterKaizenImage">After Kaizen Image (Upload QR/Image) *</label>
+                        <input asp-for="AfterKaizenImage" type="file" class="form-control" accept="image/*" required />
                         <span asp-validation-for="AfterKaizenImage" class="text-danger"></span>
                     </div>
 
@@ -168,7 +193,7 @@
                     <!-- Cost Saving Section -->
                     <div class="cost-saving-section">
                         <h5 class="mb-3" data-lang-key="costSavingTitle">Cost Saving Information</h5>
-                        
+
                         <div class="radio-group">
                             <div class="radio-item">
                                 <input type="radio" asp-for="CostSavingType" id="noCostSaving" value="NoCostSaving" checked />
@@ -197,8 +222,8 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="OtherBenefits" class="form-label" data-lang-key="otherBenefits"></label>
-                        <textarea asp-for="OtherBenefits" class="form-control" rows="2"></textarea>
+                        <label asp-for="OtherBenefits" class="form-label" data-lang-key="otherBenefits">Other Benefits *</label>
+                        <textarea asp-for="OtherBenefits" class="form-control" rows="2" required></textarea>
                         <span asp-validation-for="OtherBenefits" class="text-danger"></span>
                     </div>
 
@@ -217,65 +242,68 @@
     const translations = {
         en: {
             title: "Kaizen Suggestion Form",
+            requiredFieldsNote: "Fields marked with * are required",
             dateSubmitted: "Date Submitted",
-            dateImplemented: "Date Implemented",
+            dateImplemented: "Date Implemented *",
             kaizenNo: "Kaizen No",
             department: "Department / Cell",
             employeeName: "Employee Name",
             employeeNo: "Employee No",
+            employeePhoto: "Employee Photo *",
             suggestionDescription: "Kaizen Suggestion Description",
-            beforeKaizenImage: "Before Kaizen Image (Upload QR/Image)",
-            afterKaizenImage: "After Kaizen Image (Upload QR/Image)",
-            employeePhoto: "Employee Photo",
+            beforeKaizenImage: "Before Kaizen Image (Upload QR/Image) *",
+            afterKaizenImage: "After Kaizen Image (Upload QR/Image) *",
 
             costSavingTitle: "Cost Saving Information",
             noCostSaving: "No Cost Saving",
             hasCostSaving: "Has Cost Saving",
             costSaving: "Cost Saving ($ per year)",
             dollarRate: "Current Dollar Rate",
-            otherBenefits: "Other Benefits",
+            otherBenefits: "Other Benefits *",
             submitButton: "Submit Suggestion"
         },
         si: {
             title: "කයිසන් යෝජනා පෝරමය",
+            requiredFieldsNote: "* සලකුණු කර ඇති ක්ෂේත්‍ර අවශ්‍ය වේ",
             dateSubmitted: "ඉදිරිපත් කළ දිනය",
-            dateImplemented: "ක්‍රියාත්මක කළ දිනය",
+            dateImplemented: "ක්‍රියාත්මක කළ දිනය *",
             kaizenNo: "කයිසන් අංකය",
             department: "දෙපාර්තමේන්තුව / කොටුව",
             employeeName: "සේවක නම",
             employeeNo: "සේවක අංකය",
+            employeePhoto: "සේවක ඡායාරූපය *",
             suggestionDescription: "කයිසන් යෝජනා විස්තරය",
-            beforeKaizenImage: "කයිසන් පෙර රූපය (QR/රූපය උඩුගත කරන්න)",
-            afterKaizenImage: "කයිසන් පසු රූපය (QR/රූපය උඩුගත කරන්න)",
-            employeePhoto: "සේවක රූපය",
+            beforeKaizenImage: "කයිසන් පෙර රූපය (QR/රූපය උඩුගත කරන්න) *",
+            afterKaizenImage: "කයිසන් පසු රූපය (QR/රූපය උඩුගත කරන්න) *",
 
             costSavingTitle: "පිරිවැය ඉතිරිකිරීමේ තොරතුරු",
             noCostSaving: "පිරිවැය ඉතිරිකිරීමක් නැත",
             hasCostSaving: "පිරිවැය ඉතිරිකිරීමක් ඇත",
             costSaving: "පිරිවැය ඉතිරිකිරීම (වර්ෂයකට ඩොලර්)",
             dollarRate: "වර්තමාන ඩොලර් අනුපාතය",
-            otherBenefits: "වෙනත් ප්‍රතිලාභ",
+            otherBenefits: "වෙනත් ප්‍රතිලාභ *",
             submitButton: "යෝජනාව ඉදිරිපත් කරන්න"
         },
         ta: {
             title: "கைசென் பரிந்துரை படிவம்",
+            requiredFieldsNote: "* குறிக்கப்பட்ட புலங்கள் தேவை",
             dateSubmitted: "சமர்ப்பித்த தேதி",
-            dateImplemented: "செயல்படுத்தப்பட்ட தேதி",
+            dateImplemented: "செயல்படுத்தப்பட்ட தேதி *",
             kaizenNo: "கைசென் எண்",
             department: "துறை / செல்",
             employeeName: "பணியாளர் பெயர்",
             employeeNo: "பணியாளர் எண்",
+            employeePhoto: "பணியாளர் புகைப்படம் *",
             suggestionDescription: "கைசென் பரிந்துரை விளக்கம்",
-            beforeKaizenImage: "கைசென் முன் படம் (QR/படம் பதிவேற்றவும்)",
-            afterKaizenImage: "கைசென் பின் படம் (QR/படம் பதிவேற்றவும்)",
-            employeePhoto: "பணியாளர் படம்",
+            beforeKaizenImage: "கைசென் முன் படம் (QR/படம் பதிவேற்றவும்) *",
+            afterKaizenImage: "கைசென் பின் படம் (QR/படம் பதிவேற்றவும்) *",
 
             costSavingTitle: "செலவு சேமிப்பு தகவல்",
             noCostSaving: "செலவு சேமிப்பு இல்லை",
             hasCostSaving: "செலவு சேமிப்பு உள்ளது",
             costSaving: "செலவு சேமிப்பு (வருடத்திற்கு டாலர்)",
             dollarRate: "தற்போதைய டாலர் விகிதம்",
-            otherBenefits: "மற்ற நன்மைகள்",
+            otherBenefits: "மற்ற நன்மைகள் *",
             submitButton: "பரிந்துரையை சமர்ப்பிக்கவும்"
         }
     };
@@ -303,7 +331,7 @@
     function handleCostSavingChange() {
         const hasCostSaving = document.getElementById('hasCostSaving');
         const costSavingFields = document.getElementById('costSavingFields');
-        
+
         if (hasCostSaving.checked) {
             costSavingFields.classList.add('show');
         } else {
@@ -326,42 +354,77 @@
         // Add event listeners for cost saving radio buttons
         document.getElementById('noCostSaving').addEventListener('change', handleCostSavingChange);
         document.getElementById('hasCostSaving').addEventListener('change', handleCostSavingChange);
-        
+
         // Add form validation - only for the Kaizen form
         const kaizenForm = document.getElementById('kaizenForm');
         if (kaizenForm) {
             kaizenForm.addEventListener('submit', validateForm);
         }
     });
-    
+
     function validateForm(event) {
         let isValid = true;
         const errorMessages = [];
-        
+
         // Clear previous error messages
         clearValidationErrors();
-        
+
         // Validate Employee Name
         const employeeName = document.getElementById('EmployeeName').value.trim();
         if (!employeeName) {
             showFieldError('EmployeeName', 'Employee Name is required.');
             isValid = false;
         }
-        
+
         // Validate Employee Number
         const employeeNo = document.getElementById('EmployeeNo').value.trim();
         if (!employeeNo) {
             showFieldError('EmployeeNo', 'Employee Number is required.');
             isValid = false;
         }
-        
+
+        // Validate Date Implemented
+        const dateImplemented = document.getElementById('DateImplemented').value.trim();
+        if (!dateImplemented) {
+            showFieldError('DateImplemented', 'Date Implemented is required.');
+            isValid = false;
+        }
+
+        // Validate Employee Photo
+        const employeePhoto = document.getElementById('EmployeePhoto');
+        if (!employeePhoto.files || employeePhoto.files.length === 0) {
+            showFieldError('EmployeePhoto', 'Employee Photo is required.');
+            isValid = false;
+        }
+
         // Validate Suggestion Description
         const suggestionDescription = document.getElementById('SuggestionDescription').value.trim();
         if (!suggestionDescription) {
             showFieldError('SuggestionDescription', 'Suggestion Description is required.');
             isValid = false;
         }
-        
+
+        // Validate Before Kaizen Image
+        const beforeKaizenImage = document.getElementById('BeforeKaizenImage');
+        if (!beforeKaizenImage.files || beforeKaizenImage.files.length === 0) {
+            showFieldError('BeforeKaizenImage', 'Before Kaizen Image is required.');
+            isValid = false;
+        }
+
+        // Validate After Kaizen Image
+        const afterKaizenImage = document.getElementById('AfterKaizenImage');
+        if (!afterKaizenImage.files || afterKaizenImage.files.length === 0) {
+            showFieldError('AfterKaizenImage', 'After Kaizen Image is required.');
+            isValid = false;
+        }
+
+        // Validate Other Benefits
+        const otherBenefits = document.getElementById('OtherBenefits').value.trim();
+        if (!otherBenefits) {
+            showFieldError('OtherBenefits', 'Other Benefits is required.');
+            isValid = false;
+        }
+
         // Validate conditional fields for cost saving
         const hasCostSaving = document.getElementById('hasCostSaving').checked;
         if (hasCostSaving) {
@@ -370,28 +433,28 @@
                 showFieldError('CostSaving', 'Cost Saving amount is required when "Has Cost Saving" is selected.');
                 isValid = false;
             }
-            
+
             const dollarRate = document.getElementById('DollarRate').value.trim();
             if (!dollarRate || parseFloat(dollarRate) <= 0) {
                 showFieldError('DollarRate', 'Dollar Rate is required when "Has Cost Saving" is selected.');
                 isValid = false;
             }
         }
-        
+
         if (!isValid) {
             event.preventDefault();
             // Show summary error message
             showSummaryError('Please fill in all required fields before submitting the form.');
         }
-        
+
         return isValid;
     }
-    
+
     function showFieldError(fieldId, message) {
         const field = document.getElementById(fieldId);
         if (field) {
             field.classList.add('is-invalid');
-            
+
             // Create or update error message
             let errorSpan = field.parentNode.querySelector('.field-error-message');
             if (!errorSpan) {
@@ -402,26 +465,26 @@
             errorSpan.textContent = message;
         }
     }
-    
+
     function clearValidationErrors() {
         // Remove all custom error messages
         document.querySelectorAll('.field-error-message').forEach(el => el.remove());
         document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
         document.querySelectorAll('.summary-error').forEach(el => el.remove());
     }
-    
+
     function showSummaryError(message) {
         // Remove existing summary error
         const existingError = document.querySelector('.summary-error');
         if (existingError) {
             existingError.remove();
         }
-        
+
         // Create summary error message
         const errorDiv = document.createElement('div');
         errorDiv.className = 'alert alert-danger summary-error mt-3';
         errorDiv.textContent = message;
-        
+
         // Insert before the submit button
         const submitButton = document.querySelector('button[type="submit"]');
         if (submitButton) {
