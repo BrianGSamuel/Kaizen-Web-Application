@@ -1,0 +1,68 @@
+@using KaizenWebApp.ViewModels;
+@model RegisterViewModel;
+
+@{
+    ViewData["Title"] = "Add New User";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h5 class="admin-card-title">
+            <i class="fas fa-user-plus me-2"></i>Add New User
+        </h5>
+    </div>
+    
+    <form asp-action="RegisterAdmin" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label">Full Name</label>
+                    <input asp-for="Name" class="form-control" placeholder="Enter full name" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label">Username</label>
+                    <input asp-for="Username" class="form-control" placeholder="Enter username" />
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">Password</label>
+                    <input asp-for="Password" type="password" class="form-control" placeholder="Enter password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between">
+            <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-admin-outline">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+            <button type="submit" class="btn btn-admin">
+                <i class="fas fa-user-plus me-2"></i>Add User
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
+    }
+} 

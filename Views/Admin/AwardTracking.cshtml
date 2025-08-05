@@ -1,0 +1,363 @@
+@model List<KaizenWebApp.Models.KaizenForm>
+@{
+    ViewData["Title"] = "Award Tracking";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">
+                        <i class="fas fa-trophy text-warning me-2"></i>
+                        Award Tracking - Approved Kaizens
+                    </h3>
+                    <p class="text-muted mb-0">Manage awards for kaizens approved by both manager and engineer</p>
+                </div>
+
+                <!-- Search Section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-search me-2"></i>
+                            Search & Filter
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" action="@Url.Action("AwardTracking", "Admin")" id="searchForm">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="startDate" class="form-label fw-bold">Start Date</label>
+                                        <input type="date" class="form-control" id="startDate" name="startDate" 
+                                               value="@Context.Request.Query["startDate"]">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="endDate" class="form-label fw-bold">End Date</label>
+                                        <input type="date" class="form-control" id="endDate" name="endDate" 
+                                               value="@Context.Request.Query["endDate"]">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="department" class="form-label fw-bold">Department</label>
+                                        <select class="form-select" id="department" name="department">
+                                            <option value="">All Departments</option>
+                                            @foreach (var dept in ViewBag.Departments ?? new List<string>())
+                                            {
+                                                var selected = Context.Request.Query["department"].ToString() == dept;
+                                                <option value="@dept" selected="@selected">@dept</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="category" class="form-label fw-bold">Category</label>
+                                        <select class="form-select" id="category" name="category">
+                                            <option value="">All Categories</option>
+                                            @foreach (var cat in ViewBag.Categories ?? new List<string>())
+                                            {
+                                                var selected = Context.Request.Query["category"].ToString() == cat;
+                                                <option value="@cat" selected="@selected">@cat</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="awardStatus" class="form-label fw-bold">Award Status</label>
+                                        <select class="form-select" id="awardStatus" name="awardStatus">
+                                            <option value="">All Award Status</option>
+                                            <option value="1ST PRICE" selected="@(Context.Request.Query["awardStatus"].ToString() == "1ST PRICE")">1ST PRICE</option>
+                                            <option value="2ND PRICE" selected="@(Context.Request.Query["awardStatus"].ToString() == "2ND PRICE")">2ND PRICE</option>
+                                            <option value="3RD PRICE" selected="@(Context.Request.Query["awardStatus"].ToString() == "3RD PRICE")">3RD PRICE</option>
+                                            <option value="NO PRICE" selected="@(Context.Request.Query["awardStatus"].ToString() == "NO PRICE")">NO PRICE</option>
+                                            <option value="Pending" selected="@(Context.Request.Query["awardStatus"].ToString() == "Pending")">Pending</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search me-2"></i>
+                                            Search
+                                        </button>
+                                        <a href="@Url.Action("AwardTracking", "Admin")" class="btn btn-outline-secondary">
+                                            <i class="fas fa-times me-2"></i>
+                                            Clear Filters
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @if (!Model.Any())
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Approved Kaizens Found</h5>
+                        <p class="text-muted">No kaizens match your current search criteria.</p>
+                        <a href="@Url.Action("AwardTracking", "Admin")" class="btn btn-primary">
+                            <i class="fas fa-times me-2"></i>
+                            Clear Filters
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="text-muted">
+                            <i class="fas fa-list me-2"></i>
+                            Showing @Model.Count() approved kaizen(s)
+                        </div>
+                                                 @if (!string.IsNullOrEmpty(Context.Request.Query["startDate"]) || 
+                              !string.IsNullOrEmpty(Context.Request.Query["endDate"]) || 
+                              !string.IsNullOrEmpty(Context.Request.Query["department"]) || 
+                              !string.IsNullOrEmpty(Context.Request.Query["category"]) ||
+                              !string.IsNullOrEmpty(Context.Request.Query["awardStatus"]))
+                        {
+                            <div class="text-muted small">
+                                <i class="fas fa-filter me-1"></i>
+                                Filters applied
+                            </div>
+                        }
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Kaizen No</th>
+                                    <th>Employee</th>
+                                    <th>Department</th>
+                                    <th>Date Submitted</th>
+                                    <th>Cost Saving</th>
+                                    <th>Award Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var kaizen in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@kaizen.KaizenNo</strong>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(kaizen.EmployeePhotoPath))
+                                                {
+                                                    <img src="@kaizen.EmployeePhotoPath" 
+                                                         alt="Employee Photo" 
+                                                         class="rounded-circle me-2" 
+                                                         style="width: 30px; height: 30px; object-fit: cover;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                         style="width: 30px; height: 30px;">
+                                                        <i class="fas fa-user text-white" style="font-size: 12px;"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <div class="fw-bold">@kaizen.EmployeeName</div>
+                                                    <small class="text-muted">@kaizen.EmployeeNo</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">@kaizen.Department</span>
+                                        </td>
+                                        <td>
+                                            <small>@kaizen.DateSubmitted.ToString("MMM dd, yyyy")</small>
+                                        </td>
+                                        <td>
+                                            @if (kaizen.CostSaving.HasValue && kaizen.CostSaving > 0)
+                                            {
+                                                <span class="text-success fw-bold">
+                                                    $@kaizen.CostSaving.Value.ToString("N2")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No cost saving</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(kaizen.AwardPrice))
+                                            {
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-trophy me-1"></i>
+                                                    @kaizen.AwardPrice
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    Pending
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="@Url.Action("AwardDetails", "Admin", new { id = kaizen.Id })" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye me-1"></i>
+                                                    View Details
+                                                </a>
+                                                @if (string.IsNullOrEmpty(kaizen.AwardPrice))
+                                                {
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-success"
+                                                            onclick="assignAward(@kaizen.Id)">
+                                                        <i class="fas fa-trophy me-1"></i>
+                                                        Assign Award
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Award Assignment Modal -->
+<div class="modal fade" id="awardModal" tabindex="-1" aria-labelledby="awardModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="awardModalLabel">
+                    <i class="fas fa-trophy text-warning me-2"></i>
+                    Assign Award
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="awardForm" method="post" action="@Url.Action("AssignAward", "Admin")">
+                <div class="modal-body">
+                    <input type="hidden" id="kaizenId" name="kaizenId" />
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="awardPrice" class="form-label fw-bold">Award Price</label>
+                                <select class="form-select" id="awardPrice" name="awardPrice" required>
+                                    <option value="">Select Award Price</option>
+                                    <option value="1ST PRICE">1ST PRICE</option>
+                                    <option value="2ND PRICE">2ND PRICE</option>
+                                    <option value="3RD PRICE">3RD PRICE</option>
+                                    <option value="NO PRICE">NO PRICE</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="committeeSignature" class="form-label fw-bold">Committee Signature</label>
+                                <input type="text" class="form-control" id="committeeSignature" name="committeeSignature" 
+                                       placeholder="Enter committee member signature" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="committeeComments" class="form-label fw-bold">Comments & Recommendations</label>
+                        <textarea class="form-control" id="committeeComments" name="committeeComments" 
+                                  rows="4" placeholder="Enter committee comments and recommendations"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-trophy me-1"></i>
+                        Assign Award
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function assignAward(kaizenId) {
+            document.getElementById('kaizenId').value = kaizenId;
+            var modal = new bootstrap.Modal(document.getElementById('awardModal'));
+            modal.show();
+        }
+
+        // Form validation
+        document.getElementById('awardForm').addEventListener('submit', function(e) {
+            var awardPrice = document.getElementById('awardPrice').value;
+            var signature = document.getElementById('committeeSignature').value;
+            
+            if (!awardPrice || !signature) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return false;
+            }
+        });
+
+        // Search functionality enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchForm = document.getElementById('searchForm');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+
+            // Set default date range to last 30 days if no dates are selected
+            if (!startDateInput.value && !endDateInput.value) {
+                const today = new Date();
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+                
+                startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+                endDateInput.value = today.toISOString().split('T')[0];
+            }
+
+            // Validate date range
+            searchForm.addEventListener('submit', function(e) {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+                
+                if (startDateInput.value && endDateInput.value && startDate > endDate) {
+                    e.preventDefault();
+                    alert('Start date cannot be after end date.');
+                    return false;
+                }
+            });
+
+                         // Auto-submit form when filters change (optional)
+             const filterInputs = document.querySelectorAll('#department, #category, #awardStatus');
+             filterInputs.forEach(input => {
+                 input.addEventListener('change', function() {
+                     // Uncomment the line below if you want auto-submit on filter change
+                     // searchForm.submit();
+                 });
+             });
+        });
+    </script>
+} 

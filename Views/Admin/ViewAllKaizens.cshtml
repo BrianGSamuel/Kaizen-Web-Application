@@ -1,0 +1,475 @@
+@model IEnumerable<KaizenWebApp.Models.KaizenForm>
+
+@{
+    ViewData["Title"] = "View All Kaizens";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Advanced Search Section -->
+    <div class="search-section mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>Advanced Search & Filters
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="advancedSearchForm" method="get">
+                    <div class="row">
+                        <!-- General Search -->
+                        <div class="col-md-6 mb-3">
+                            <label for="searchString" class="form-label">
+                                <i class="fas fa-search me-2"></i>General Search
+                            </label>
+                            <input type="text" id="searchString" name="searchString" class="form-control"
+                                   placeholder="Search by Kaizen No, Employee Name, Employee No, Department, or Description..."
+                                   value="@ViewBag.CurrentFilters?.SearchString" />
+                        </div>
+
+                        <!-- Department Filter -->
+                        <div class="col-md-6 mb-3">
+                            <label for="department" class="form-label">
+                                <i class="fas fa-building me-2"></i>Department
+                            </label>
+                            <select id="department" name="department" class="form-select">
+                                <option value="">All Departments</option>
+                                @if (ViewBag.Departments != null)
+                                {
+                                    foreach (var dept in ViewBag.Departments)
+                                    {
+                                        if (ViewBag.CurrentFilters?.Department == dept)
+                                        {
+                                            <option value="@dept" selected>@dept</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@dept">@dept</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Status Filters -->
+                        <div class="col-md-4 mb-3">
+                            <label for="status" class="form-label">
+                                <i class="fas fa-info-circle me-2"></i>Overall Status
+                            </label>
+                            <select id="status" name="status" class="form-select">
+                                <option value="">All Status</option>
+                                @if (ViewBag.CurrentFilters?.Status == "Approved")
+                                {
+                                    <option value="Approved" selected>Approved</option>
+                                }
+                                else
+                                {
+                                    <option value="Approved">Approved</option>
+                                }
+                                @if (ViewBag.CurrentFilters?.Status == "Rejected")
+                                {
+                                    <option value="Rejected" selected>Rejected</option>
+                                }
+                                else
+                                {
+                                    <option value="Rejected">Rejected</option>
+                                }
+                                @if (ViewBag.CurrentFilters?.Status == "Pending")
+                                {
+                                    <option value="Pending" selected>Pending</option>
+                                }
+                                else
+                                {
+                                    <option value="Pending">Pending</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="engineerStatus" class="form-label">
+                                <i class="fas fa-user-cog me-2"></i>Engineer Status
+                            </label>
+                            <select id="engineerStatus" name="engineerStatus" class="form-select">
+                                <option value="">All Engineer Status</option>
+                                @if (ViewBag.CurrentFilters?.EngineerStatus == "Approved")
+                                {
+                                    <option value="Approved" selected>Approved</option>
+                                }
+                                else
+                                {
+                                    <option value="Approved">Approved</option>
+                                }
+                                @if (ViewBag.CurrentFilters?.EngineerStatus == "Rejected")
+                                {
+                                    <option value="Rejected" selected>Rejected</option>
+                                }
+                                else
+                                {
+                                    <option value="Rejected">Rejected</option>
+                                }
+                                @if (ViewBag.CurrentFilters?.EngineerStatus == "Pending")
+                                {
+                                    <option value="Pending" selected>Pending</option>
+                                }
+                                else
+                                {
+                                    <option value="Pending">Pending</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="managerStatus" class="form-label">
+                                <i class="fas fa-user-tie me-2"></i>Manager Status
+                            </label>
+                            <select id="managerStatus" name="managerStatus" class="form-select">
+                                <option value="">All Manager Status</option>
+                                @if (ViewBag.CurrentFilters?.ManagerStatus == "Approved")
+                                {
+                                    <option value="Approved" selected>Approved</option>
+                                }
+                                else
+                                {
+                                    <option value="Approved">Approved</option>
+                                }
+                                @if (ViewBag.CurrentFilters?.ManagerStatus == "Rejected")
+                                {
+                                    <option value="Rejected" selected>Rejected</option>
+                                }
+                                else
+                                {
+                                    <option value="Rejected">Rejected</option>
+                                }
+                                @if (ViewBag.CurrentFilters?.ManagerStatus == "Pending")
+                                {
+                                    <option value="Pending" selected>Pending</option>
+                                }
+                                else
+                                {
+                                    <option value="Pending">Pending</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-calendar me-2"></i>Date Range
+                            </label>
+                            <div class="d-flex gap-2">
+                                <input type="date" id="startDate" name="startDate" class="form-control" 
+                                       value="@ViewBag.CurrentFilters?.StartDate" />
+                                <span class="align-self-center">to</span>
+                                <input type="date" id="endDate" name="endDate" class="form-control" 
+                                       value="@ViewBag.CurrentFilters?.EndDate" />
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="d-flex gap-2 w-100">
+                                <button type="submit" class="btn btn-primary flex-fill">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                                <button type="button" id="clearBtn" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-section">
+        <div class="card">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Kaizen Results
+                        <span id="resultCount" class="badge bg-primary ms-2">@Model.Count()</span>
+                    </h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="searchResults">
+                    @if (!Model?.Any() ?? true)
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Kaizen suggestions found</h4>
+                            <p class="text-muted mb-0">Try adjusting your search criteria</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><i class="fas fa-calendar me-2"></i>Date Submitted</th>
+                                        <th><i class="fas fa-hashtag me-2"></i>Kaizen No</th>
+                                        <th><i class="fas fa-building me-2"></i>Department</th>
+                                        <th><i class="fas fa-user me-2"></i>Employee Name</th>
+
+                                        <th><i class="fas fa-user-cog me-2"></i>Engineer Status</th>
+                                        <th><i class="fas fa-user-tie me-2"></i>Manager Status</th>
+                                        <th><i class="fas fa-info-circle me-2"></i>Overall Status</th>
+                                        <th><i class="fas fa-cogs me-2"></i>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        var engineerStatus = item.EngineerStatus ?? "Pending";
+                                        var managerStatus = item.ManagerStatus ?? "Pending";
+                                        
+                                        // Business logic for overall status
+                                        var overallStatus = "Pending";
+                                        var overallStatusClass = "badge bg-warning";
+                                        
+                                        if (engineerStatus == "Rejected" || managerStatus == "Rejected")
+                                        {
+                                            overallStatus = "Rejected";
+                                            overallStatusClass = "badge bg-danger";
+                                        }
+                                        else if (engineerStatus == "Approved" && managerStatus == "Approved")
+                                        {
+                                            overallStatus = "Approved";
+                                            overallStatusClass = "badge bg-success";
+                                        }
+
+                                        <tr>
+                                            <td class="text-center">@item.DateSubmitted.ToString("yyyy-MM-dd")</td>
+                                            <td class="text-center fw-bold">@Html.DisplayFor(modelItem => item.KaizenNo)</td>
+                                            <td class="text-center">@Html.DisplayFor(modelItem => item.Department)</td>
+                                            <td>@Html.DisplayFor(modelItem => item.EmployeeName)</td>
+                                            <td class="text-center">
+                                                <span class="badge @(engineerStatus == "Approved" ? "bg-success" : engineerStatus == "Rejected" ? "bg-danger" : "bg-warning")">
+                                                    @engineerStatus
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge @(managerStatus == "Approved" ? "bg-success" : managerStatus == "Rejected" ? "bg-danger" : "bg-warning")">
+                                                    @managerStatus
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="@overallStatusClass">@overallStatus</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="viewKaizen(@item.Id)" title="View Details">
+                                                    <i class="fas fa-eye"></i> View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Kaizen Modal -->
+<div class="modal fade" id="viewKaizenModal" tabindex="-1" aria-labelledby="viewKaizenModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewKaizenModalLabel">
+                    <i class="fas fa-eye me-2"></i>Kaizen Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewKaizenModalBody">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Clear filters
+    document.getElementById('clearBtn').addEventListener('click', function() {
+        const form = document.getElementById('advancedSearchForm');
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.value = '';
+        });
+        form.submit();
+    });
+
+    // View kaizen details
+    function viewKaizen(id) {
+        const modal = new bootstrap.Modal(document.getElementById('viewKaizenModal'));
+        const modalBody = document.getElementById('viewKaizenModalBody');
+        
+        modalBody.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h6 class="text-muted">Loading Kaizen details...</h6>
+            </div>
+        `;
+        
+        modal.show();
+        
+        fetch(`/Kaizen/Edit/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const kaizen = data.data;
+                    modalBody.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>Basic Information
+                                </h6>
+                                <div class="mb-3">
+                                    <strong>Kaizen No:</strong> ${kaizen.kaizenNo}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Employee Name:</strong> ${kaizen.employeeName}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Employee No:</strong> ${kaizen.employeeNo}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Department:</strong> ${kaizen.department}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Date Submitted:</strong> ${new Date(kaizen.dateSubmitted).toLocaleDateString()}
+                                </div>
+                                                                 <div class="mb-3">
+                                     <strong>Date Implemented:</strong> ${kaizen.dateImplemented ? new Date(kaizen.dateImplemented).toLocaleDateString() : 'Not implemented yet'}
+                                 </div>
+                                 <div class="mb-3">
+                                     <strong>Employee Image:</strong>
+                                     ${kaizen.employeePhotoPath ? 
+                                         `<img src="${kaizen.employeePhotoPath}" alt="Employee Photo" class="img-fluid rounded" style="max-height: 100px; max-width: 100px;">` : 
+                                         '<span class="text-muted">No photo available</span>'
+                                     }
+                                 </div>
+                             </div>
+                             <div class="col-md-6">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-coins me-2"></i>Cost Information
+                                </h6>
+                                <div class="mb-3">
+                                    <strong>Cost Saving:</strong> ${kaizen.costSaving ? `$ ${parseFloat(kaizen.costSaving).toLocaleString()}` : 'N/A'}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Dollar Rate:</strong> ${kaizen.dollarRate ? `$ ${parseFloat(kaizen.dollarRate).toLocaleString()}` : 'N/A'}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Other Benefits:</strong> ${kaizen.otherBenefits || 'N/A'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-lightbulb me-2"></i>Suggestion Description
+                                </h6>
+                                <div class="border rounded p-3 bg-light">
+                                    ${kaizen.suggestionDescription || 'No description provided'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-user-cog me-2"></i>Engineer Review
+                                </h6>
+                                <div class="mb-2">
+                                    <strong>Status:</strong> 
+                                    <span class="badge ${kaizen.engineerStatus === 'Approved' ? 'bg-success' : kaizen.engineerStatus === 'Rejected' ? 'bg-danger' : 'bg-warning'}">
+                                        ${kaizen.engineerStatus || 'Pending'}
+                                    </span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Approved By:</strong> ${kaizen.engineerApprovedBy || 'N/A'}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Comments:</strong> ${kaizen.comments || 'No comments'}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Category:</strong> ${kaizen.category || 'N/A'}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-user-tie me-2"></i>Manager Review
+                                </h6>
+                                <div class="mb-2">
+                                    <strong>Status:</strong> 
+                                    <span class="badge ${kaizen.managerStatus === 'Approved' ? 'bg-success' : kaizen.managerStatus === 'Rejected' ? 'bg-danger' : 'bg-warning'}">
+                                        ${kaizen.managerStatus || 'Pending'}
+                                    </span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Approved By:</strong> ${kaizen.managerApprovedBy || 'N/A'}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Comments:</strong> ${kaizen.managerComments || 'No comments'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${kaizen.beforeKaizenImagePath || kaizen.afterKaizenImagePath ? `
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-images me-2"></i>Images
+                                </h6>
+                                <div class="row">
+                                    ${kaizen.beforeKaizenImagePath ? `
+                                    <div class="col-md-6">
+                                        <h6 class="text-muted">Before Kaizen</h6>
+                                        <img src="${kaizen.beforeKaizenImagePath}" alt="Before Kaizen" class="img-fluid rounded" style="max-height: 200px;">
+                                    </div>
+                                    ` : ''}
+                                    ${kaizen.afterKaizenImagePath ? `
+                                    <div class="col-md-6">
+                                        <h6 class="text-muted">After Kaizen</h6>
+                                        <img src="${kaizen.afterKaizenImagePath}" alt="After Kaizen" class="img-fluid rounded" style="max-height: 200px;">
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    `;
+                } else {
+                    modalBody.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error loading Kaizen details: ${data.message}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalBody.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        An error occurred while loading the Kaizen details.
+                    </div>
+                `;
+            });
+    }
+</script> 

@@ -391,7 +391,7 @@
                     </div>
                     <div class="status-select-group">
                         <label for="status" class="form-label">
-                            <i class="fas fa-info-circle me-2"></i>Status
+                            <i class="fas fa-info-circle me-2"></i>Engineer Status
                         </label>
                         <select id="status" class="form-select">
                             <option value="">All Status</option>
@@ -435,7 +435,7 @@
                                 <th><i class="fas fa-user me-2"></i>Employee Name</th>
                                 <th><i class="fas fa-id-badge me-2"></i>Employee No</th>
                                 <th><i class="fas fa-coins me-2"></i>Cost Saving</th>
-                                <th><i class="fas fa-info-circle me-2"></i>Status</th>
+                                <th><i class="fas fa-info-circle me-2"></i>Engineer Status</th>
                                 <th><i class="fas fa-cogs me-2"></i>Actions</th>
                             </tr>
                         </thead>
@@ -453,20 +453,21 @@
                                     </td>
                                     <td class="text-center">
                                         @{
-                                            var statusClass = item.Status switch
+                                            var engineerStatus = item.EngineerStatus ?? "Pending";
+                                            var statusClass = engineerStatus switch
                                             {
                                                 "Approved" => "status-approved",
                                                 "Rejected" => "status-rejected",
                                                 _ => "status-pending"
                                             };
                                         }
-                                        <span class="@statusClass">@item.Status</span>
+                                        <span class="@statusClass">@engineerStatus</span>
                                     </td>
                                     <td class="text-center">
                                         <button class="btn btn-view" onclick="viewKaizen(@item.Id)">
                                             <i class="fas fa-eye me-1"></i>View
                                         </button>
-                                        @if (item.Status == "Pending")
+                                        @if ((item.EngineerStatus ?? "Pending") == "Pending")
                                         {
                                             <button class="btn btn-approval" onclick="showApprovalPopup(@item.Id)">
                                                 <i class="fas fa-gavel me-1"></i>Approval
@@ -598,29 +599,18 @@
                             <i class="fas fa-coins me-2"></i>Cost Saving Information
                         </h6>
 
-                        <div class="mb-3">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" id="editNoCostSaving" name="CostSavingTypeEngineer" value="NoCostSaving" />
-                                <label class="form-check-label" for="editNoCostSaving">No Cost Saving</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" id="editHasCostSaving" name="CostSavingTypeEngineer" value="HasCostSaving" />
-                                <label class="form-check-label" for="editHasCostSaving">Has Cost Saving</label>
-                            </div>
-                        </div>
-
-                        <div id="editCostSavingFields" class="row mb-3" style="display: none;">
+                        <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="editCostSaving" class="form-label">
+                                <label class="form-label">
                                     <i class="fas fa-coins me-2"></i>Cost Saving ($ per year)
                                 </label>
-                                <input type="number" id="editCostSaving" name="CostSaving" class="form-control" step="0.01" />
+                                <input type="text" id="editCostSavingDisplay" class="form-control" readonly />
                             </div>
                             <div class="col-md-6">
-                                <label for="editDollarRate" class="form-label">
+                                <label class="form-label">
                                     <i class="fas fa-dollar-sign me-2"></i>Current Dollar Rate
                                 </label>
-                                <input type="number" id="editDollarRate" name="DollarRate" class="form-control" step="0.01" />
+                                <input type="text" id="editDollarRateDisplay" class="form-control" readonly />
                             </div>
                         </div>
                     </div>
@@ -824,10 +814,10 @@
                     <p class="text-muted">Please select your decision below</p>
                 </div>
                 <div class="d-flex justify-content-center gap-3">
-                    <button type="button" class="btn btn-approve btn-lg" onclick="approveKaizen()">
+                    <button type="button" class="btn btn-approve btn-lg" onclick="showNameInput('approve')">
                         <i class="fas fa-check me-2"></i>Approve
                     </button>
-                    <button type="button" class="btn btn-reject btn-lg" onclick="rejectKaizen()">
+                    <button type="button" class="btn btn-reject btn-lg" onclick="showNameInput('reject')">
                         <i class="fas fa-times me-2"></i>Reject
                     </button>
                 </div>
@@ -835,6 +825,39 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Name Input Modal -->
+<div class="modal fade" id="nameInputModal" tabindex="-1" aria-labelledby="nameInputModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nameInputModalLabel">
+                    <i class="fas fa-user me-2"></i>Enter Your Name
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="userNameInput" class="form-label">
+                        <i class="fas fa-signature me-2"></i>Your Name
+                    </label>
+                    <input type="text" id="userNameInput" class="form-control" placeholder="Enter your full name" required />
+                    <div class="invalid-feedback">
+                        Please enter your name.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn" onclick="confirmAction()">
+                    <i class="fas fa-check me-2"></i>Confirm
                 </button>
             </div>
         </div>
@@ -924,14 +947,15 @@
                             <th><i class="fas fa-user me-2"></i>Employee Name</th>
                             <th><i class="fas fa-id-badge me-2"></i>Employee No</th>
                             <th><i class="fas fa-coins me-2"></i>Cost Saving</th>
-                            <th><i class="fas fa-info-circle me-2"></i>Status</th>
+                            <th><i class="fas fa-info-circle me-2"></i>Engineer Status</th>
                             <th><i class="fas fa-cogs me-2"></i>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${kaizens.map(item => {
-                            const statusClass = item.status === 'Approved' ? 'status-approved' :
-                                               item.status === 'Rejected' ? 'status-rejected' : 'status-pending';
+                            const engineerStatus = item.engineerStatus || 'Pending';
+                            const statusClass = engineerStatus === 'Approved' ? 'status-approved' :
+                                               engineerStatus === 'Rejected' ? 'status-rejected' : 'status-pending';
                             return `
                                 <tr>
                                     <td class="text-center">${new Date(item.dateSubmitted).toLocaleDateString()}</td>
@@ -943,13 +967,13 @@
                                         ${item.costSaving ? `$ ${parseFloat(item.costSaving).toFixed(2)}` : 'N/A'}
                                     </td>
                                     <td class="text-center">
-                                        <span class="${statusClass}">${item.status || 'Pending'}</span>
+                                        <span class="${statusClass}">${engineerStatus}</span>
                                     </td>
                                     <td class="text-center">
                                         <button class="btn btn-view" onclick="viewKaizen(${item.id})">
                                             <i class="fas fa-eye me-1"></i>View
                                         </button>
-                                        ${item.status === 'Pending' ? `
+                                        ${engineerStatus === 'Pending' ? `
                                             <button class="btn btn-approval" onclick="showApprovalPopup(${item.id})">
                                                 <i class="fas fa-gavel me-1"></i>Approval
                                             </button>
@@ -1036,26 +1060,9 @@
                     document.getElementById('editEmployeeName').value = data.data.employeeName;
                     document.getElementById('editEmployeeNo').value = data.data.employeeNo;
                     document.getElementById('editSuggestionDescription').value = data.data.suggestionDescription || '';
-                    document.getElementById('editCostSaving').value = data.data.costSaving || '';
-                    document.getElementById('editDollarRate').value = data.data.dollarRate || '';
+                    document.getElementById('editCostSavingDisplay').value = data.data.costSaving ? `$${data.data.costSaving}` : 'N/A';
+                    document.getElementById('editDollarRateDisplay').value = data.data.dollarRate ? `$${data.data.dollarRate}` : 'N/A';
                     document.getElementById('editOtherBenefits').value = data.data.otherBenefits || '';
-
-                    // Handle cost saving type radio buttons
-                    const noCostSavingRadio = document.getElementById('editNoCostSaving');
-                    const hasCostSavingRadio = document.getElementById('editHasCostSaving');
-                    const costSavingFields = document.getElementById('editCostSavingFields');
-
-                    if (data.data.costSavingType === 'NoCostSaving') {
-                        noCostSavingRadio.checked = true;
-                        costSavingFields.style.display = 'none';
-                    } else if (data.data.costSavingType === 'HasCostSaving') {
-                        hasCostSavingRadio.checked = true;
-                        costSavingFields.style.display = 'block';
-                    } else {
-                        // Default to NoCostSaving if not set
-                        noCostSavingRadio.checked = true;
-                        costSavingFields.style.display = 'none';
-                    }
 
                     // Handle existing images
                     const beforeImageContainer = document.getElementById('editBeforeKaizenImageContainer');
@@ -1080,8 +1087,8 @@
                     }
 
                     // Check if kaizen is rejected or pending and hide buttons accordingly
-                    const status = data.data.status;
-                    if (status !== 'Rejected' && status !== 'Pending') {
+                    const engineerStatus = data.data.engineerStatus || 'Pending';
+                    if (engineerStatus !== 'Rejected' && engineerStatus !== 'Pending') {
                         document.getElementById('enableEditBtn').style.display = 'block';
                         document.getElementById('executiveFillingBtn').style.display = 'block';
                     }
@@ -1151,7 +1158,7 @@
                     }
 
                     // Set signature field
-                    document.getElementById('enhancedEditApprovedBy').value = data.data.approvedBy || '';
+                    document.getElementById('enhancedEditApprovedBy').value = data.data.engineerApprovedBy || '';
 
                     // Set comments field
                     document.getElementById('enhancedEditComments').value = data.data.comments || '';
@@ -1211,6 +1218,8 @@
         const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
         formData.append('__RequestVerificationToken', token);
 
+
+
         fetch(`/Kaizen/Edit/${id}`, {
             method: 'POST',
             body: formData
@@ -1241,17 +1250,45 @@
         modal.show();
     }
 
-    function approveKaizen(id) {
-        const kaizenId = id || currentKaizenId;
-        if (!kaizenId) return;
+    function showNameInput(action) {
+        // Clear the input field
+        document.getElementById('userNameInput').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('nameInputModal'));
+        modal.show();
+        
+        // Set the onclick handler for the confirm button
+        document.getElementById('confirmActionBtn').onclick = function() {
+            const name = document.getElementById('userNameInput').value.trim();
+            if (name) {
+                if (action === 'approve') {
+                    approveKaizen(currentKaizenId, name);
+                } else if (action === 'reject') {
+                    rejectKaizen(currentKaizenId, name);
+                }
+                modal.hide();
+            } else {
+                alert('Please enter your name to confirm the action.');
+                document.getElementById('userNameInput').focus();
+            }
+        };
+    }
 
-        if (confirm('Are you sure you want to approve this Kaizen suggestion?')) {
-            fetch(`/Kaizen/UpdateStatus/${kaizenId}`, {
+    function confirmAction() {
+        // This function is now handled by the onclick attribute of confirmActionBtn
+        // It will be called when the user clicks the confirm button in the nameInputModal
+    }
+
+    function approveKaizen(id, name) {
+        if (!id) return;
+
+        if (confirm(`Are you sure you want to approve this Kaizen suggestion?`)) {
+            fetch(`/Kaizen/UpdateEngineerStatus/${id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status: 'Approved' })
+                body: JSON.stringify({ engineerStatus: 'Approved', engineerApprovedBy: name })
             })
             .then(response => response.json())
             .then(data => {
@@ -1270,17 +1307,16 @@
         }
     }
 
-    function rejectKaizen(id) {
-        const kaizenId = id || currentKaizenId;
-        if (!kaizenId) return;
+    function rejectKaizen(id, name) {
+        if (!id) return;
 
-        if (confirm('Are you sure you want to reject this Kaizen suggestion?')) {
-            fetch(`/Kaizen/UpdateStatus/${kaizenId}`, {
+        if (confirm(`Are you sure you want to reject this Kaizen suggestion?`)) {
+            fetch(`/Kaizen/UpdateEngineerStatus/${id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status: 'Rejected' })
+                body: JSON.stringify({ engineerStatus: 'Rejected', engineerApprovedBy: name })
             })
             .then(response => response.json())
             .then(data => {
@@ -1340,7 +1376,7 @@
                     }
 
                     // Set signature field
-                    document.getElementById('enhancedEditApprovedBy').value = data.data.approvedBy || '';
+                    document.getElementById('enhancedEditApprovedBy').value = data.data.engineerApprovedBy || '';
 
                     // Set comments field
                     document.getElementById('enhancedEditComments').value = data.data.comments || '';
@@ -1452,7 +1488,8 @@
         const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
         formData.append('__RequestVerificationToken', token);
 
-        fetch(`/Kaizen/Edit/${id}`, {
+        // Use the dedicated SaveExecutiveFilling endpoint instead of Edit
+        fetch(`/Kaizen/SaveExecutiveFilling/${id}`, {
             method: 'POST',
             body: formData
         })

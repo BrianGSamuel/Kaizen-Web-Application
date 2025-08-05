@@ -40,10 +40,6 @@ namespace KaizenWebApp.Models
         [Display(Name = "Suggestion Description")]
         public string SuggestionDescription { get; set; }
 
-        [StringLength(20)]
-        [Display(Name = "Status")]
-        public string? Status { get; set; }
-
         [Display(Name = "Cost Saving ($ per year)")]
         public decimal? CostSaving { get; set; }
 
@@ -72,10 +68,6 @@ namespace KaizenWebApp.Models
         [Display(Name = "Category")]
         public string? Category { get; set; } // Comma-separated list of categories
 
-        [StringLength(100)]
-        [Display(Name = "Approved By")]
-        public string? ApprovedBy { get; set; }
-
         [StringLength(1000)]
         [Display(Name = "Comments")]
         public string? Comments { get; set; }
@@ -97,5 +89,22 @@ namespace KaizenWebApp.Models
         [StringLength(100)]
         [Display(Name = "Manager Signature")]
         public string? ManagerSignature { get; set; }
+
+        // Engineer and Manager status fields
+        [StringLength(20)]
+        [Display(Name = "Engineer Status")]
+        public string? EngineerStatus { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Engineer Approved By")]
+        public string? EngineerApprovedBy { get; set; }
+
+        [StringLength(20)]
+        [Display(Name = "Manager Status")]
+        public string? ManagerStatus { get; set; }
+
+        [StringLength(100)]
+        [Display(Name = "Manager Approved By")]
+        public string? ManagerApprovedBy { get; set; }
     }
 }

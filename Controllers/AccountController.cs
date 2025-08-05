@@ -99,8 +99,14 @@ namespace KaizenWebApp.Controllers
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-            // Check if username contains "user" or "manager" to determine navigation
-            if (user.UserName.ToLower().Contains("user"))
+            // Check if username contains "admin", "user", or "manager" to determine navigation
+            Console.WriteLine($"User logged in: {user.UserName}, redirecting...");
+            if (user.UserName.ToLower() == "admin")
+            {
+                Console.WriteLine($"Redirecting admin user to Dashboard");
+                return RedirectToAction("Dashboard", "Admin");
+            }
+            else if (user.UserName.ToLower().Contains("user"))
             {
                 return RedirectToAction("Kaizenform", "Kaizen");
             }
@@ -152,6 +158,60 @@ namespace KaizenWebApp.Controllers
             Console.WriteLine($"User saved with ID: {user.Id}");
 
             return RedirectToAction("Login", "Account");
+        }
+
+        // Admin Register Actions
+        [Authorize]
+        public IActionResult RegisterAdmin()
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            return View("RegisterAdmin");
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public IActionResult RegisterAdmin(RegisterViewModel model)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            if (!ModelState.IsValid)
+                return View("RegisterAdmin", model);
+
+            Console.WriteLine($"Admin registration attempt - Username: {model.Username}, Department Name: {model.Name}");
+
+            if (_context.Users.Any(u => u.UserName == model.Username))
+            {
+                ModelState.AddModelError("", "Username already exists.");
+                return View("RegisterAdmin", model);
+            }
+
+            var user = new Users
+            {
+                UserName = model.Username,
+                DepartmentName = model.Name,
+                Password = model.Password // ⚠ Store securely using hashing in production
+            };
+
+            Console.WriteLine($"Creating user - Username: {user.UserName}, Department: {user.DepartmentName}");
+
+            _context.Users.Add(user);
+            _context.SaveChanges();
+
+            Console.WriteLine($"User saved with ID: {user.Id}");
+
+            return RedirectToAction("Dashboard", "Admin");
         }
 
         // ------------------- LOGOUT -------------------

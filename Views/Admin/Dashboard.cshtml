@@ -1,0 +1,146 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col mb-4">
+        <div class="admin-card h-100">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="fas fa-users fa-2x text-primary"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">@ViewBag.TotalUsers</h3>
+                    <p class="text-muted mb-0">Total Users</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col mb-4">
+        <div class="admin-card h-100">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="fas fa-clipboard-list fa-2x text-success"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">@ViewBag.TotalKaizens</h3>
+                    <p class="text-muted mb-0">Total Kaizens</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col mb-4">
+        <div class="admin-card h-100">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="fas fa-clock fa-2x text-warning"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">@ViewBag.PendingKaizens</h3>
+                    <p class="text-muted mb-0">Pending Kaizens</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col mb-4">
+        <div class="admin-card h-100">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="fas fa-times-circle fa-2x text-danger"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">@ViewBag.RejectedKaizens</h3>
+                    <p class="text-muted mb-0">Rejected Kaizens</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col mb-4">
+        <div class="admin-card h-100">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">@ViewBag.ApprovedKaizens</h3>
+                    <p class="text-muted mb-0">Approved Kaizens</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title">
+                    <i class="fas fa-chart-line me-2"></i>Recent Activity
+                </h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><i class="fas fa-user-plus text-success"></i></td>
+                            <td>New user registered</td>
+                            <td>@DateTime.Now.AddDays(-1).ToString("MMM dd, yyyy")</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-clipboard-check text-primary"></i></td>
+                            <td>Kaizen form submitted</td>
+                            <td>@DateTime.Now.AddDays(-2).ToString("MMM dd, yyyy")</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td>Kaizen approved</td>
+                            <td>@DateTime.Now.AddDays(-3).ToString("MMM dd, yyyy")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title">
+                    <i class="fas fa-info-circle me-2"></i>System Information
+                </h5>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <p class="mb-1"><strong>Current User:</strong></p>
+                    <p class="text-muted">@User.Identity?.Name</p>
+                </div>
+                <div class="col-6">
+                    <p class="mb-1"><strong>Role:</strong></p>
+                    <p class="text-muted">Administrator</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <p class="mb-1"><strong>System Status:</strong></p>
+                    <p class="text-success">Online</p>
+                </div>
+                <div class="col-6">
+                    <p class="mb-1"><strong>Last Updated:</strong></p>
+                    <p class="text-muted">@DateTime.Now.ToString("MMM dd, yyyy")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

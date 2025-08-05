@@ -53,14 +53,8 @@ namespace KaizenWebApp.Models
         [StringLength(255)]
         public string? AfterKaizenImagePath { get; set; }
 
-        [StringLength(20)]
-        public string Status { get; set; } = "Pending"; // Default status: Pending, Approved, Rejected
-
         [StringLength(500)]
         public string? Category { get; set; } // Comma-separated list of categories
-
-        [StringLength(100)]
-        public string? ApprovedBy { get; set; }
 
         [StringLength(1000)]
         public string? Comments { get; set; }
@@ -78,5 +72,30 @@ namespace KaizenWebApp.Models
 
         [StringLength(100)]
         public string? ManagerSignature { get; set; }
+
+        // New fields for separate engineer and manager approval tracking
+        [StringLength(20)]
+        public string? EngineerStatus { get; set; } // "Pending", "Approved", "Rejected"
+
+        [StringLength(100)]
+        public string? EngineerApprovedBy { get; set; }
+
+        [StringLength(20)]
+        public string? ManagerStatus { get; set; } // "Pending", "Approved", "Rejected"
+
+        [StringLength(100)]
+        public string? ManagerApprovedBy { get; set; }
+
+        // Award tracking fields
+        [StringLength(20)]
+        public string? AwardPrice { get; set; } // "1ST PRICE", "2ND PRICE", "3RD PRICE", "NO PRICE"
+
+        [StringLength(1000)]
+        public string? CommitteeComments { get; set; }
+
+        [StringLength(100)]
+        public string? CommitteeSignature { get; set; }
+
+        public DateTime? AwardDate { get; set; }
     }
 }

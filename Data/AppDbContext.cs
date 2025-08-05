@@ -10,5 +10,6 @@ namespace KaizenWebApp.Data
         }
         public DbSet<Users> Users { get; set; }
         public DbSet<KaizenForm> KaizenForms { get; set; }
+        public DbSet<DepartmentTarget> DepartmentTargets { get; set; }
     }
 }

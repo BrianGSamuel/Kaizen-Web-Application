@@ -68,9 +68,15 @@ namespace KaizenWebApp.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            // Only allow managers (users without "user" in their username)
             var username = User?.Identity?.Name;
-            if (username?.ToLower().Contains("user") == true)
+            
+            // Check for kaizen team users first
+            if (username?.ToLower().Contains("kaizenteam") == true)
+            {
+                return RedirectToAction("KaizenTeam", "Kaizen");
+            }
+            // Check for regular users
+            else if (username?.ToLower().Contains("user") == true)
             {
                 return RedirectToAction("UserKaizenList", "Kaizen");
             }
@@ -108,12 +114,12 @@ namespace KaizenWebApp.Controllers
                 
                 // Total Cost Savings (excluding rejected Kaizens)
                 ViewBag.TotalCostSaving = await _context.KaizenForms
-                    .Where(k => k.CostSaving.HasValue && k.Status != "Rejected")
+                    .Where(k => k.CostSaving.HasValue && k.EngineerStatus != "Rejected")
                     .SumAsync(k => k.CostSaving.Value);
                 
                 // Total Approved Kaizens
                 ViewBag.TotalApprovedKaizens = await _context.KaizenForms
-                    .Where(k => k.Status == "Approved")
+                    .Where(k => k.EngineerStatus == "Approved")
                     .CountAsync();
                 
                 // Get departments for dropdown (list)
@@ -149,6 +155,34 @@ namespace KaizenWebApp.Controllers
             }
 
             return View();
+        }
+
+        [AllowAnonymous]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
+        public IActionResult Index()
+        {
+            // Redirect to appropriate dashboard based on user role
+            var username = User.Identity?.Name;
+            if (username?.ToLower() == "admin")
+            {
+                return RedirectToAction("Dashboard", "Admin");
+            }
+            else if (username?.ToLower().Contains("user") == true)
+            {
+                return RedirectToAction("Kaizenform", "Kaizen");
+            }
+            else if (username?.ToLower().Contains("manager") == true)
+            {
+                return RedirectToAction("KaizenListManager", "Kaizen");
+            }
+            else
+            {
+                return RedirectToAction("KaizenListEngineer", "Kaizen");
+            }
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -216,8 +250,8 @@ namespace KaizenWebApp.Controllers
                 // Apply status filter
                 if (!string.IsNullOrEmpty(status))
                 {
-                    query = query.Where(k => k.Status == status);
-                    _logger.LogInformation($"Applied status filter: {status}");
+                    query = query.Where(k => k.EngineerStatus == status);
+                    _logger.LogInformation($"Applied engineer status filter: {status}");
                 }
 
                 var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
@@ -310,7 +344,7 @@ namespace KaizenWebApp.Controllers
                 
                 if (!string.IsNullOrEmpty(status))
                 {
-                    criteria.Add(new Chunk("Status: ", criteriaFont));
+                    criteria.Add(new Chunk("Engineer Status: ", criteriaFont));
                     criteria.Add(new Chunk(status, criteriaFont));
                     criteria.Add(new Chunk("\n", criteriaFont));
                 }
@@ -329,7 +363,7 @@ namespace KaizenWebApp.Controllers
                 table.AddCell(new PdfPCell(new Phrase("Kaizen No", headerFont)) { BackgroundColor = new BaseColor(200, 200, 200) });
                 table.AddCell(new PdfPCell(new Phrase("Department", headerFont)) { BackgroundColor = new BaseColor(200, 200, 200) });
                 table.AddCell(new PdfPCell(new Phrase("Employee", headerFont)) { BackgroundColor = new BaseColor(200, 200, 200) });
-                table.AddCell(new PdfPCell(new Phrase("Status", headerFont)) { BackgroundColor = new BaseColor(200, 200, 200) });
+                table.AddCell(new PdfPCell(new Phrase("Engineer Status", headerFont)) { BackgroundColor = new BaseColor(200, 200, 200) });
                 table.AddCell(new PdfPCell(new Phrase("Cost Saving", headerFont)) { BackgroundColor = new BaseColor(200, 200, 200) });
 
                 // Add data
@@ -340,7 +374,7 @@ namespace KaizenWebApp.Controllers
                     table.AddCell(new PdfPCell(new Phrase(kaizen.KaizenNo, dataFont)));
                     table.AddCell(new PdfPCell(new Phrase(kaizen.Department ?? "N/A", dataFont)));
                     table.AddCell(new PdfPCell(new Phrase($"{kaizen.EmployeeName} ({kaizen.EmployeeNo})", dataFont)));
-                    table.AddCell(new PdfPCell(new Phrase(kaizen.Status ?? "Pending", dataFont)));
+                    table.AddCell(new PdfPCell(new Phrase(kaizen.EngineerStatus ?? "Pending", dataFont)));
                     table.AddCell(new PdfPCell(new Phrase(kaizen.CostSaving.HasValue ? $"${kaizen.CostSaving.Value:N2}" : "N/A", dataFont)));
                 }
 
@@ -349,9 +383,9 @@ namespace KaizenWebApp.Controllers
                 // Add summary statistics
                 document.Add(new Paragraph("\n", criteriaFont));
                 var totalCostSaving = kaizens.Where(k => k.CostSaving.HasValue).Sum(k => k.CostSaving.Value);
-                var approvedCount = kaizens.Count(k => k.Status == "Approved");
-                var pendingCount = kaizens.Count(k => k.Status == "Pending" || string.IsNullOrEmpty(k.Status));
-                var rejectedCount = kaizens.Count(k => k.Status == "Rejected");
+                var approvedCount = kaizens.Count(k => k.EngineerStatus == "Approved");
+                var pendingCount = kaizens.Count(k => k.EngineerStatus == "Pending" || string.IsNullOrEmpty(k.EngineerStatus));
+                var rejectedCount = kaizens.Count(k => k.EngineerStatus == "Rejected");
 
                 Paragraph summary = new Paragraph();
                 summary.Add(new Chunk("Summary Statistics:\n", headerFont));

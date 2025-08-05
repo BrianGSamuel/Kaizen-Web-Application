@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KaizenWebApplication.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250801060617_AddManagerCommentFields")]
-    partial class AddManagerCommentFields
+    [Migration("20250804092132_RemoveStatusAndApprovedByFields")]
+    partial class RemoveStatusAndApprovedByFields
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,10 +36,6 @@ namespace KaizenWebApplication.Migrations
                     b.Property<string>("AfterKaizenImagePath")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("ApprovedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("BeforeKaizenImagePath")
                         .HasMaxLength(255)
@@ -91,6 +87,14 @@ namespace KaizenWebApplication.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("EngineerApprovedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("EngineerStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("ImplementationArea")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -100,14 +104,25 @@ namespace KaizenWebApplication.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("OtherBenefits")
+                    b.Property<string>("ManagerApprovedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ManagerComments")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<string>("ManagerSignature")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ManagerStatus")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("OtherBenefits")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("SuggestionDescription")
                         .IsRequired()

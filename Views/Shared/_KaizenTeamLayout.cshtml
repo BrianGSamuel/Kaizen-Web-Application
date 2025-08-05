@@ -1,0 +1,734 @@
+@*
+    File: Views/Shared/_KaizenTeamLayout.cshtml
+*@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Kaizen Team Panel</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/UsersApp.styles.css" asp-append-version="true" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --kaizen-dark-red: #dc2626;
+            --kaizen-light-red: #ef4444;
+            --kaizen-hover-red: #b91c1c;
+            --kaizen-text-light: #ffffff;
+            --kaizen-text-muted: #fecaca;
+            --kaizen-bg-light: #ffffff;
+            --kaizen-sidebar-bg: #2c3e50;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--kaizen-bg-light);
+            color: #1f2937;
+        }
+
+        /* Kaizen Team Layout Structure */
+        .kaizen-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .kaizen-sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--kaizen-sidebar-bg) 0%, #34495e 100%);
+            color: var(--kaizen-text-light);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .kaizen-sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .kaizen-sidebar-header img {
+            height: 40px;
+            width: auto;
+            filter: brightness(0) invert(1);
+            margin-bottom: 10px;
+        }
+
+        .kaizen-sidebar-header h4 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .kaizen-sidebar-header p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--kaizen-text-muted);
+        }
+
+        .kaizen-nav {
+            padding: 20px 0;
+        }
+
+        .kaizen-nav-item {
+            margin-bottom: 5px;
+        }
+
+        .kaizen-nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--kaizen-text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .kaizen-nav-link:hover {
+            background-color: #34495e;
+            color: var(--kaizen-text-light);
+            text-decoration: none;
+            border-left-color: #ffffff;
+        }
+
+        .kaizen-nav-link.active {
+            background-color: #34495e;
+            border-left-color: #ffffff;
+        }
+
+        .kaizen-nav-link i {
+            width: 20px;
+            margin-right: 12px;
+            text-align: center;
+        }
+
+        /* Main Content Area */
+        .kaizen-main {
+            flex: 1;
+            margin-left: 280px;
+            padding: 20px;
+            background-color: var(--kaizen-bg-light);
+            color: #1f2937;
+        }
+
+        .kaizen-header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .kaizen-header h1 {
+            margin: 0;
+            color: var(--kaizen-dark-red);
+            font-weight: 600;
+        }
+
+        .kaizen-content {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        /* User Info in Sidebar */
+        .kaizen-user-info {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: auto;
+        }
+
+        .kaizen-user-info .user-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .kaizen-user-info .user-role {
+            font-size: 0.8rem;
+            color: var(--kaizen-text-muted);
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .kaizen-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .kaizen-sidebar.show {
+                transform: translateX(0);
+            }
+
+            .kaizen-main {
+                margin-left: 0;
+            }
+
+            .kaizen-toggle {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1001;
+                background: var(--kaizen-dark-red);
+                color: white;
+                border: none;
+                padding: 10px;
+                border-radius: 5px;
+            }
+        }
+
+        /* Kaizen Team specific buttons */
+        .btn-kaizen {
+            background: linear-gradient(135deg, var(--kaizen-dark-red) 0%, var(--kaizen-light-red) 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 10px 25px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-kaizen:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.4);
+            color: white;
+        }
+
+        .btn-kaizen-outline {
+            border: 2px solid var(--kaizen-dark-red);
+            color: var(--kaizen-dark-red);
+            background: transparent;
+            font-weight: 600;
+            padding: 8px 23px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-kaizen-outline:hover {
+            background: var(--kaizen-dark-red);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Kaizen Team cards */
+        .kaizen-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .kaizen-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .kaizen-card-header {
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .kaizen-card-title {
+            color: var(--kaizen-dark-red);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Search and filter styles */
+        .search-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .search-form {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .search-input-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, var(--kaizen-dark-red) 0%, var(--kaizen-light-red) 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.4);
+            color: white;
+        }
+
+        /* Table styles */
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .kaizen-table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .kaizen-table thead {
+            background: linear-gradient(135deg, var(--kaizen-dark-red) 0%, var(--kaizen-light-red) 100%);
+            color: white;
+        }
+
+        .kaizen-table th {
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .kaizen-table td {
+            border: none;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .kaizen-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .kaizen-table tbody tr:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Status badges */
+        .status-pending {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #212529;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status-approved {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status-rejected {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        /* Action buttons */
+        .btn-view {
+            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            margin-right: 0.25rem;
+        }
+
+        .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+            color: white;
+        }
+
+        .cost-saving {
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        /* Modal styles */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--kaizen-dark-red) 0%, var(--kaizen-light-red) 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            border: none;
+            padding: 1.5rem 2rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        /* Form styles */
+        .form-label {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            padding: 0.875rem 1rem;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            height: 48px;
+            line-height: 1.2;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #6b7280;
+            box-shadow: 0 0 0 0.2rem rgba(107, 114, 128, 0.25);
+            transform: translateY(-2px);
+        }
+
+        /* Alert styles */
+        .alert {
+            border-radius: 15px;
+            border: none;
+            padding: 2rem;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            color: #17a2b8;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            color: var(--kaizen-dark-red);
+            border-left: 4px solid var(--kaizen-dark-red);
+        }
+
+        /* No data alert */
+        .no-data-alert {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            color: #1976d2;
+        }
+
+        /* Loading spinner */
+        .spinner-border {
+            animation: spin 1s linear infinite, pulse 2s ease-in-out infinite;
+        }
+
+        @@keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Additional KaizenTeam specific styles */
+        .search-form .d-flex {
+            flex: 0 0 auto;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .search-input-group .d-flex {
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .search-input-group .d-flex .form-control {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .search-input-group .d-flex span {
+            font-weight: 500;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .image-preview {
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            padding: 1rem;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+        }
+
+        .image-preview:hover {
+            border-color: #6b7280;
+            transform: scale(1.02);
+        }
+
+        .form-control[readonly], .form-control[disabled] {
+            background-color: #f9fafb;
+            color: #6b7280;
+            border-color: #e5e7eb;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.3);
+            color: white;
+        }
+
+        .btn-executive {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(111, 66, 193, 0.3);
+            border: 2px solid #5a2d91;
+        }
+
+        .btn-executive:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.5);
+            color: white;
+            background: linear-gradient(135deg, #7c4dcc 0%, #6f42c1 100%);
+            border-color: #5a2d91;
+        }
+
+        /* Navigation Arrow Styles */
+        .nav-arrow {
+            background: none;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .nav-arrow:hover {
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .nav-arrow.back {
+            color: white;
+        }
+
+        .nav-arrow.back:hover {
+            color: white;
+        }
+
+        .btn-update {
+            background: linear-gradient(135deg, var(--kaizen-dark-red) 0%, var(--kaizen-light-red) 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-update:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.4);
+            color: white;
+        }
+
+        /* Modal animations */
+        .modal-content {
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .alert {
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @@keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @@keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    @Html.AntiForgeryToken()
+    
+    <div class="kaizen-container">
+        <!-- Sidebar Navigation -->
+        <nav class="kaizen-sidebar">
+            <div class="kaizen-sidebar-header">
+                <img src="~/images/flintec-logo.png" alt="Flintec Logo" />
+                <h4>Kaizen Team Panel</h4>
+                <p>Complete Kaizen Management</p>
+            </div>
+
+            <div class="kaizen-nav">
+                <div class="kaizen-nav-item">
+                    <a class="kaizen-nav-link" asp-controller="Kaizen" asp-action="KaizenListEngineer">
+                        <i class="fas fa-list"></i>
+                        View All Kaizens
+                    </a>
+                </div>
+
+                <div class="kaizen-nav-item">
+                    <a class="kaizen-nav-link" asp-controller="Admin" asp-action="UserManagement">
+                        <i class="fas fa-users"></i>
+                        User Management
+                    </a>
+                </div>
+
+                <div class="kaizen-nav-item">
+                    <a class="kaizen-nav-link" asp-controller="Kaizen" asp-action="AwardTracking">
+                        <i class="fas fa-trophy"></i>
+                        Award Tracking
+                    </a>
+                </div>
+
+                <div class="kaizen-nav-item">
+                    <a class="kaizen-nav-link" asp-controller="Kaizen" asp-action="DepartmentTargets">
+                        <i class="fas fa-bullseye"></i>
+                        Department Targets
+                    </a>
+                </div>
+            </div>
+
+            <div class="kaizen-user-info">
+                <div class="user-name">@Context.User.Identity?.Name</div>
+                <div class="user-role">Kaizen Team Member</div>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="mt-3">
+                    <button type="submit" class="btn btn-sm btn-outline-light w-100">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </button>
+                </form>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="kaizen-main">
+            <div class="kaizen-header">
+                <h1>@ViewData["Title"]</h1>
+            </div>
+
+            <div class="kaizen-content">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Toggle Button -->
+    <button class="kaizen-toggle d-md-none" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.kaizen-sidebar').classList.toggle('show');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.kaizen-sidebar');
+            const toggle = document.querySelector('.kaizen-toggle');
+            
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
+                    sidebar.classList.remove('show');
+                }
+            }
+        });
+
+        // Set active nav link based on current page
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.kaizen-nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') && currentPath.includes(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html> 
