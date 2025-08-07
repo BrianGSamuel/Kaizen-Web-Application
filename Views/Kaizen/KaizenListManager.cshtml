@@ -502,16 +502,26 @@
                                         <span class="@statusClass">@managerStatus</span>
                                     </td>
                                     <td class="text-center">
-                                        <button class="btn btn-view" onclick="viewKaizen(@item.Id)">
-                                            <i class="fas fa-eye me-1"></i>View
-                                        </button>
-                                        @if ((item.ManagerStatus ?? "Pending") == "Pending")
-                                        {
-                                            <button class="btn btn-approval" onclick="showApprovalPopup(@item.Id)">
-                                                <i class="fas fa-gavel me-1"></i>Approval
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-view" onclick="viewKaizen(@item.Id)">
+                                                <i class="fas fa-eye me-1"></i>View
                                             </button>
-                                        }
-
+                                            @if ((item.EngineerStatus ?? "Pending") == "Approved" && (item.ManagerStatus ?? "Pending") == "Approved")
+                                            {
+                                                <button class="btn btn-success" onclick="openFormB(@item.Id)">
+                                                    <i class="fas fa-file-alt me-1"></i>Form B
+                                                </button>
+                                                <button class="btn btn-info" onclick="printFormB(@item.Id)">
+                                                    <i class="fas fa-print me-1"></i>Print
+                                                </button>
+                                            }
+                                            @if ((item.ManagerStatus ?? "Pending") == "Pending")
+                                            {
+                                                <button class="btn btn-approval" onclick="showApprovalPopup(@item.Id)">
+                                                    <i class="fas fa-gavel me-1"></i>Approval
+                                                </button>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -1213,6 +1223,14 @@
                 alert('An error occurred while loading the kaizen data.');
                 modal.hide();
             });
+    }
+
+    function openFormB(id) {
+        window.open(`/Kaizen/FormB/${id}`, '_blank');
+    }
+
+    function printFormB(id) {
+        window.open(`/Kaizen/PrintFormB/${id}`, '_blank');
     }
 
 

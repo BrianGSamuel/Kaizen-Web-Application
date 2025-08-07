@@ -1,0 +1,559 @@
+@model KaizenWebApp.ViewModels.FormBViewModel
+@{
+    ViewData["Title"] = "Section B (Kaizen Display Form)";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    @@page {
+        margin: 0;
+        size: A4;
+    }
+    
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+        .print-only {
+            display: block !important;
+        }
+        body {
+            margin: 0;
+            padding: 5px;
+            background: white !important;
+            font-size: 10px;
+        }
+        .form-container {
+            box-shadow: none !important;
+            border: 1px solid #000 !important;
+            background: white !important;
+            padding: 15px !important;
+            margin: 0 !important;
+            max-width: none !important;
+            min-height: auto !important;
+        }
+        .header-section {
+            background: #f8f9fa !important;
+            border: 1px solid #000 !important;
+            padding: 10px !important;
+            margin-bottom: 8px !important;
+        }
+        .comparison-section {
+            gap: 8px !important;
+            margin: 8px 0 !important;
+        }
+        .comparison-box {
+            padding: 8px !important;
+            min-height: 120px !important;
+        }
+        .image-placeholder {
+            height: 80px !important;
+            min-height: 80px !important;
+        }
+        .advantages-section {
+            padding: 8px !important;
+            margin: 8px 0 !important;
+        }
+        .signature-section {
+            gap: 8px !important;
+            margin-top: 10px !important;
+        }
+        .signature-box {
+            padding: 8px !important;
+        }
+        .form-title {
+            font-size: 14px !important;
+            margin-bottom: 10px !important;
+        }
+        .proposer-photo {
+            width: 50px !important;
+            height: 50px !important;
+        }
+        .proposer-photo-placeholder {
+            width: 50px !important;
+            height: 50px !important;
+        }
+        .kaizen-number {
+            padding: 4px 10px !important;
+            font-size: 10px !important;
+        }
+        .form-value.large {
+            min-height: 30px !important;
+        }
+        .document-id-section {
+            margin-top: 10px !important;
+            padding-top: 5px !important;
+        }
+        .document-id {
+            font-size: 10px !important;
+        }
+        /* Hide layout elements in print */
+        header, nav, footer, .navbar, .sidebar, .main-header, .main-footer {
+            display: none !important;
+        }
+        /* Remove any layout containers */
+        .container, .container-fluid, .row, .col, .col-md-*, .col-lg-* {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        /* Hide any browser-generated content */
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        /* Ensure no browser header appears */
+        html {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+
+    body {
+        background: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border: 2px solid #3498db;
+        min-height: 100vh;
+        box-sizing: border-box;
+    }
+
+    .button-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+        padding: 10px 0;
+        border-bottom: 2px solid #3498db;
+    }
+
+    .form-title {
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 25px;
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .header-section {
+        background: #f8f9fa;
+        border: 2px solid #3498db;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-section {
+        margin-bottom: 20px;
+    }
+
+    .form-row {
+        display: flex;
+        margin-bottom: 15px;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-label {
+        font-weight: bold;
+        min-width: 150px;
+        color: #2c3e50;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-value {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #ffffff;
+        min-height: 20px;
+        font-size: 12px;
+    }
+
+    .form-value.large {
+        min-height: 80px;
+        white-space: pre-wrap;
+        line-height: 1.4;
+    }
+
+    .checkbox-group {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+    }
+
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-weight: 500;
+        font-size: 12px;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+        transform: scale(1.1);
+        accent-color: #3498db;
+    }
+
+    .comparison-section {
+        display: flex;
+        gap: 15px;
+        margin: 20px 0;
+        align-items: stretch;
+    }
+
+    .comparison-box {
+        flex: 1;
+        border: 2px solid #3498db;
+        border-radius: 6px;
+        padding: 15px;
+        text-align: center;
+        position: relative;
+        min-height: 200px;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .comparison-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #2c3e50;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #3498db;
+        padding-bottom: 5px;
+        flex-shrink: 0;
+    }
+
+    .image-placeholder {
+        width: 100%;
+        flex: 1;
+        border: 2px dashed #bdc3c7;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        margin-top: 10px;
+        min-height: 140px;
+        height: 140px;
+    }
+
+    .image-placeholder img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 4px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .advantages-section {
+        border: 2px solid #3498db;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 20px 0;
+        background: #ffffff;
+    }
+
+    .advantages-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #2c3e50;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: center;
+        border-bottom: 1px solid #3498db;
+        padding-bottom: 5px;
+    }
+
+    .signature-section {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .signature-box {
+        flex: 1;
+        border: 2px solid #3498db;
+        border-radius: 6px;
+        padding: 15px;
+        text-align: center;
+        background: #ffffff;
+    }
+
+    .signature-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #2c3e50;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .signature-line {
+        border-bottom: 1px solid #000;
+        height: 30px;
+        margin-top: 10px;
+        margin-bottom: 5px;
+    }
+
+    .footer {
+        text-align: right;
+        margin-top: 20px;
+        font-size: 10px;
+        color: #7f8c8d;
+        font-style: italic;
+    }
+
+    .employee-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .employee-details {
+        flex: 1;
+    }
+
+    .employee-name {
+        font-size: 14px;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 3px;
+    }
+
+    .employee-meta {
+        color: #7f8c8d;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .kaizen-number {
+        background: #3498db;
+        color: white;
+        padding: 8px 15px !important;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 14px !important;
+        text-align: center;
+    }
+
+    .description-section {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 15px 0;
+        border-left: 3px solid #3498db;
+    }
+
+    .description-label {
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .proposer-photo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #3498db;
+        margin: 0 auto 5px;
+        display: block;
+    }
+
+    .proposer-photo-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 5px;
+        border: 3px solid #3498db;
+    }
+
+    .document-id-section {
+        margin-top: 20px;
+        text-align: center;
+        border-top: 1px solid #3498db;
+        padding-top: 10px;
+    }
+
+    .document-id {
+        font-size: 14px;
+        font-weight: bold;
+        color: #2c3e50;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+</style>
+
+<div class="form-container">
+    <div class="button-container no-print">
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Print Form
+        </button>
+    </div>
+
+    <div class="form-title">Section B (Kaizen Display Form)</div>
+
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="form-row">
+            <div class="form-label">Kaizen Suggestion #:</div>
+            <div class="kaizen-number">@Model.KaizenNo</div>
+            <div class="form-label" style="margin-left: 20px; margin-right: 5px;">කාර්තුව:</div>
+            <div class="checkbox-group" style="margin-left: 0; padding-left: 0px; padding: 0px;">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="task1" />
+                    <label for="task1">1</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="task2" />
+                    <label for="task2">2</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="task3" />
+                    <label for="task3">3</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="task4" />
+                    <label for="task4">4</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Information -->
+        <div class="employee-info">
+            <div class="employee-details">
+                <div class="employee-name">@Model.EmployeeName</div>
+                <div class="employee-meta">
+                    <span><i class="fas fa-building me-1"></i>@Model.Department</span>
+                    <span><i class="fas fa-id-badge me-1"></i>@Model.EmployeeNo</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="description-section">
+            <div class="description-label">Description/යෝජනාව:</div>
+            <div class="form-value large">@Model.SuggestionDescription</div>
+        </div>
+    </div>
+
+    <!-- Method/Arrangement Comparison Section -->
+    <div class="comparison-section">
+        <div class="comparison-box">
+            <div class="comparison-title">Previous Method/Arrangement (පෙර)</div>
+            <div class="image-placeholder">
+                @if (!string.IsNullOrEmpty(Model.BeforeKaizenImagePath))
+                {
+                    <img src="@Model.BeforeKaizenImagePath" alt="Before Kaizen" />
+                }
+                else
+                {
+                    <i class="fas fa-camera fa-2x text-muted"></i>
+                }
+            </div>
+        </div>
+
+        <div class="comparison-box">
+            <div class="comparison-title">New Method/Arrangement (පසු)</div>
+            <div class="image-placeholder">
+                @if (!string.IsNullOrEmpty(Model.AfterKaizenImagePath))
+                {
+                    <img src="@Model.AfterKaizenImagePath" alt="After Kaizen" />
+                }
+                else
+                {
+                    <i class="fas fa-camera fa-2x text-muted"></i>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Advantages Section -->
+    <div class="advantages-section">
+        <div class="advantages-title">Advantages of suggested method comparing to previous/අපේක්ෂිත වාසි</div>
+        <div class="form-value large">@Model.OtherBenefits</div>
+    </div>
+
+    <!-- Comments and Signature Section -->
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="signature-title">යෝජකයා (Proposer)</div>
+            @if (!string.IsNullOrEmpty(Model.EmployeePhotoPath))
+            {
+                <img src="@Model.EmployeePhotoPath" alt="Employee Photo" class="proposer-photo" />
+            }
+            else
+            {
+                <div class="proposer-photo-placeholder">
+                    <i class="fas fa-user fa-2x text-white"></i>
+                </div>
+            }
+            <div class="signature-line"></div>
+            <small>@Model.EmployeeName</small>
+        </div>
+
+        <div class="signature-box">
+            <div class="signature-title">අංශ ප්‍රධානීගේ සටහන/ Senior Manager Comments</div>
+            <div class="form-value large">@Model.ManagerComments</div>
+            <div class="signature-line"></div>
+            <small>අත්සන (Signature): @Model.ManagerSignature</small>
+        </div>
+    </div>
+
+    <!-- Document ID Section -->
+    <div class="document-id-section">
+        <div class="document-id">FGE-0454-Rev 5</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Auto-populate implementation details if empty
+            if (!$('#ImplementationDetails').val()) {
+                $('#ImplementationDetails').val('Implementation details will be filled by the responsible person.');
+            }
+            
+            if (!$('#Results').val()) {
+                $('#Results').val('Results and outcomes will be documented after implementation.');
+            }
+            
+            if (!$('#Remarks').val()) {
+                $('#Remarks').val('Additional remarks and observations.');
+            }
+        });
+    </script>
+}

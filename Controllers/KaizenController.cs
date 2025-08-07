@@ -1957,6 +1957,53 @@ namespace KaizenWebApp.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> FormB(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var kaizen = await _context.KaizenForms.FindAsync(id);
+                if (kaizen == null)
+                {
+                    return NotFound();
+                }
+
+                var formBViewModel = new FormBViewModel
+                {
+                    Id = kaizen.Id,
+                    KaizenNo = kaizen.KaizenNo,
+                    EmployeeName = kaizen.EmployeeName,
+                    EmployeeNo = kaizen.EmployeeNo,
+                    Department = kaizen.Department,
+                    SuggestionDescription = kaizen.SuggestionDescription,
+                    BeforeKaizenImagePath = kaizen.BeforeKaizenImagePath,
+                    AfterKaizenImagePath = kaizen.AfterKaizenImagePath,
+                    EmployeePhotoPath = kaizen.EmployeePhotoPath,
+                    OtherBenefits = kaizen.OtherBenefits,
+                    ImplementationDate = kaizen.DateImplemented ?? DateTime.Now,
+                    ImplementationCost = 0,
+                    ImplementationDetails = "",
+                    Results = "",
+                    Remarks = "",
+                    ManagerComments = kaizen.ManagerComments,
+                    ManagerSignature = kaizen.ManagerSignature,
+                    DateSubmitted = kaizen.DateSubmitted
+                };
+
+                return View(formBViewModel);
+            }
+            catch (Exception ex)
+            {
+                return View("Error");
+            }
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveFormB(FormBViewModel model)
@@ -1998,6 +2045,87 @@ namespace KaizenWebApp.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PrintFormB(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var kaizen = await _context.KaizenForms.FindAsync(id);
+                if (kaizen == null)
+                {
+                    return NotFound();
+                }
+
+                return View("FormB", new FormBViewModel
+                {
+                    Id = kaizen.Id,
+                    KaizenNo = kaizen.KaizenNo,
+                    EmployeeName = kaizen.EmployeeName,
+                    EmployeeNo = kaizen.EmployeeNo,
+                    Department = kaizen.Department,
+                    SuggestionDescription = kaizen.SuggestionDescription,
+                    BeforeKaizenImagePath = kaizen.BeforeKaizenImagePath,
+                    AfterKaizenImagePath = kaizen.AfterKaizenImagePath,
+                    EmployeePhotoPath = kaizen.EmployeePhotoPath,
+                    OtherBenefits = kaizen.OtherBenefits,
+                    ImplementationDate = kaizen.DateImplemented ?? DateTime.Now,
+                    ImplementationCost = 0,
+                    ImplementationDetails = "",
+                    Results = "",
+                    Remarks = "",
+                    ManagerComments = kaizen.ManagerComments,
+                    ManagerSignature = kaizen.ManagerSignature,
+                    DateSubmitted = kaizen.DateSubmitted
+                });
+            }
+            catch (Exception ex)
+            {
+                return View("Error");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetKaizenData(int id)
+        {
+            try
+            {
+                var kaizen = await _context.KaizenForms.FindAsync(id);
+                if (kaizen == null)
+                {
+                    return Json(new { success = false, message = "Kaizen not found" });
+                }
+
+                var kaizenData = new
+                {
+                    kaizenNo = kaizen.KaizenNo,
+                    employeeName = kaizen.EmployeeName,
+                    employeeNo = kaizen.EmployeeNo,
+                    department = kaizen.Department,
+                    suggestionDescription = kaizen.SuggestionDescription,
+                    otherBenefits = kaizen.OtherBenefits,
+                    beforeKaizenImagePath = kaizen.BeforeKaizenImagePath,
+                    afterKaizenImagePath = kaizen.AfterKaizenImagePath,
+                    managerComments = kaizen.ManagerComments,
+                    managerSignature = kaizen.ManagerSignature,
+                    costSaving = kaizen.CostSaving,
+                    category = kaizen.Category,
+                    dateSubmitted = kaizen.DateSubmitted.ToString("yyyy-MM-dd")
+                };
+
+                return Json(new { success = true, kaizen = kaizenData });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
             }
         }
 
@@ -3162,15 +3290,7 @@ namespace KaizenWebApp.Controllers
         public string ManagerApprovedBy { get; set; }
     }
 
-    public class FormBViewModel
-    {
-        public int Id { get; set; }
-        public DateTime ImplementationDate { get; set; }
-        public decimal? ImplementationCost { get; set; }
-        public string ImplementationDetails { get; set; }
-        public string Results { get; set; }
-        public string Remarks { get; set; }
-    }
+
 
     public class ManagerCommentRequest
     {
