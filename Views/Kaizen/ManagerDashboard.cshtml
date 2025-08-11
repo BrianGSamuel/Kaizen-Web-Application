@@ -1,0 +1,249 @@
+@model KaizenWebApp.ViewModels.ManagerDashboardViewModel
+@{
+    ViewData["Title"] = "Manager Dashboard";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+
+<style>
+    .summary-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .summary-card .d-flex {
+        flex: 1;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .summary-card.submissions {
+        border-left: 5px solid #007bff;
+    }
+
+    .summary-card.target {
+        border-left: 5px solid #28a745;
+    }
+
+    .summary-card.cost-savings {
+        border-left: 5px solid #ffc107;
+    }
+
+    .summary-card.approvals {
+        border-left: 5px solid #dc3545;
+    }
+
+    .summary-card.completed {
+        border-left: 5px solid #17a2b8;
+    }
+
+    .summary-card.trend {
+        border-left: 5px solid #6f42c1;
+    }
+
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .metric-change {
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .metric-change.positive {
+        color: #28a745;
+    }
+
+    .metric-change.negative {
+        color: #dc3545;
+    }
+
+    .metric-change.neutral {
+        color: #6c757d;
+    }
+
+    .status-badge {
+        padding: 0.2rem 0.4rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-block;
+        min-width: fit-content;
+    }
+
+    .status-completed { background-color: #d4edda; color: #155724; }
+    .status-on-track { background-color: #d1ecf1; color: #0c5460; }
+    .status-behind { background-color: #fff3cd; color: #856404; }
+    .status-at-risk { background-color: #f8d7da; color: #721c24; }
+
+    .progress-bar {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .progress-fill.completed { background-color: #28a745; }
+    .progress-fill.on-track { background-color: #17a2b8; }
+    .progress-fill.behind { background-color: #ffc107; }
+    .progress-fill.at-risk { background-color: #dc3545; }
+
+    .welcome-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .row > [class*="col-"] {
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+
+<div class="container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <div class="row align-items-center">
+            <div class="col-12">
+                <h4 class="mb-2">Welcome to your Dashboard</h4>
+                <p class="text-muted mb-0">You're managing the <strong>@Model.Department</strong> department. Here's how your team is performing this month.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards Row 1 -->
+    <div class="row">
+        <!-- Current Month Submissions -->
+        <div class="col-lg-4 col-md-6">
+            <div class="summary-card submissions">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-value text-primary">@Model.CurrentMonthSubmissions</div>
+                        <div class="metric-label">Current Month Submissions</div>
+                    </div>
+                    <div class="text-primary">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Target Achievement -->
+        <div class="col-lg-4 col-md-6">
+            <div class="summary-card target">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-value text-success">@Model.CurrentMonthAchievement.ToString("F1")%</div>
+                        <div class="metric-label">Target Achievement</div>
+                        <div class="text-muted">@Model.CurrentMonthSubmissions of @Model.CurrentMonthTarget target</div>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-bullseye fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Savings -->
+        <div class="col-lg-4 col-md-6">
+            <div class="summary-card cost-savings">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-value text-warning">$@Model.CurrentMonthCostSavings.ToString("N0")</div>
+                        <div class="metric-label">Cost Savings</div>
+                        <div class="text-muted">Approved kaizens only</div>
+                    </div>
+                    <div class="text-warning">
+                        <i class="fas fa-dollar-sign fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards Row 2 -->
+    <div class="row">
+        <!-- Pending Approvals -->
+        <div class="col-lg-4 col-md-6">
+            <div class="summary-card approvals">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-value text-danger">@Model.PendingApprovals</div>
+                        <div class="metric-label">Pending Approvals</div>
+                        <div class="text-muted">Requires your attention</div>
+                    </div>
+                    <div class="text-danger">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Kaizens -->
+        <div class="col-lg-4 col-md-6">
+            <div class="summary-card completed">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-value text-info">@Model.CompletedKaizens</div>
+                        <div class="metric-label">Completed Kaizens</div>
+                        <div class="text-muted">Fully approved and implemented</div>
+                    </div>
+                    <div class="text-info">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Month Comparison -->
+        <div class="col-lg-4 col-md-6">
+            <div class="summary-card trend">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-value text-purple">@Model.PreviousMonthSubmissions</div>
+                        <div class="metric-label">@Model.PreviousMonthName Submissions</div>
+                        <div class="text-muted">Previous month comparison</div>
+                    </div>
+                    <div class="text-purple">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

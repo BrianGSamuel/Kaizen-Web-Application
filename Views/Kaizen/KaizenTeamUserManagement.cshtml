@@ -1,0 +1,312 @@
+@model List<KaizenWebApp.Models.Users>
+@{
+    ViewData["Title"] = "User Management";
+    Layout = "~/Views/Shared/_KaizenTeamLayout.cshtml";
+}
+
+<div class="search-section">
+    <div class="manager-card-header mb-3">
+        <h5 class="manager-card-title">
+            <i class="fas fa-users me-2"></i>User Management
+        </h5>
+    </div>
+    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <span class="text-muted">Total Users: <strong>@Model.Count</strong></span>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn-manager" onclick="showAddUserModal()">
+                <i class="fas fa-user-plus me-2"></i>Add New User
+            </button>
+            <button type="button" class="btn-secondary" onclick="exportUsers()">
+                <i class="fas fa-file-excel me-2"></i>Export Users
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="table-container">
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table manager-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Department</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        var role = "User";
+                        if (user.UserName?.ToLower().Contains("admin") == true)
+                        {
+                            role = "Administrator";
+                        }
+                        else if (user.UserName?.ToLower().Contains("engineer") == true)
+                        {
+                            role = "Engineer";
+                        }
+                        else if (user.UserName?.ToLower().Contains("manager") == true)
+                        {
+                            role = "Manager";
+                        }
+                        else if (user.UserName?.ToLower().Contains("kaizenteam") == true)
+                        {
+                            role = "Kaizen Team";
+                        }
+
+                        <tr>
+                            <td>
+                                <div>
+                                    <div class="fw-bold">@user.UserName</div>
+                                    <small class="text-muted">ID: @user.Id</small>
+                                </div>
+                            </td>
+                            <td>@user.DepartmentName</td>
+                            <td>
+                                <span class="badge bg-primary">@role</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <button class="btn-view" onclick="viewUserDetails(@user.Id)" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-view" onclick="editUser(@user.Id)" title="Edit User">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    @if (user.UserName?.ToLower() != "admin")
+                                    {
+                                        <button class="btn-view text-danger" onclick="deleteUser(@user.Id, '@user.UserName')" title="Delete User">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="no-data-alert">
+            <i class="fas fa-users fa-3x mb-3"></i>
+            <h5>No users found</h5>
+            <p class="mb-0">No users have been registered in the system yet.</p>
+        </div>
+    }
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" id="newUsername" name="username" required>
+                        <small class="text-muted">Username will determine the user's role (e.g., "user123", "manager123", "engineer123", "kaizenteam123")</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <input type="text" class="form-control" id="newDepartment" name="department" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="newPassword" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-kaizen" onclick="saveNewUser()">Add User</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editUserModalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View User Details Modal -->
+<div class="modal fade" id="viewUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">User Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewUserModalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showAddUserModal() {
+            $('#addUserForm')[0].reset();
+            $('#addUserModal').modal('show');
+        }
+
+        function saveNewUser() {
+            var username = $('#newUsername').val();
+            var department = $('#newDepartment').val();
+            var password = $('#newPassword').val();
+            var confirmPassword = $('#confirmPassword').val();
+
+            if (!username || !department || !password || !confirmPassword) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match.');
+                return;
+            }
+
+            var formData = {
+                username: username,
+                department: department,
+                password: password
+            };
+
+            $.post('/Admin/AddUser', formData, function(response) {
+                if (response.success) {
+                    $('#addUserModal').modal('hide');
+                    alert('User added successfully!');
+                    location.reload();
+                } else {
+                    alert('Error adding user: ' + response.message);
+                }
+            });
+        }
+
+        function viewUserDetails(id) {
+            $.get('/Admin/GetUserDetails/' + id, function(response) {
+                if (response.success) {
+                    $('#viewUserModalBody').html(createUserDetailsHtml(response.user));
+                    $('#viewUserModal').modal('show');
+                } else {
+                    alert('Error loading user details: ' + response.message);
+                }
+            });
+        }
+
+        function editUser(id) {
+            $.get('/Admin/EditUser/' + id, function(response) {
+                if (response.success) {
+                    $('#editUserModalBody').html(createEditUserFormHtml(response.user));
+                    $('#editUserModal').modal('show');
+                } else {
+                    alert('Error loading edit form: ' + response.message);
+                }
+            });
+        }
+
+        function deleteUser(id, username) {
+            if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+                $.post('/Admin/DeleteUser/' + id, function(response) {
+                    if (response.success) {
+                        alert('User deleted successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error deleting user: ' + response.message);
+                    }
+                });
+            }
+        }
+
+        function exportUsers() {
+            window.open('/Admin/ExportUsers', '_blank');
+        }
+
+        function createUserDetailsHtml(user) {
+            return `
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Username:</strong> ${user.username}</p>
+                        <p><strong>Department:</strong> ${user.departmentName}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Role:</strong> <span class="badge bg-primary">${user.role}</span></p>
+                        <p><strong>User ID:</strong> ${user.id}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createEditUserFormHtml(user) {
+            return `
+                <form id="editUserForm">
+                    <input type="hidden" name="Id" value="${user.id}">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" name="UserName" value="${user.username}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <input type="text" class="form-control" name="DepartmentName" value="${user.departmentName}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password (leave blank to keep current)</label>
+                        <input type="password" class="form-control" name="Password">
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn-kaizen" onclick="saveEditUser()">Save Changes</button>
+                    </div>
+                </form>
+            `;
+        }
+
+        function saveEditUser() {
+            var formData = new FormData($('#editUserForm')[0]);
+            
+            $.ajax({
+                url: '/Admin/EditUser',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        $('#editUserModal').modal('hide');
+                        alert('User updated successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error updating user: ' + response.message);
+                    }
+                }
+            });
+        }
+    </script>
+}

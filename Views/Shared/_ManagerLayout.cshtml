@@ -1,25 +1,25 @@
 @*
-    File: Views/Shared/_KaizenTeamLayout.cshtml
+    File: Views/Shared/_ManagerLayout.cshtml
 *@
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Kaizen Team Panel</title>
+    <title>@ViewData["Title"] - Manager Panel</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/UsersApp.styles.css" asp-append-version="true" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --kaizen-dark-blue: #1e40af;
-            --kaizen-light-blue: #3b82f6;
-            --kaizen-hover-blue: #1d4ed8;
-            --kaizen-text-light: #ffffff;
-            --kaizen-text-muted: #bfdbfe;
-            --kaizen-bg-light: #ffffff;
-            --kaizen-sidebar-bg: #1e3a8a;
+            --manager-dark-blue: #1e40af;
+            --manager-light-blue: #3b82f6;
+            --manager-hover-blue: #1d4ed8;
+            --manager-text-light: #ffffff;
+            --manager-text-muted: #bfdbfe;
+            --manager-bg-light: #ffffff;
+            --manager-sidebar-bg: #1e3a8a;
         }
 
         html, body {
@@ -30,21 +30,21 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--kaizen-bg-light);
+            background-color: var(--manager-bg-light);
             color: #1f2937;
         }
 
-        /* Kaizen Team Layout Structure */
-        .kaizen-container {
+        /* Manager Layout Structure */
+        .manager-container {
             display: flex;
             min-height: 100vh;
         }
 
         /* Sidebar Navigation */
-        .kaizen-sidebar {
+        .manager-sidebar {
             width: 280px;
-            background: linear-gradient(180deg, var(--kaizen-sidebar-bg) 0%, #1e40af 100%);
-            color: var(--kaizen-text-light);
+            background: linear-gradient(180deg, var(--manager-sidebar-bg) 0%, #1e40af 100%);
+            color: var(--manager-text-light);
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             position: fixed;
             height: 100vh;
@@ -52,77 +52,77 @@
             z-index: 1000;
         }
 
-        .kaizen-sidebar-header {
+        .manager-sidebar-header {
             padding: 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
         }
 
-        .kaizen-sidebar-header img {
+        .manager-sidebar-header img {
             height: 40px;
             width: auto;
             filter: brightness(0) invert(1);
             margin-bottom: 10px;
         }
 
-        .kaizen-sidebar-header h4 {
+        .manager-sidebar-header h4 {
             margin: 0;
             font-weight: 600;
             font-size: 1.2rem;
         }
 
-        .kaizen-sidebar-header p {
+        .manager-sidebar-header p {
             margin: 0;
             font-size: 0.9rem;
-            color: var(--kaizen-text-muted);
+            color: var(--manager-text-muted);
         }
 
-        .kaizen-nav {
+        .manager-nav {
             padding: 20px 0;
         }
 
-        .kaizen-nav-item {
+        .manager-nav-item {
             margin-bottom: 5px;
         }
 
-        .kaizen-nav-link {
+        .manager-nav-link {
             display: flex;
             align-items: center;
             padding: 12px 20px;
-            color: var(--kaizen-text-light);
+            color: var(--manager-text-light);
             text-decoration: none;
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
         }
 
-        .kaizen-nav-link:hover {
+        .manager-nav-link:hover {
             background-color: #1e40af;
-            color: var(--kaizen-text-light);
+            color: var(--manager-text-light);
             text-decoration: none;
             border-left-color: #ffffff;
         }
 
-        .kaizen-nav-link.active {
+        .manager-nav-link.active {
             background-color: #1e40af;
             border-left-color: #ffffff;
         }
 
-        .kaizen-nav-link i {
+        .manager-nav-link i {
             width: 20px;
             margin-right: 12px;
             text-align: center;
         }
 
         /* Main Content Area */
-        .kaizen-main {
+        .manager-main {
             flex: 1;
             margin-left: 280px;
             padding: 20px;
-            background-color: var(--kaizen-bg-light);
+            background-color: var(--manager-bg-light);
             color: #1f2937;
         }
 
-        .kaizen-header {
+        .manager-header {
             background: white;
             padding: 20px;
             border-radius: 10px;
@@ -130,13 +130,13 @@
             margin-bottom: 20px;
         }
 
-        .kaizen-header h1 {
+        .manager-header h1 {
             margin: 0;
-            color: var(--kaizen-dark-blue);
+            color: var(--manager-dark-blue);
             font-weight: 600;
         }
 
-        .kaizen-content {
+        .manager-content {
             background: white;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -144,44 +144,44 @@
         }
 
         /* User Info in Sidebar */
-        .kaizen-user-info {
+        .manager-user-info {
             padding: 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             margin-top: auto;
         }
 
-        .kaizen-user-info .user-name {
+        .manager-user-info .user-name {
             font-weight: 600;
             margin-bottom: 5px;
         }
 
-        .kaizen-user-info .user-role {
+        .manager-user-info .user-role {
             font-size: 0.8rem;
-            color: var(--kaizen-text-muted);
+            color: var(--manager-text-muted);
         }
 
         /* Responsive Design */
         @@media (max-width: 768px) {
-            .kaizen-sidebar {
+            .manager-sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
             }
 
-            .kaizen-sidebar.show {
+            .manager-sidebar.show {
                 transform: translateX(0);
             }
 
-            .kaizen-main {
+            .manager-main {
                 margin-left: 0;
             }
 
-            .kaizen-toggle {
+            .manager-toggle {
                 display: block;
                 position: fixed;
                 top: 20px;
                 left: 20px;
                 z-index: 1001;
-                background: var(--kaizen-dark-blue);
+                background: var(--manager-dark-blue);
                 color: white;
                 border: none;
                 padding: 10px;
@@ -189,42 +189,9 @@
             }
         }
 
-        /* Kaizen Team specific buttons */
-        .btn-kaizen {
-            background: linear-gradient(135deg, var(--kaizen-dark-blue) 0%, var(--kaizen-light-blue) 100%);
-            border: none;
-            color: white;
-            font-weight: 600;
-            padding: 10px 25px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-kaizen:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(30, 64, 175, 0.4);
-            color: white;
-        }
-
-        .btn-kaizen-outline {
-            border: 2px solid var(--kaizen-dark-blue);
-            color: var(--kaizen-dark-blue);
-            background: transparent;
-            font-weight: 600;
-            padding: 8px 23px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-kaizen-outline:hover {
-            background: var(--kaizen-dark-blue);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        /* Manager-style buttons for Kaizen Team */
+        /* Manager specific buttons */
         .btn-manager {
-            background: linear-gradient(135deg, var(--kaizen-dark-blue) 0%, var(--kaizen-light-blue) 100%);
+            background: linear-gradient(135deg, var(--manager-dark-blue) 0%, var(--manager-light-blue) 100%);
             border: none;
             color: white;
             font-weight: 600;
@@ -240,8 +207,8 @@
         }
 
         .btn-manager-outline {
-            border: 2px solid var(--kaizen-dark-blue);
-            color: var(--kaizen-dark-blue);
+            border: 2px solid var(--manager-dark-blue);
+            color: var(--manager-dark-blue);
             background: transparent;
             font-weight: 600;
             padding: 8px 23px;
@@ -250,39 +217,12 @@
         }
 
         .btn-manager-outline:hover {
-            background: var(--kaizen-dark-blue);
+            background: var(--manager-dark-blue);
             color: white;
             transform: translateY(-2px);
         }
 
-        /* Kaizen Team cards */
-        .kaizen-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            padding: 25px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .kaizen-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .kaizen-card-header {
-            border-bottom: 1px solid #e9ecef;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-
-        .kaizen-card-title {
-            color: var(--kaizen-dark-blue);
-            font-weight: 600;
-            margin: 0;
-        }
-
-        /* Manager-style cards for Kaizen Team */
+        /* Manager cards */
         .manager-card {
             background: white;
             border-radius: 10px;
@@ -304,7 +244,7 @@
         }
 
         .manager-card-title {
-            color: var(--kaizen-dark-blue);
+            color: var(--manager-dark-blue);
             font-weight: 600;
             margin: 0;
         }
@@ -332,7 +272,7 @@
         }
 
         .btn-search {
-            background: linear-gradient(135deg, var(--kaizen-dark-blue) 0%, var(--kaizen-light-blue) 100%);
+            background: linear-gradient(135deg, var(--manager-dark-blue) 0%, var(--manager-light-blue) 100%);
             border: none;
             color: white;
             font-weight: 600;
@@ -356,43 +296,6 @@
             border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .kaizen-table {
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .kaizen-table thead {
-            background: linear-gradient(135deg, var(--kaizen-dark-blue) 0%, var(--kaizen-light-blue) 100%);
-            color: white;
-        }
-
-        .kaizen-table th {
-            border: none;
-            padding: 1rem;
-            font-weight: 600;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        .kaizen-table td {
-            border: none;
-            border-bottom: 1px solid #f0f0f0;
-            padding: 1rem;
-            vertical-align: middle;
-        }
-
-        .kaizen-table tbody tr {
-            transition: all 0.3s ease;
-        }
-
-        .kaizen-table tbody tr:hover {
-            background-color: #f8f9fa;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Manager-style table for Kaizen Team */
         .manager-table {
             border-radius: 10px;
             overflow: hidden;
@@ -400,7 +303,7 @@
         }
 
         .manager-table thead {
-            background: linear-gradient(135deg, var(--kaizen-dark-blue) 0%, var(--kaizen-light-blue) 100%);
+            background: linear-gradient(135deg, var(--manager-dark-blue) 0%, var(--manager-light-blue) 100%);
             color: white;
         }
 
@@ -476,6 +379,42 @@
             color: white;
         }
 
+        .btn-approve {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            margin-right: 0.25rem;
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+            color: white;
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            margin-right: 0.25rem;
+        }
+
+        .btn-reject:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+            color: white;
+        }
+
         .cost-saving {
             font-weight: 600;
             color: #28a745;
@@ -489,7 +428,7 @@
         }
 
         .modal-header {
-            background: linear-gradient(135deg, var(--kaizen-dark-blue) 0%, var(--kaizen-light-blue) 100%);
+            background: linear-gradient(135deg, var(--manager-dark-blue) 0%, var(--manager-light-blue) 100%);
             color: white;
             border-radius: 20px 20px 0 0;
             border: none;
@@ -520,7 +459,7 @@
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: var(--kaizen-dark-blue);
+            border-color: var(--manager-dark-blue);
             box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.25);
             transform: translateY(-2px);
         }
@@ -540,8 +479,8 @@
 
         .alert-danger {
             background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-            color: var(--kaizen-dark-blue);
-            border-left: 4px solid var(--kaizen-dark-blue);
+            color: #dc3545;
+            border-left: 4px solid #dc3545;
         }
 
         /* No data alert */
@@ -564,49 +503,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Admin card styles for KaizenTeam */
-        .admin-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-
-        .admin-card-header {
-            background: linear-gradient(135deg, var(--kaizen-dark-blue) 0%, var(--kaizen-light-blue) 100%);
-            color: white;
-            padding: 1.5rem 2rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .admin-card-title {
-            margin: 0;
-            font-weight: 600;
-            font-size: 1.25rem;
-        }
-
-        .btn-admin {
-            background: linear-gradient(135deg, var(--kaizen-dark-blue) 0%, var(--kaizen-light-blue) 100%);
-            border: none;
-            color: white;
-            font-weight: 600;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .btn-admin:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(30, 64, 175, 0.4);
-            color: white;
-            text-decoration: none;
-        }
-
-        /* Additional KaizenTeam specific styles */
+        /* Additional Manager specific styles */
         .search-form .d-flex {
             flex: 0 0 auto;
             justify-content: flex-end;
@@ -666,27 +563,6 @@
             color: white;
         }
 
-        .btn-executive {
-            background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
-            border: none;
-            color: white;
-            font-weight: 700;
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            box-shadow: 0 2px 8px rgba(111, 66, 193, 0.3);
-            border: 2px solid #5a2d91;
-        }
-
-        .btn-executive:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.5);
-            color: white;
-            background: linear-gradient(135deg, #7c4dcc 0%, #6f42c1 100%);
-            border-color: #5a2d91;
-        }
-
         /* Navigation Arrow Styles */
         .nav-arrow {
             background: none;
@@ -717,7 +593,7 @@
         }
 
         .btn-update {
-            background: linear-gradient(135deg, var(--kaizen-dark-blue) 0%, var(--kaizen-light-blue) 100%);
+            background: linear-gradient(135deg, var(--manager-dark-blue) 0%, var(--manager-light-blue) 100%);
             border: none;
             color: white;
             font-weight: 600;
@@ -767,62 +643,64 @@
 <body>
     @Html.AntiForgeryToken()
     
-    <div class="kaizen-container">
+    <div class="manager-container">
         <!-- Sidebar Navigation -->
-        <nav class="kaizen-sidebar">
-            <div class="kaizen-sidebar-header">
+        <nav class="manager-sidebar">
+            <div class="manager-sidebar-header">
                 <img src="~/images/flintec-logo.png" alt="Flintec Logo" />
-                <h4>Kaizen Team Panel</h4>
-                <p>Complete Kaizen Management</p>
+                <h4>Manager Panel</h4>
+                <p>Kaizen Management System</p>
             </div>
 
-            <div class="kaizen-nav">
-                <div class="kaizen-nav-item">
-                    <a class="kaizen-nav-link" asp-controller="Kaizen" asp-action="KaizenTeamDashboard">
+            <div class="manager-nav">
+                <div class="manager-nav-item">
+                    <a class="manager-nav-link" asp-controller="Kaizen" asp-action="ManagerDashboard">
                         <i class="fas fa-tachometer-alt"></i>
                         Dashboard
                     </a>
                 </div>
 
-                <div class="kaizen-nav-item">
-                    <a class="kaizen-nav-link" asp-controller="Kaizen" asp-action="KaizenTeam">
+                <div class="manager-nav-item">
+                    <a class="manager-nav-link" asp-controller="Kaizen" asp-action="KaizenListManager">
                         <i class="fas fa-list"></i>
-                        View All Kaizens
+                        Kaizen Management
                     </a>
                 </div>
 
-                <div class="kaizen-nav-item">
-                    <a class="kaizen-nav-link" asp-controller="Kaizen" asp-action="AwardTracking">
+                <div class="manager-nav-item">
+                    <a class="manager-nav-link" asp-controller="Kaizen" asp-action="AwardTrackingManager">
                         <i class="fas fa-trophy"></i>
                         Award Tracking
                     </a>
                 </div>
 
-                <div class="kaizen-nav-item">
-                    <a class="kaizen-nav-link" asp-controller="Kaizen" asp-action="DepartmentTargets">
+                <div class="manager-nav-item">
+                    <a class="manager-nav-link" asp-controller="Kaizen" asp-action="DepartmentTargetsManager">
                         <i class="fas fa-bullseye"></i>
                         Department Targets
                     </a>
                 </div>
 
-                <div class="kaizen-nav-item">
-                    <a class="kaizen-nav-link" asp-controller="Kaizen" asp-action="AboutSystem">
+                <div class="manager-nav-item">
+                    <a class="manager-nav-link" asp-controller="Kaizen" asp-action="AboutSystem">
                         <i class="fas fa-info-circle"></i>
                         About System
                     </a>
                 </div>
 
-                <div class="kaizen-nav-item">
-                    <a class="kaizen-nav-link" asp-controller="Account" asp-action="ChangeMyPassword">
+                <div class="manager-nav-item">
+                    <a class="manager-nav-link" asp-controller="Account" asp-action="ChangeMyPassword">
                         <i class="fas fa-key"></i>
                         Change Password
                     </a>
                 </div>
+
+
             </div>
 
-            <div class="kaizen-user-info">
+            <div class="manager-user-info">
                 <div class="user-name">@Context.User.Identity?.Name</div>
-                <div class="user-role">Kaizen Team Member</div>
+                <div class="user-role">Manager</div>
                 <div class="mt-3">
                     <form asp-controller="Account" asp-action="Logout" method="post">
                         <button type="submit" class="btn btn-sm btn-outline-light w-100">
@@ -834,19 +712,19 @@
         </nav>
 
         <!-- Main Content -->
-        <main class="kaizen-main">
-            <div class="kaizen-header">
+        <main class="manager-main">
+            <div class="manager-header">
                 <h1>@ViewData["Title"]</h1>
             </div>
 
-            <div class="kaizen-content">
+            <div class="manager-content">
                 @RenderBody()
             </div>
         </main>
     </div>
 
     <!-- Mobile Toggle Button -->
-    <button class="kaizen-toggle d-md-none" onclick="toggleSidebar()">
+    <button class="manager-toggle d-md-none" onclick="toggleSidebar()">
         <i class="fas fa-bars"></i>
     </button>
 
@@ -856,13 +734,13 @@
     
     <script>
         function toggleSidebar() {
-            document.querySelector('.kaizen-sidebar').classList.toggle('show');
+            document.querySelector('.manager-sidebar').classList.toggle('show');
         }
 
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(event) {
-            const sidebar = document.querySelector('.kaizen-sidebar');
-            const toggle = document.querySelector('.kaizen-toggle');
+            const sidebar = document.querySelector('.manager-sidebar');
+            const toggle = document.querySelector('.manager-toggle');
             
             if (window.innerWidth <= 768) {
                 if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
@@ -874,60 +752,16 @@
         // Set active nav link based on current page
         document.addEventListener('DOMContentLoaded', function() {
             const currentPath = window.location.pathname;
-            const navLinks = document.querySelectorAll('.kaizen-nav-link');
-            
-            console.log('Current path:', currentPath);
-            
-            // Remove any existing active classes first
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            // Determine which link should be active based on current path
-            let activeLink = null;
+            const navLinks = document.querySelectorAll('.manager-nav-link');
             
             navLinks.forEach(link => {
-                const href = link.getAttribute('href');
-                if (href) {
-                    console.log('Checking link:', href);
-                    // More precise matching to avoid conflicts
-                    if (currentPath === '/Kaizen/KaizenTeamDashboard' && href.includes('KaizenTeamDashboard')) {
-                        activeLink = link;
-                        console.log('Dashboard matched');
-                    }
-                    else if (currentPath === '/Kaizen/KaizenTeam' && href.includes('KaizenTeam') && !href.includes('Dashboard')) {
-                        activeLink = link;
-                        console.log('KaizenTeam matched');
-                    }
-                    else if (currentPath.includes('/Kaizen/AwardTracking') && href.includes('AwardTracking')) {
-                        activeLink = link;
-                        console.log('AwardTracking matched');
-                    }
-                    else if (currentPath.includes('/Kaizen/DepartmentTargets') && href.includes('DepartmentTargets')) {
-                        activeLink = link;
-                        console.log('DepartmentTargets matched');
-                    }
-                    else if (currentPath.includes('/Kaizen/AboutSystem') && href.includes('AboutSystem')) {
-                        activeLink = link;
-                        console.log('AboutSystem matched');
-                    }
-                    else if (currentPath.includes('/Account/ChangeMyPassword') && href.includes('ChangeMyPassword')) {
-                        activeLink = link;
-                        console.log('ChangeMyPassword matched');
-                    }
+                if (link.getAttribute('href') && currentPath.includes(link.getAttribute('href'))) {
+                    link.classList.add('active');
                 }
             });
-            
-            // Set the active class on the correct link
-            if (activeLink) {
-                activeLink.classList.add('active');
-                console.log('Active link set:', activeLink.textContent.trim());
-            } else {
-                console.log('No active link found');
-            }
         });
     </script>
     
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-</html> 
+</html>

@@ -73,7 +73,7 @@ namespace KaizenWebApp.Controllers
             // Check for kaizen team users first
             if (username?.ToLower().Contains("kaizenteam") == true)
             {
-                return RedirectToAction("KaizenTeam", "Kaizen");
+                return RedirectToAction("KaizenTeamDashboard", "Kaizen");
             }
             // Check for regular users
             else if (username?.ToLower().Contains("user") == true)
@@ -170,6 +170,10 @@ namespace KaizenWebApp.Controllers
             if (username?.ToLower() == "admin")
             {
                 return RedirectToAction("Dashboard", "Admin");
+            }
+            else if (username?.ToLower().Contains("kaizenteam") == true)
+            {
+                return RedirectToAction("KaizenTeamDashboard", "Kaizen");
             }
             else if (username?.ToLower().Contains("user") == true)
             {

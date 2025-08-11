@@ -2,81 +2,12 @@
 
 @{
     ViewData["Title"] = "Kaizen Suggestions Management";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
 
 <style>
-    .kaizen-list-header {
-        background: linear-gradient(135deg, #E31E24 0%, #c41e3a 100%);
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 8px 25px rgba(227, 30, 36, 0.3);
-    }
-
-    body {
-        background-color: #f8f9fa;
-    }
-
-    .search-section {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .search-form {
-        display: flex;
-        gap: 1rem;
-        align-items: end;
-        flex-wrap: wrap;
-    }
-
-    .search-input-group {
-        flex: 1;
-        min-width: 250px;
-    }
-
-    .status-select-group {
-        min-width: 200px;
-    }
-
-    .btn-search {
-        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-        .btn-search:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(227, 30, 36, 0.4);
-            color: white;
-        }
-
-    .btn-clear {
-        background: var(--secondary-gray);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-        .btn-clear:hover {
-            background: #555;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-    .table-container {
+    /* Admin card styling to match AwardTrackingManager */
+    .admin-card {
         background: white;
         border-radius: 15px;
         padding: 2rem;
@@ -84,454 +15,269 @@
         border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
-    .kaizen-table {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-        .kaizen-table thead {
-            background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
-            color: white;
-        }
-
-        .kaizen-table th {
-            border: none;
-            padding: 1rem;
-            font-weight: 600;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        .kaizen-table td {
-            border: none;
-            border-bottom: 1px solid #f0f0f0;
-            padding: 1rem;
-            vertical-align: middle;
-        }
-
-        .kaizen-table tbody tr {
-            transition: all 0.3s ease;
-        }
-
-            .kaizen-table tbody tr:hover {
-                background-color: #f8f9fa;
-                transform: translateY(-1px);
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
-
-    .btn-approve {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        font-size: 0.875rem;
-        margin-right: 0.25rem;
-    }
-
-        .btn-approve:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
-            color: white;
-        }
-
-    .btn-reject {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        font-size: 0.875rem;
-        margin-right: 0.25rem;
-    }
-
-        .btn-reject:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-            color: white;
-        }
-
-    .btn-approval {
-        background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        font-size: 0.8rem;
-        margin-right: 0.25rem;
-    }
-
-        .btn-approval:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
-            color: white;
-        }
-
-
-
-    .btn-view {
-        background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        font-size: 0.875rem;
-        margin-right: 0.25rem;
-    }
-
-        .btn-view:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
-            color: white;
-        }
-
-    .btn-edit {
-        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-        border: none;
-        color: #212529;
-        font-weight: 700;
-        padding: 0.6rem 1.2rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        font-size: 0.9rem;
-        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
-        border: 2px solid #e0a800;
-    }
-
-        .btn-edit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.5);
-            color: #212529;
-            background: linear-gradient(135deg, #ffca2c 0%, #e0a800 100%);
-            border-color: #d39e00;
-        }
-
-    .btn-executive {
-        background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
-        border: none;
-        color: white;
-        font-weight: 700;
-        padding: 0.6rem 1.2rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        font-size: 0.9rem;
-        box-shadow: 0 2px 8px rgba(111, 66, 193, 0.3);
-        border: 2px solid #5a2d91;
-    }
-
-        .btn-executive:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.5);
-            color: white;
-            background: linear-gradient(135deg, #7c4dcc 0%, #6f42c1 100%);
-            border-color: #5a2d91;
-        }
-
-    .btn-manager {
-        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-        border: none;
-        color: white;
-        font-weight: 700;
-        padding: 0.6rem 1.2rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        font-size: 0.9rem;
-        box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
-        border: 2px solid #138496;
-    }
-
-        .btn-manager:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(23, 162, 184, 0.5);
-            color: white;
-            background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
-            border-color: #138496;
-        }
-
-    .status-pending {
-        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-        color: #212529;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
-
-    .status-approved {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
-
-    .status-rejected {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
-
-    .cost-saving {
-        font-weight: 600;
-        color: var(--success-green);
-    }
-
-    .no-data-alert {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border: none;
-        border-radius: 10px;
-        padding: 2rem;
-        text-align: center;
-        color: #1976d2;
-    }
-
-    .success-alert {
-        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
-        border: none;
-        border-radius: 10px;
-        color: var(--success-green);
-    }
-
-    .modal-content {
-        border-radius: 15px;
-        border: none;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-
-    .modal-header {
-        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
-        color: white;
-        border-radius: 15px 15px 0 0;
-        border: none;
-    }
-
-    .modal-title {
-        font-weight: 600;
-    }
-
-    .form-label {
-        font-weight: 600;
-        color: var(--secondary-gray);
-        margin-bottom: 0.5rem;
-    }
-
-    .form-control, .form-select {
-        border-radius: 8px;
-        border: 2px solid #e9ecef;
-        padding: 0.75rem;
-        transition: all 0.3s ease;
-    }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-red);
-            box-shadow: 0 0 0 0.2rem rgba(227, 30, 36, 0.25);
-        }
-
-    .btn-update {
-        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-        .btn-update:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(227, 30, 36, 0.4);
-            color: white;
-        }
-
-    .image-preview {
-        border-radius: 8px;
-        border: 2px solid #e9ecef;
-        padding: 0.5rem;
-        background: #f8f9fa;
-    }
-
-    /* Read-only styling for executive filling form */
-    .form-control[readonly], .form-control[disabled] {
+    /* Enhanced table styling */
+    .table-hover tbody tr:hover {
         background-color: #f8f9fa;
-        color: #495057;
-        border-color: #ced4da;
-        cursor: not-allowed;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
     }
 
-    .form-check-input[disabled] {
-        opacity: 0.6;
-        cursor: not-allowed;
+    /* Badge enhancements */
+    .badge {
+        font-weight: 600;
+        padding: 0.5rem 0.75rem;
+        border-radius: 20px;
     }
 
-    .form-check-input[disabled]:checked {
-        background-color: #6c757d;
+    /* Button group improvements */
+    .btn-group .btn {
+        margin-right: 0.25rem;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-group .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Employee photo styling */
+    .rounded-circle {
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .rounded-circle:hover {
         border-color: #6c757d;
+        transform: scale(1.05);
     }
 
-    @@media (max-width: 768px) {
-        .search-form {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .search-input-group,
-        .status-select-group {
-            min-width: auto;
-        }
-
-        .kaizen-table {
-            font-size: 0.875rem;
-        }
-
-            .kaizen-table th,
-            .kaizen-table td {
-                padding: 0.75rem 0.5rem;
-            }
+    /* Cost saving styling */
+    .text-success.fw-bold {
+        font-size: 0.95rem;
     }
+
+    /* Status badge icons */
+    .badge i {
+        font-size: 0.8rem;
+    }
+
+
 </style>
 
 <div class="container-fluid">
-    <!-- Header Section -->
-    <div class="kaizen-list-header text-center">
-        <div class="row align-items-center">
-            <div class="col-md-8 mx-auto">
-                <h1 class="display-5 fw-bold mb-3">
-                    <i class="fas fa-tasks me-3"></i>Kaizen Management
-                </h1>
-                <p class="lead mb-0">Review and manage engineer-approved Kaizen suggestions with executive filling</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Search Section -->
-    <div class="search-section">
-        <div class="row">
-            <div class="col-12">
-                <div class="search-form">
-                    <div class="search-input-group">
-                        <label for="searchString" class="form-label">
-                            <i class="fas fa-search me-2"></i>Search
-                        </label>
-                        <input type="text" id="searchString" class="form-control"
-                               placeholder="Search by Kaizen No, Employee Name, or Employee No..." />
+    <div class="row">
+        <div class="col-12">
+                        <div class="admin-card">
+                
+                <!-- Search Section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-search me-2"></i>
+                            Search & Filter
+                        </h5>
                     </div>
-                    <div class="status-select-group">
-                        <label for="status" class="form-label">
-                            <i class="fas fa-info-circle me-2"></i>Manager Status
-                        </label>
-                        <select id="status" class="form-select">
-                            <option value="">All Status</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" id="clearBtn" class="btn btn-clear">
-                            <i class="fas fa-times me-2"></i>Clear
-                        </button>
+                    <div class="card-body">
+                        <form method="get" action="@Url.Action("KaizenListManager", "Kaizen")" id="searchForm">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="startDate" class="form-label fw-bold">Start Date</label>
+                                        <input type="date" class="form-control" id="startDate" name="startDate" 
+                                               value="@Context.Request.Query["startDate"]">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="endDate" class="form-label fw-bold">End Date</label>
+                                        <input type="date" class="form-control" id="endDate" name="endDate" 
+                                               value="@Context.Request.Query["endDate"]">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="category" class="form-label fw-bold">Category</label>
+                                        <select class="form-select" id="category" name="category">
+                                            <option value="">All Categories</option>
+                                            <option value="Cost reduction" selected="@(Context.Request.Query["category"].ToString() == "Cost reduction")">Major Cost reduction by innovation</option>
+                                            <option value="Productivity Improvement" selected="@(Context.Request.Query["category"].ToString() == "Productivity Improvement")">Productivity Improvement</option>
+                                            <option value="OHS Improvement" selected="@(Context.Request.Query["category"].ToString() == "OHS Improvement")">OHS Improvement</option>
+                                            <option value="Quality Improvements" selected="@(Context.Request.Query["category"].ToString() == "Quality Improvements")">Quality Improvements</option>
+                                            <option value="Environmental friendly" selected="@(Context.Request.Query["category"].ToString() == "Environmental friendly")">Environmental friendly Innovation</option>
+                                            <option value="5S Improvement" selected="@(Context.Request.Query["category"].ToString() == "5S Improvement")">5S Improvement</option>
+                                            <option value="Ergonomics Improvements" selected="@(Context.Request.Query["category"].ToString() == "Ergonomics Improvements")">Ergonomics Improvements</option>
+                                            <option value="Energy Saving Improvement" selected="@(Context.Request.Query["category"].ToString() == "Energy Saving Improvement")">Energy Saving Improvement</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="managerStatus" class="form-label fw-bold">Manager Status</label>
+                                        <select class="form-select" id="managerStatus" name="managerStatus">
+                                            <option value="">All Status</option>
+                                            <option value="Approved" selected="@(Context.Request.Query["managerStatus"].ToString() == "Approved")">Approved</option>
+                                            <option value="Rejected" selected="@(Context.Request.Query["managerStatus"].ToString() == "Rejected")">Rejected</option>
+                                            <option value="Pending" selected="@(Context.Request.Query["managerStatus"].ToString() == "Pending")">Pending</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="searchString" class="form-label fw-bold">Search</label>
+                                        <input type="text" class="form-control" id="searchString" name="searchString" 
+                                               placeholder="Search by Kaizen No, Employee Name, or Employee No..."
+                                               value="@Context.Request.Query["searchString"]">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search me-2"></i>
+                                            Search
+                                        </button>
+                                        <a href="@Url.Action("KaizenListManager", "Kaizen")" class="btn btn-outline-secondary">
+                                            <i class="fas fa-times me-2"></i>
+                                            Clear Filters
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
 
-
-    <!-- Table Section -->
-    <div class="table-container">
-        <div id="searchResults">
-            @if (!Model?.Any() ?? true)
-            {
-                <div class="no-data-alert">
-                    <i class="fas fa-inbox fa-3x mb-3"></i>
-                    <h4>No Kaizen suggestions available</h4>
-                    <p class="mb-0">Start typing to search for Kaizen suggestions</p>
-                </div>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table kaizen-table">
-                        <thead>
-                            <tr>
-                                <th><i class="fas fa-calendar me-2"></i>Date Submitted</th>
-                                <th><i class="fas fa-hashtag me-2"></i>Kaizen No</th>
-                                <th><i class="fas fa-building me-2"></i>Department Name</th>
-                                <th><i class="fas fa-user me-2"></i>Employee Name</th>
-                                <th><i class="fas fa-id-badge me-2"></i>Employee No</th>
-                                <th><i class="fas fa-coins me-2"></i>Cost Saving</th>
-                                <th><i class="fas fa-info-circle me-2"></i>Manager Status</th>
-                                <th><i class="fas fa-cogs me-2"></i>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model)
-                            {
+                @if (!Model?.Any() ?? true)
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Kaizen Suggestions Found</h5>
+                        <p class="text-muted">No kaizens match your current search criteria.</p>
+                        <a href="@Url.Action("KaizenListManager", "Kaizen")" class="btn btn-manager">
+                            <i class="fas fa-times me-2"></i>
+                            Clear Filters
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="text-muted">
+                            <i class="fas fa-list me-2"></i>
+                            Showing @Model.Count() kaizen suggestion(s)
+                        </div>
+                        @if (!string.IsNullOrEmpty(Context.Request.Query["startDate"]) || 
+                              !string.IsNullOrEmpty(Context.Request.Query["endDate"]) || 
+                              !string.IsNullOrEmpty(Context.Request.Query["category"]) ||
+                              !string.IsNullOrEmpty(Context.Request.Query["managerStatus"]) ||
+                              !string.IsNullOrEmpty(Context.Request.Query["searchString"]))
+                        {
+                            <div class="text-muted small">
+                                <i class="fas fa-filter me-1"></i>
+                                Filters applied
+                            </div>
+                        }
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
                                 <tr>
-                                    <td class="text-center">@item.DateSubmitted.ToString("yyyy-MM-dd")</td>
-                                    <td class="text-center fw-bold">@Html.DisplayFor(modelItem => item.KaizenNo)</td>
-                                    <td class="text-center">@Html.DisplayFor(modelItem => item.Department)</td>
-                                    <td>@Html.DisplayFor(modelItem => item.EmployeeName)</td>
-                                    <td class="text-center">@Html.DisplayFor(modelItem => item.EmployeeNo)</td>
-                                    <td class="text-center cost-saving">
-                                        @(item.CostSaving.HasValue ? $"$ {item.CostSaving.Value:N2}" : "N/A")
-                                    </td>
-                                    <td class="text-center">
-                                        @{
-                                            var managerStatus = item.ManagerStatus ?? "Pending";
-                                            var statusClass = managerStatus switch
-                                            {
-                                                "Approved" => "status-approved",
-                                                "Rejected" => "status-rejected",
-                                                _ => "status-pending"
-                                            };
-                                        }
-                                        <span class="@statusClass">@managerStatus</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="btn-group" role="group">
-                                            <button class="btn btn-view" onclick="viewKaizen(@item.Id)">
-                                                <i class="fas fa-eye me-1"></i>View
-                                            </button>
-                                            @if ((item.EngineerStatus ?? "Pending") == "Approved" && (item.ManagerStatus ?? "Pending") == "Approved")
-                                            {
-                                                <button class="btn btn-success" onclick="openFormB(@item.Id)">
-                                                    <i class="fas fa-file-alt me-1"></i>Form B
-                                                </button>
-                                                <button class="btn btn-info" onclick="printFormB(@item.Id)">
-                                                    <i class="fas fa-print me-1"></i>Print
-                                                </button>
-                                            }
-                                            @if ((item.ManagerStatus ?? "Pending") == "Pending")
-                                            {
-                                                <button class="btn btn-approval" onclick="showApprovalPopup(@item.Id)">
-                                                    <i class="fas fa-gavel me-1"></i>Approval
-                                                </button>
-                                            }
-                                        </div>
-                                    </td>
+                                    <th>Date Submitted</th>
+                                    <th>Kaizen No</th>
+                                    <th>Employee</th>
+                                    <th>Cost Saving</th>
+                                    <th>Manager Status</th>
+                                    <th>Actions</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <small>@item.DateSubmitted.ToString("MMM dd, yyyy")</small>
+                                        </td>
+                                        <td>
+                                            <strong>@Html.DisplayFor(modelItem => item.KaizenNo)</strong>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(item.EmployeePhotoPath))
+                                                {
+                                                    <img src="@item.EmployeePhotoPath" 
+                                                         alt="Employee Photo" 
+                                                         class="rounded-circle me-2" 
+                                                         style="width: 30px; height: 30px; object-fit: cover;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                         style="width: 30px; height: 30px;">
+                                                        <i class="fas fa-user text-white" style="font-size: 12px;"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <div class="fw-bold">@Html.DisplayFor(modelItem => item.EmployeeName)</div>
+                                                    <small class="text-muted">@Html.DisplayFor(modelItem => item.EmployeeNo)</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (item.CostSaving.HasValue && item.CostSaving > 0)
+                                            {
+                                                <span class="text-success fw-bold">
+                                                    $@item.CostSaving.Value.ToString("N2")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No cost saving</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @{
+                                                var managerStatus = item.ManagerStatus ?? "Pending";
+                                                var statusClass = managerStatus switch
+                                                {
+                                                    "Approved" => "badge bg-success",
+                                                    "Rejected" => "badge bg-danger",
+                                                    _ => "badge bg-warning text-dark"
+                                                };
+                                            }
+                                            <span class="@statusClass">
+                                                <i class="fas fa-@(managerStatus == "Approved" ? "check" : managerStatus == "Rejected" ? "times" : "clock") me-1"></i>
+                                                @managerStatus
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="@Url.Action("KaizenDetails", "Kaizen", new { id = item.Id })" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye me-1"></i>
+                                                    View Details
+                                                </a>
+                                                @if ((item.ManagerStatus ?? "Pending") == "Pending")
+                                                {
+                                                    <button class="btn btn-sm btn-warning" onclick="showApprovalPopup(@item.Id)">
+                                                        <i class="fas fa-gavel me-1"></i>Approval
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
         </div>
     </div>
-</div>
 
 <!-- Edit Modal -->
 <div class="modal fade" id="editKaizenModal" tabindex="-1" aria-labelledby="editKaizenModalLabel" aria-hidden="true">
@@ -972,148 +718,33 @@
 }
 
 <script>
-    // Real-time search functionality
-    let searchTimeout;
-    const searchInput = document.getElementById('searchString');
-    const statusSelect = document.getElementById('status');
-    const clearBtn = document.getElementById('clearBtn');
-    const searchResults = document.getElementById('searchResults');
+    // Search functionality enhancements
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchForm = document.getElementById('searchForm');
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
 
-    // Search function with debouncing
-    function performSearch() {
-        const searchTerm = searchInput.value.trim();
-        const status = statusSelect.value;
-
-        // Show loading state
-        searchResults.innerHTML = `
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Searching...</p>
-            </div>
-        `;
-
-        // Make AJAX request
-        fetch(`/Kaizen/Search?searchString=${encodeURIComponent(searchTerm)}&status=${encodeURIComponent(status)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    displaySearchResults(data.kaizens, searchTerm, status);
-                } else {
-                    searchResults.innerHTML = `
-                        <div class="no-data-alert">
-                            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                            <h4>Error occurred</h4>
-                            <p class="mb-0">${data.message}</p>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Search error:', error);
-                searchResults.innerHTML = `
-                    <div class="no-data-alert">
-                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                        <h4>Search failed</h4>
-                        <p class="mb-0">An error occurred while searching. Please try again.</p>
-                    </div>
-                `;
-            });
-    }
-
-    // Display search results
-    function displaySearchResults(kaizens, searchTerm, status) {
-        if (!kaizens || kaizens.length === 0) {
-            let message = 'No Kaizen suggestions found';
-            if (searchTerm || status) {
-                message += ` for "${searchTerm || status}"`;
-            }
-            searchResults.innerHTML = `
-                <div class="no-data-alert">
-                    <i class="fas fa-search fa-3x mb-3"></i>
-                    <h4>${message}</h4>
-                    <p class="mb-0">Try adjusting your search criteria</p>
-                </div>
-            `;
-            return;
+        // Set default date range to last 30 days if no dates are selected
+        if (!startDateInput.value && !endDateInput.value) {
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            
+            startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+            endDateInput.value = today.toISOString().split('T')[0];
         }
 
-        const tableHTML = `
-            <div class="table-responsive">
-                <table class="table kaizen-table">
-                    <thead>
-                        <tr>
-                            <th><i class="fas fa-calendar me-2"></i>Date Submitted</th>
-                            <th><i class="fas fa-hashtag me-2"></i>Kaizen No</th>
-                            <th><i class="fas fa-building me-2"></i>Department Name</th>
-                            <th><i class="fas fa-user me-2"></i>Employee Name</th>
-                            <th><i class="fas fa-id-badge me-2"></i>Employee No</th>
-                            <th><i class="fas fa-coins me-2"></i>Cost Saving</th>
-                            <th><i class="fas fa-info-circle me-2"></i>Manager Status</th>
-                            <th><i class="fas fa-cogs me-2"></i>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${kaizens.map(item => {
-                            const managerStatus = item.managerStatus || 'Pending';
-                            const statusClass = managerStatus === 'Approved' ? 'status-approved' :
-                                               managerStatus === 'Rejected' ? 'status-rejected' : 'status-pending';
-                            return `
-                                <tr>
-                                    <td class="text-center">${new Date(item.dateSubmitted).toLocaleDateString()}</td>
-                                    <td class="text-center fw-bold">${item.kaizenNo}</td>
-                                    <td class="text-center">${item.department}</td>
-                                    <td>${item.employeeName}</td>
-                                    <td class="text-center">${item.employeeNo}</td>
-                                    <td class="text-center cost-saving">
-                                        ${item.costSaving ? `$ ${parseFloat(item.costSaving).toFixed(2)}` : 'N/A'}
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="${statusClass}">${managerStatus}</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <button class="btn btn-view" onclick="viewKaizen(${item.id})">
-                                            <i class="fas fa-eye me-1"></i>View
-                                        </button>
-                                        ${managerStatus === 'Pending' ? `
-                                            <button class="btn btn-approval" onclick="showApprovalPopup(${item.id})">
-                                                <i class="fas fa-gavel me-1"></i>Approval
-                                            </button>
-                                        ` : ''}
-
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-
-        searchResults.innerHTML = tableHTML;
-    }
-
-    // Event listeners
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(performSearch, 300); // 300ms delay
-    });
-
-    statusSelect.addEventListener('change', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(performSearch, 300);
-    });
-
-    clearBtn.addEventListener('click', function() {
-        searchInput.value = '';
-        statusSelect.value = '';
-        performSearch();
-    });
-
-    // Load initial data
-    document.addEventListener('DOMContentLoaded', function() {
-        performSearch();
+        // Validate date range
+        searchForm.addEventListener('submit', function(e) {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            
+            if (startDateInput.value && endDateInput.value && startDate > endDate) {
+                e.preventDefault();
+                alert('Start date cannot be after end date.');
+                return false;
+            }
+        });
 
         // Add event listeners for cost saving radio buttons in edit modal
         const editNoCostSavingRadio = document.getElementById('editNoCostSaving');
@@ -1224,16 +855,6 @@
                 modal.hide();
             });
     }
-
-    function openFormB(id) {
-        window.open(`/Kaizen/FormB/${id}`, '_blank');
-    }
-
-    function printFormB(id) {
-        window.open(`/Kaizen/PrintFormB/${id}`, '_blank');
-    }
-
-
 
     function executiveFilling() {
         // Get the current kaizen ID from the edit modal

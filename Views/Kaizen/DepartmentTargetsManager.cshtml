@@ -3,12 +3,12 @@
 @inject AppDbContext _context
 @{
     ViewData["Title"] = "Department Targets & Analytics";
-    Layout = "~/Views/Shared/_KaizenTeamLayout.cshtml";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
 
 <style>
     .targets-header {
-        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        background: linear-gradient(135deg, var(--manager-dark-blue) 0%, var(--manager-light-blue) 100%);
         color: white;
         padding: 2rem 0;
         margin-bottom: 2rem;
@@ -124,15 +124,23 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
 
-    .modal-header {
-        background: linear-gradient(135deg, #E31E24 0%, #c41e3a 100%);
-        color: white;
-        border-radius: 15px 15px 0 0;
-        border: none;
-    }
+         .modal-header {
+         background: linear-gradient(135deg, var(--manager-dark-blue) 0%, var(--manager-light-blue) 100%);
+         color: white;
+         border-radius: 15px 15px 0 0;
+         border: none;
+     }
+     
+     .modal-header.at-risk {
+         background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+     }
+     
+     .modal-header.completed {
+         background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+     }
 
     .btn-target {
-        background: linear-gradient(135deg, #E31E24 0%, #c41e3a 100%);
+        background: linear-gradient(135deg, var(--manager-dark-blue) 0%, var(--manager-light-blue) 100%);
         border: none;
         color: white;
         font-weight: 600;
@@ -143,7 +151,7 @@
 
     .btn-target:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(227, 30, 36, 0.4);
+        box-shadow: 0 5px 15px rgba(30, 64, 175, 0.4);
         color: white;
     }
 
@@ -158,13 +166,27 @@
     .status-on-track { background-color: #d1ecf1; color: #0c5460; }
     .status-behind { background-color: #fff3cd; color: #856404; }
     .status-at-risk { background-color: #f8d7da; color: #721c24; }
+
+    .manager-indicator {
+        background: linear-gradient(135deg, var(--manager-dark-blue) 0%, var(--manager-light-blue) 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    
 </style>
 
 <div class="container">
+
+
     <!-- Filter Section -->
     <div class="filter-section">
         <form method="get" class="row align-items-end">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label for="year" class="form-label">Year</label>
                 <select name="year" id="year" class="form-select" onchange="this.form.submit()">
                     @foreach (var year in Model.AvailableYears)
@@ -180,7 +202,7 @@
                     }
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label for="month" class="form-label">Month</label>
                 <select name="month" id="month" class="form-select" onchange="this.form.submit()">
                     @foreach (var month in Model.AvailableMonths)
@@ -200,129 +222,76 @@
                     }
                 </select>
             </div>
-            <div class="col-md-3">
-                <label for="statusFilter" class="form-label">Risk Status</label>
-                <select name="statusFilter" id="statusFilter" class="form-select">
-                    <option value="">All Departments</option>
-                    @{
-                        var selectedStatusFilter = Context.Request.Query["statusFilter"].ToString();
-                    }
-                    @if (selectedStatusFilter == "At Risk")
-                    {
-                        <option value="At Risk" selected>At Risk</option>
-                    }
-                    else
-                    {
-                        <option value="At Risk">At Risk</option>
-                    }
-                    @if (selectedStatusFilter == "Safe")
-                    {
-                        <option value="Safe" selected>Safe</option>
-                    }
-                    else
-                    {
-                        <option value="Safe">Safe</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-3 text-end">
-                <button type="submit" class="btn btn-target">
-                    <i class="fas fa-filter me-2"></i>Apply Filter
-                </button>
-            </div>
+                         <div class="col-md-4 text-end">
+                 <button type="submit" class="btn btn-danger">
+                     <i class="fas fa-filter me-2"></i>Apply Filter
+                 </button>
+             </div>
         </form>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="row summary-cards">
-        <div class="col-md-3">
-            <div class="summary-card submitted">
-                <h3 class="text-primary mb-2">@ViewBag.MostSubmittedCount</h3>
-                <p class="text-muted mb-0">@ViewBag.MostSubmittedDepartment</p>
-                <small class="text-muted">Most Submitted</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="summary-card cost-saving">
-                <h3 class="text-info mb-2">$@ViewBag.MostCostSavingKaizenAmount.ToString("N0")</h3>
-                <p class="text-muted mb-0">@ViewBag.MostCostSavingKaizenNo</p>
-                <small class="text-muted">Best Cost Saving</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="summary-card departments">
-                <h3 class="text-success mb-2">@Model.DepartmentTargets.Count</h3>
-                <p class="text-muted mb-0">Total Departments</p>
-                <small class="text-muted">Active Departments</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="summary-card at-risk">
-                <h3 class="text-danger mb-2">@Model.DepartmentTargets.Count(d => d.Status == "At Risk")</h3>
-                <p class="text-muted mb-0">Departments</p>
-                <small class="text-muted">At Risk</small>
-            </div>
-        </div>
-    </div>
 
-    <!-- Department List -->
-    <div class="chart-container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="mb-0">
-                <i class="fas fa-list me-2"></i>
-                Department Details
-            </h4>
-            <div class="text-muted">
-                <i class="fas fa-info-circle me-1"></i>
-                View only - No target setting allowed
-            </div>
-        </div>
-        
-        @if (!Model.DepartmentTargets.Any())
-        {
-            <div class="text-center py-5">
-                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No departments found</h5>
-                <p class="text-muted">No kaizen submissions found for the selected period.</p>
-            </div>
-        }
-        else
-        {
-            <div class="row">
-                @foreach (var dept in Model.DepartmentTargets)
-                {
-                    <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="department-card @dept.Status.ToLower().Replace(" ", "-")" 
-                             onclick="showDepartmentDetails('@dept.Department', @dept.TargetCount, @dept.AchievedCount, @dept.AchievementPercentage)">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <h6 class="mb-0">@dept.Department</h6>
-                                <span class="status-badge status-@dept.Status.ToLower().Replace(" ", "-")">
-                                    @dept.Status
-                                </span>
-                            </div>
-                            <div class="row text-center mb-3">
-                                <div class="col-6">
-                                    <h5 class="text-danger mb-1">@dept.TargetCount</h5>
-                                    <small class="text-muted">Target</small>
-                                </div>
-                                <div class="col-6">
-                                    <h5 class="text-success mb-1">@dept.AchievedCount</h5>
-                                    <small class="text-muted">Achieved</small>
-                                </div>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill @dept.Status.ToLower().Replace(" ", "-")" 
-                                     style="width: @(Math.Min(dept.AchievementPercentage, 100))%"></div>
-                            </div>
-                            <div class="text-center mt-2">
-                                <small class="text-muted">@dept.AchievementPercentage.ToString("F1")% Complete</small>
-                            </div>
-                        </div>
+
+                                      <!-- Department Details -->
+       <div class="row">
+                       <!-- Department Cards -->
+            <div class="col-md-12">
+                <div class="chart-container">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Your Department Performance
+                        </h4>
+                        <small class="text-muted">Click on to view chart</small>
                     </div>
-                }
+                   
+                   @if (!Model.DepartmentTargets.Any())
+                   {
+                       <div class="text-center py-5">
+                           <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                           <h5 class="text-muted">No department data found</h5>
+                           <p class="text-muted">No kaizen submissions found for your department in the selected period.</p>
+                       </div>
+                   }
+                   else
+                   {
+                       <div class="row">
+                           @foreach (var dept in Model.DepartmentTargets)
+                           {
+                               <div class="col-md-6 mb-3">
+                                   <div class="department-card @dept.Status.ToLower().Replace(" ", "-")" 
+                                        onclick="showDepartmentDetails('@dept.Department', @dept.TargetCount, @dept.AchievedCount, @dept.AchievementPercentage)">
+                                       <div class="d-flex justify-content-between align-items-start mb-3">
+                                           <h6 class="mb-0">@dept.Department</h6>
+                                           <span class="status-badge status-@dept.Status.ToLower().Replace(" ", "-")">
+                                               @dept.Status
+                                           </span>
+                                       </div>
+                                       <div class="row text-center mb-3">
+                                           <div class="col-6">
+                                               <h5 class="text-danger mb-1">@dept.TargetCount</h5>
+                                               <small class="text-muted">Target</small>
+                                           </div>
+                                           <div class="col-6">
+                                               <h5 class="text-success mb-1">@dept.AchievedCount</h5>
+                                               <small class="text-muted">Achieved</small>
+                                           </div>
+                                       </div>
+                                       <div class="progress-bar">
+                                           <div class="progress-fill @dept.Status.ToLower().Replace(" ", "-")" 
+                                                style="width: @(Math.Min(dept.AchievementPercentage, 100))%"></div>
+                                       </div>
+                                       <div class="text-center mt-2">
+                                           <small class="text-muted">@dept.AchievementPercentage.ToString("F1")% Complete</small>
+                                       </div>
+                                   </div>
+                               </div>
+                           }
+                       </div>
+                   }
+                               </div>
             </div>
-        }
-    </div>
+       </div>
 </div>
 
 <!-- Department Details Modal -->
@@ -372,11 +341,23 @@
             Percentage = d.AchievementPercentage
         })));
 
+        
+
         function showDepartmentDetails(department, target, achieved, percentage) {
             document.getElementById('deptName').textContent = department;
             document.getElementById('deptTarget').textContent = target;
             document.getElementById('deptAchieved').textContent = achieved;
             document.getElementById('deptPercentage').textContent = percentage.toFixed(1) + '%';
+            
+            // Set modal header color based on percentage
+            const modalHeader = document.querySelector('#departmentDetailsModal .modal-header');
+            modalHeader.className = 'modal-header'; // Reset to default
+            
+            if (percentage >= 100) {
+                modalHeader.classList.add('completed');
+            } else if (percentage < 50) {
+                modalHeader.classList.add('at-risk');
+            }
             
             // Create department-specific chart
             const modalChartContainer = document.getElementById('deptChart');
@@ -408,4 +389,4 @@
             new bootstrap.Modal(document.getElementById('departmentDetailsModal')).show();
         }
     </script>
-} 
+}

@@ -17,16 +17,6 @@
             <div class="card-body">
                 <form id="advancedSearchForm" method="get">
                     <div class="row">
-                        <!-- General Search -->
-                        <div class="col-md-6 mb-3">
-                            <label for="searchString" class="form-label">
-                                <i class="fas fa-search me-2"></i>General Search
-                            </label>
-                            <input type="text" id="searchString" name="searchString" class="form-control"
-                                   placeholder="Search by Kaizen No, Employee Name, Employee No, Department, or Description..."
-                                   value="@ViewBag.CurrentFilters?.SearchString" />
-                        </div>
-
                         <!-- Department Filter -->
                         <div class="col-md-6 mb-3">
                             <label for="department" class="form-label">
@@ -45,6 +35,30 @@
                                         else
                                         {
                                             <option value="@dept">@dept</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label">
+                                <i class="fas fa-tags me-2"></i>Category
+                            </label>
+                            <select id="category" name="category" class="form-select">
+                                <option value="">All Categories</option>
+                                @if (ViewBag.Categories != null)
+                                {
+                                    foreach (var cat in ViewBag.Categories)
+                                    {
+                                        if (ViewBag.CurrentFilters?.Category == cat)
+                                        {
+                                            <option value="@cat" selected>@cat</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@cat">@cat</option>
                                         }
                                     }
                                 }

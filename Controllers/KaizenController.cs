@@ -399,7 +399,7 @@ namespace KaizenWebApp.Controllers
 
         // GET: /Kaizen/Search (AJAX endpoint)
         [HttpGet]
-        public async Task<IActionResult> Search(string searchString, string department, string status)
+        public async Task<IActionResult> Search(string searchString, string department, string status, string category, string startDate, string endDate)
         {
             // Check for direct URL access and end session if detected
             if (await CheckAndEndSessionIfDirectAccess())
@@ -417,7 +417,7 @@ namespace KaizenWebApp.Controllers
 
                 Console.WriteLine($"=== SEARCH DEBUG ===");
                 Console.WriteLine($"Search called by: {username}, IsUser: {isUser}, IsManager: {isManager}, UserDepartment: {userDepartment}");
-                Console.WriteLine($"SearchString: '{searchString}', Department: '{department}', Status: '{status}'");
+                Console.WriteLine($"SearchString: '{searchString}', Department: '{department}', Status: '{status}', Category: '{category}', StartDate: '{startDate}', EndDate: '{endDate}'");
                 
                 // Debug: Check total kaizens in database
                 var totalKaizens = await _context.KaizenForms.CountAsync();
@@ -484,6 +484,28 @@ namespace KaizenWebApp.Controllers
                 {
                     query = query.Where(k => (k.ManagerStatus ?? "Pending") == status);
                     Console.WriteLine($"Applied manager status filter: {status}");
+                }
+
+                // Apply category filter
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                    Console.WriteLine($"Applied category filter: {category}");
+                }
+
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                    Console.WriteLine($"Applied start date filter: {startDate}");
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                    Console.WriteLine($"Applied end date filter: {endDate}");
                 }
 
                 // Debug: Check query before final execution
@@ -1499,7 +1521,7 @@ namespace KaizenWebApp.Controllers
 
         // GET: /Kaizen/KaizenListManager - For users with "manager" in their username
         [HttpGet]
-        public async Task<IActionResult> KaizenListManager(string searchString, string status)
+        public async Task<IActionResult> KaizenListManager(string searchString, string status, string category, string managerStatus, string startDate, string endDate)
         {
             // Check for direct URL access and end session if detected
             if (await CheckAndEndSessionIfDirectAccess())
@@ -1534,7 +1556,7 @@ namespace KaizenWebApp.Controllers
             {
                 Console.WriteLine($"=== KAIZENLISTMANAGER DEBUG ===");
                 Console.WriteLine($"KaizenListManager called by: {username}");
-                Console.WriteLine($"SearchString: {searchString}, Status: {status}");
+                Console.WriteLine($"SearchString: {searchString}, Status: {status}, Category: {category}, ManagerStatus: {managerStatus}, StartDate: {startDate}, EndDate: {endDate}");
 
                 var query = _context.KaizenForms.AsQueryable();
 
@@ -1601,10 +1623,37 @@ namespace KaizenWebApp.Controllers
                     Console.WriteLine($"Applied search filter for: {searchString}");
                 }
 
-                if (!string.IsNullOrEmpty(status))
+                // Filter by category
+                if (!string.IsNullOrEmpty(category))
                 {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                    Console.WriteLine($"Applied category filter: {category}");
+                }
+
+                // Filter by manager status
+                if (!string.IsNullOrEmpty(managerStatus))
+                {
+                    query = query.Where(k => (k.ManagerStatus ?? "Pending") == managerStatus);
+                    Console.WriteLine($"Applied manager status filter: {managerStatus}");
+                }
+                else if (!string.IsNullOrEmpty(status))
+                {
+                    // Fallback to the old 'status' parameter for backward compatibility
                     query = query.Where(k => (k.ManagerStatus ?? "Pending") == status);
-                    Console.WriteLine($"Applied manager status filter: {status}");
+                    Console.WriteLine($"Applied manager status filter (legacy): {status}");
+                }
+
+                // Filter by date range
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out var start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                    Console.WriteLine($"Applied start date filter: {startDate}");
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out var end))
+                {
+                    query = query.Where(k => k.DateSubmitted <= end);
+                    Console.WriteLine($"Applied end date filter: {endDate}");
                 }
 
                 var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
@@ -2065,7 +2114,7 @@ namespace KaizenWebApp.Controllers
                     return NotFound();
                 }
 
-                return View("FormB", new FormBViewModel
+                return View("PrintFormB", new FormBViewModel
                 {
                     Id = kaizen.Id,
                     KaizenNo = kaizen.KaizenNo,
@@ -2555,6 +2604,79 @@ namespace KaizenWebApp.Controllers
 
         // GET: /Kaizen/KaizenTeam - Full access page for kaizen team
         [HttpGet]
+        public async Task<IActionResult> KaizenTeamDashboard()
+        {
+            // Check if user is kaizen team
+            var username = User.Identity?.Name;
+            if (username?.ToLower().Contains("kaizenteam") != true)
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            // Get statistics for dashboard
+            var totalKaizens = _context.KaizenForms.Count();
+            
+            // Pending kaizens: where either engineer or manager is pending or null
+            var pendingKaizens = _context.KaizenForms.Count(k => 
+                k.EngineerStatus == "Pending" || k.ManagerStatus == "Pending" ||
+                k.EngineerStatus == null || k.ManagerStatus == null);
+            
+            // Rejected kaizens: where either manager or engineer status is rejected
+            var rejectedKaizens = _context.KaizenForms.Count(k => 
+                k.EngineerStatus == "Rejected" || k.ManagerStatus == "Rejected");
+            
+            // Approved kaizens: where both manager and engineer are approved
+            var approvedKaizens = _context.KaizenForms.Count(k => 
+                k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
+
+            // Awarded kaizens: where award price is assigned
+            var awardedKaizens = _context.KaizenForms.Count(k => 
+                !string.IsNullOrEmpty(k.AwardPrice));
+
+            // Calculate percentages
+            var totalForPercentage = totalKaizens > 0 ? totalKaizens : 1;
+            var pendingPercentage = Math.Round((double)pendingKaizens / totalForPercentage * 100, 1);
+            var approvedPercentage = Math.Round((double)approvedKaizens / totalForPercentage * 100, 1);
+            var rejectedPercentage = Math.Round((double)rejectedKaizens / totalForPercentage * 100, 1);
+
+            // Get most active department
+            var mostActiveDepartment = _context.KaizenForms
+                .Where(k => k.Department != null && k.Department.Trim() != "")
+                .GroupBy(k => k.Department)
+                .Select(g => new { Department = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .FirstOrDefault();
+
+            // Get highest cost saving department
+            var highestCostSavingDepartment = _context.KaizenForms
+                .Where(k => k.Department != null && k.Department.Trim() != "" && k.CostSaving.HasValue && k.CostSaving > 0)
+                .GroupBy(k => k.Department)
+                .Select(g => new { Department = g.Key, TotalSaving = g.Sum(k => k.CostSaving.Value) })
+                .OrderByDescending(x => x.TotalSaving)
+                .FirstOrDefault();
+
+            // Get highest cost saving amount
+            var highestCostSaving = _context.KaizenForms
+                .Where(k => k.CostSaving.HasValue && k.CostSaving > 0)
+                .Max(k => k.CostSaving) ?? 0;
+
+            ViewBag.TotalKaizens = totalKaizens;
+            ViewBag.PendingKaizens = pendingKaizens;
+            ViewBag.RejectedKaizens = rejectedKaizens;
+            ViewBag.ApprovedKaizens = approvedKaizens;
+            ViewBag.AwardedKaizens = awardedKaizens;
+            ViewBag.PendingPercentage = pendingPercentage;
+            ViewBag.ApprovedPercentage = approvedPercentage;
+            ViewBag.RejectedPercentage = rejectedPercentage;
+            ViewBag.MostActiveDepartment = mostActiveDepartment?.Department ?? "No Data";
+            ViewBag.MostActiveCount = mostActiveDepartment?.Count ?? 0;
+            ViewBag.HighestCostSavingDepartment = highestCostSavingDepartment?.Department ?? "No Data";
+            ViewBag.HighestCostSaving = highestCostSaving;
+
+            return View();
+        }
+
+        [HttpGet]
         public async Task<IActionResult> KaizenTeam(string searchString, string department, string status, 
             string startDate, string endDate, string category, string engineerStatus, string managerStatus, 
             string costSavingRange, string employeeName, string employeeNo, string kaizenNo)
@@ -2642,19 +2764,7 @@ namespace KaizenWebApp.Controllers
                     query = query.Where(k => k.Category != null && k.Category.Contains(category));
                 }
 
-                // Apply engineer status filter
-                if (!string.IsNullOrEmpty(engineerStatus))
-                {
-                    query = query.Where(k => (k.EngineerStatus ?? "Pending") == engineerStatus);
-                    Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
-                }
-
-                // Apply manager status filter
-                if (!string.IsNullOrEmpty(managerStatus))
-                {
-                    query = query.Where(k => (k.ManagerStatus ?? "Pending") == managerStatus);
-                    Console.WriteLine($"Applied manager status filter: {managerStatus}");
-                }
+                // Engineer status and manager status filters removed as requested
 
                 // Apply overall status filter
                 if (!string.IsNullOrEmpty(status))
@@ -2771,15 +2881,13 @@ namespace KaizenWebApp.Controllers
                     StartDate = startDate,
                     EndDate = endDate,
                     Category = category,
-                    EngineerStatus = engineerStatus,
-                    ManagerStatus = managerStatus,
                     CostSavingRange = costSavingRange,
                     EmployeeName = employeeName,
                     EmployeeNo = employeeNo,
                     KaizenNo = kaizenNo
                 };
 
-                return View("~/Views/Kaizen/KaizenTeam.cshtml", kaizens);
+                return View("KaizenTeamView", kaizens);
             }
             catch (Exception ex)
             {
@@ -2861,19 +2969,7 @@ namespace KaizenWebApp.Controllers
                     query = query.Where(k => k.Category != null && k.Category.Contains(category));
                 }
 
-                // Apply engineer status filter
-                if (!string.IsNullOrEmpty(engineerStatus))
-                {
-                    query = query.Where(k => (k.EngineerStatus ?? "Pending") == engineerStatus);
-                    Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
-                }
-
-                // Apply manager status filter
-                if (!string.IsNullOrEmpty(managerStatus))
-                {
-                    query = query.Where(k => (k.ManagerStatus ?? "Pending") == managerStatus);
-                    Console.WriteLine($"Applied manager status filter: {managerStatus}");
-                }
+                // Engineer status and manager status filters removed as requested
 
                 // Apply overall status filter
                 if (!string.IsNullOrEmpty(status))
@@ -3118,7 +3214,7 @@ namespace KaizenWebApp.Controllers
                 var costSavingDepartments = await _context.KaizenForms
                     .Where(k => k.Department != null && k.Department.Trim() != "" && k.CostSaving.HasValue && k.CostSaving > 0)
                     .GroupBy(k => k.Department)
-                    .Select(g => new { Department = g.Key, TotalSaving = g.Sum(k => k.CostSaving.Value) })
+                    .Select(g => new { Department = g.Key, TotalSaving = g.Sum(k => k.CostSaving!.Value) })
                     .OrderByDescending(x => x.TotalSaving)
                     .FirstOrDefaultAsync();
 
@@ -3133,7 +3229,7 @@ namespace KaizenWebApp.Controllers
                     .OrderByDescending(k => k.CostSaving)
                     .Select(k => new { 
                         KaizenNo = k.KaizenNo, 
-                        CostSavingAmount = k.CostSaving.Value, 
+                        CostSavingAmount = k.CostSaving!.Value, 
                         Department = k.Department 
                     })
                     .FirstOrDefaultAsync();
@@ -3148,6 +3244,251 @@ namespace KaizenWebApp.Controllers
             {
                 Console.WriteLine($"Error in DepartmentTargets: {ex.Message}");
                 return View("~/Views/Kaizen/DepartmentTargets.cshtml", new DepartmentTargetsPageViewModel());
+            }
+        }
+
+        // GET: /Kaizen/DepartmentTargetsManager - Department targets for managers (shows only their department)
+        [HttpGet]
+        public async Task<IActionResult> DepartmentTargetsManager(int? year, int? month)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow managers
+            if (!IsManagerRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                var selectedYear = year ?? DateTime.Now.Year;
+                var selectedMonth = month ?? DateTime.Now.Month;
+
+                // Get current manager's department
+                var managerDepartment = await GetCurrentUserDepartment();
+                if (string.IsNullOrEmpty(managerDepartment))
+                {
+                    TempData["AlertMessage"] = "Unable to determine your department. Please contact administrator.";
+                    return RedirectToAction("KaizenListManager");
+                }
+
+                var viewModel = new DepartmentTargetsPageViewModel
+                {
+                    SelectedYear = selectedYear,
+                    SelectedMonth = selectedMonth,
+                    AvailableYears = Enumerable.Range(2020, DateTime.Now.Year - 2020 + 1).ToList(),
+                    AvailableMonths = Enumerable.Range(1, 12).ToList()
+                };
+
+                // Get department target for the manager's department
+                var departmentTarget = await _context.DepartmentTargets
+                    .Where(dt => dt.Department == managerDepartment && dt.Year == selectedYear && dt.Month == selectedMonth)
+                    .FirstOrDefaultAsync();
+
+                var targetCount = departmentTarget?.TargetCount ?? 0;
+
+                // Count achieved kaizens for this department in the selected month/year
+                var achievedCount = await _context.KaizenForms
+                    .CountAsync(k => k.Department == managerDepartment && 
+                                    k.DateSubmitted.Year == selectedYear && 
+                                    k.DateSubmitted.Month == selectedMonth);
+
+                viewModel.DepartmentTargets.Add(new DepartmentTargetViewModel
+                {
+                    Department = managerDepartment,
+                    TargetCount = targetCount,
+                    AchievedCount = achievedCount,
+                    Year = selectedYear,
+                    Month = selectedMonth
+                });
+
+                // Calculate totals
+                viewModel.TotalTarget = viewModel.DepartmentTargets.Sum(dt => dt.TargetCount);
+                viewModel.TotalAchieved = viewModel.DepartmentTargets.Sum(dt => dt.AchievedCount);
+
+                // Calculate department-specific statistics
+                var departmentSubmissions = await _context.KaizenForms
+                    .Where(k => k.Department == managerDepartment)
+                    .CountAsync();
+
+                var costSavingTotal = await _context.KaizenForms
+                    .Where(k => k.Department == managerDepartment && k.CostSaving.HasValue && k.CostSaving > 0)
+                    .SumAsync(k => k.CostSaving!.Value);
+
+                var mostCostSavingKaizen = await _context.KaizenForms
+                    .Where(k => k.Department == managerDepartment && k.CostSaving.HasValue && k.CostSaving > 0)
+                    .OrderByDescending(k => k.CostSaving)
+                    .Select(k => new { 
+                        KaizenNo = k.KaizenNo, 
+                        CostSavingAmount = k.CostSaving!.Value 
+                    })
+                    .FirstOrDefaultAsync();
+
+                ViewBag.MostSubmittedDepartment = managerDepartment;
+                ViewBag.MostSubmittedCount = departmentSubmissions;
+                ViewBag.MostCostSavingDepartment = managerDepartment;
+                ViewBag.MostCostSavingAmount = costSavingTotal;
+                ViewBag.MostCostSavingKaizenNo = mostCostSavingKaizen?.KaizenNo ?? "No Data";
+                ViewBag.MostCostSavingKaizenAmount = mostCostSavingKaizen?.CostSavingAmount ?? 0;
+
+                return View("~/Views/Kaizen/DepartmentTargetsManager.cshtml", viewModel);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in DepartmentTargetsManager: {ex.Message}");
+                TempData["AlertMessage"] = "An error occurred while loading department targets.";
+                return RedirectToAction("KaizenListManager");
+            }
+        }
+
+        // GET: /Kaizen/KaizenDetails/{id} - Manager kaizen details page
+        [HttpGet]
+        public async Task<IActionResult> KaizenDetails(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow managers
+            if (!IsManagerRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                var kaizen = await _context.KaizenForms
+                    .FirstOrDefaultAsync(k => k.Id == id);
+
+                if (kaizen == null)
+                {
+                    TempData["ErrorMessage"] = "Kaizen suggestion not found.";
+                    return RedirectToAction("KaizenListManager");
+                }
+
+                return View("~/Views/Kaizen/KaizenDetails.cshtml", kaizen);
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "An error occurred while loading the kaizen details.";
+                return RedirectToAction("KaizenListManager");
+            }
+        }
+
+        // GET: /Kaizen/ManagerDashboard - Manager dashboard with summary boxes
+        [HttpGet]
+        public async Task<IActionResult> ManagerDashboard()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow managers
+            if (!IsManagerRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                // Get current user's department
+                var currentUserDepartment = await GetCurrentUserDepartment();
+                if (string.IsNullOrEmpty(currentUserDepartment))
+                {
+                    return RedirectToAction("Kaizenform");
+                }
+
+                // Get current month and year
+                var currentYear = DateTime.Now.Year;
+                var currentMonth = DateTime.Now.Month;
+
+                // Get department kaizens for current month
+                var currentMonthKaizens = await _context.KaizenForms
+                    .Where(k => k.Department == currentUserDepartment && 
+                               k.DateSubmitted.Year == currentYear && 
+                               k.DateSubmitted.Month == currentMonth)
+                    .ToListAsync();
+
+                // Get department kaizens for previous month
+                var previousMonth = currentMonth == 1 ? 12 : currentMonth - 1;
+                var previousYear = currentMonth == 1 ? currentYear - 1 : currentYear;
+                var previousMonthKaizens = await _context.KaizenForms
+                    .Where(k => k.Department == currentUserDepartment && 
+                               k.DateSubmitted.Year == previousYear && 
+                               k.DateSubmitted.Month == previousMonth)
+                    .ToListAsync();
+
+                // Get department target for current month
+                var currentMonthTarget = await _context.DepartmentTargets
+                    .Where(dt => dt.Department == currentUserDepartment && 
+                                dt.Year == currentYear && 
+                                dt.Month == currentMonth)
+                    .FirstOrDefaultAsync();
+
+                // Calculate summary statistics
+                var currentMonthSubmissions = currentMonthKaizens.Count;
+                var currentMonthTargetCount = currentMonthTarget?.TargetCount ?? 0;
+                var currentMonthAchievement = currentMonthTargetCount > 0 ? 
+                    (double)currentMonthSubmissions / currentMonthTargetCount * 100 : 0;
+
+                var previousMonthSubmissions = previousMonthKaizens.Count;
+                var previousMonthTarget = await _context.DepartmentTargets
+                    .Where(dt => dt.Department == currentUserDepartment && 
+                                dt.Year == previousYear && 
+                                dt.Month == previousMonth)
+                    .FirstOrDefaultAsync();
+                var previousMonthTargetCount = previousMonthTarget?.TargetCount ?? 0;
+                var previousMonthAchievement = previousMonthTargetCount > 0 ? 
+                    (double)previousMonthSubmissions / previousMonthTargetCount * 100 : 0;
+
+                // Calculate cost savings (only from approved kaizens)
+                var currentMonthCostSavings = currentMonthKaizens
+                    .Where(k => k.ManagerStatus == "Approved" && k.EngineerStatus == "Approved")
+                    .Sum(k => k.CostSaving ?? 0);
+                var previousMonthCostSavings = previousMonthKaizens
+                    .Where(k => k.ManagerStatus == "Approved" && k.EngineerStatus == "Approved")
+                    .Sum(k => k.CostSaving ?? 0);
+
+                // Calculate pending approvals
+                var pendingApprovals = currentMonthKaizens.Count(k => 
+                    k.ManagerStatus == "Pending" || k.ManagerStatus == null);
+
+                // Calculate completed kaizens
+                var completedKaizens = currentMonthKaizens.Count(k => 
+                    k.ManagerStatus == "Approved" && k.EngineerStatus == "Approved");
+
+                // Create dashboard view model
+                var dashboardViewModel = new ManagerDashboardViewModel
+                {
+                    CurrentMonthSubmissions = currentMonthSubmissions,
+                    CurrentMonthTarget = currentMonthTargetCount,
+                    CurrentMonthAchievement = currentMonthAchievement,
+                    PreviousMonthSubmissions = previousMonthSubmissions,
+                    PreviousMonthTarget = previousMonthTargetCount,
+                    PreviousMonthAchievement = previousMonthAchievement,
+                    CurrentMonthCostSavings = currentMonthCostSavings,
+                    PreviousMonthCostSavings = previousMonthCostSavings,
+                    PendingApprovals = pendingApprovals,
+                    CompletedKaizens = completedKaizens,
+                    Department = currentUserDepartment,
+                    CurrentMonth = currentMonth,
+                    CurrentYear = currentYear
+                };
+
+                return View("~/Views/Kaizen/ManagerDashboard.cshtml", dashboardViewModel);
+            }
+            catch (Exception)
+            {
+                // Log the exception
+                return RedirectToAction("Kaizenform");
             }
         }
 
@@ -3260,11 +3601,322 @@ namespace KaizenWebApp.Controllers
 
                 ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
 
-                return View(approvedKaizens);
+                return View("AwardTrackingView", approvedKaizens);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in AwardTracking: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // GET: /Kaizen/AwardTrackingManager - Award tracking for managers (department-specific)
+        [HttpGet]
+        public async Task<IActionResult> AwardTrackingManager(string startDate, string endDate, string category, string awardStatus)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow managers
+            if (!IsManagerRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                // Get current user's department
+                var currentUserDepartment = await GetCurrentUserDepartment();
+                if (string.IsNullOrEmpty(currentUserDepartment))
+                {
+                    TempData["Error"] = "Unable to determine your department. Please contact administrator.";
+                    return RedirectToAction("KaizenListManager");
+                }
+
+                // Get base query for approved kaizens in manager's department only
+                var query = _context.KaizenForms
+                    .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && k.Department == currentUserDepartment);
+
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                }
+
+                // Apply category filter
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                }
+
+                // Apply award status filter
+                if (!string.IsNullOrEmpty(awardStatus))
+                {
+                    if (awardStatus == "Pending")
+                    {
+                        // Filter for kaizens that don't have an award price assigned
+                        query = query.Where(k => string.IsNullOrEmpty(k.AwardPrice));
+                    }
+                    else
+                    {
+                        // Filter for kaizens with the specific award price
+                        query = query.Where(k => k.AwardPrice == awardStatus);
+                    }
+                }
+
+                // Get filtered results
+                var approvedKaizens = query.OrderByDescending(k => k.DateSubmitted).ToList();
+
+                // Populate ViewBag with filter options for manager's department only
+                var allCategories = new List<string>();
+                var kaizensWithCategories = _context.KaizenForms
+                    .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && 
+                                k.Department == currentUserDepartment && !string.IsNullOrEmpty(k.Category))
+                    .Select(k => k.Category)
+                    .ToList();
+
+                foreach (var catString in kaizensWithCategories)
+                {
+                    if (!string.IsNullOrEmpty(catString))
+                    {
+                        var categories = catString.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(c => c.Trim())
+                            .Where(c => !string.IsNullOrEmpty(c));
+                        allCategories.AddRange(categories);
+                    }
+                }
+
+                ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
+
+                return View("AwardTrackingManager", approvedKaizens);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in AwardTrackingManager: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // GET: /Kaizen/AwardDetailsManager - Award details for managers
+        [HttpGet]
+        public async Task<IActionResult> AwardDetailsManager(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow managers
+            if (!IsManagerRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                // Get current user's department
+                var currentUserDepartment = await GetCurrentUserDepartment();
+                if (string.IsNullOrEmpty(currentUserDepartment))
+                {
+                    TempData["Error"] = "Unable to determine your department. Please contact administrator.";
+                    return RedirectToAction("AwardTrackingManager");
+                }
+
+                var kaizen = _context.KaizenForms.FirstOrDefault(k => k.Id == id && k.Department == currentUserDepartment);
+                if (kaizen == null)
+                {
+                    return NotFound();
+                }
+
+                return View("AwardDetailsManager", kaizen);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in AwardDetailsManager: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // GET: /Kaizen/AwardDetails - Award details for Kaizen Team
+        [HttpGet]
+        public async Task<IActionResult> AwardDetails(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow Kaizen Team
+            if (!IsKaizenTeamRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                var kaizen = _context.KaizenForms.FirstOrDefault(k => k.Id == id);
+                if (kaizen == null)
+                {
+                    return NotFound();
+                }
+
+                return View("AwardDetails", kaizen);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in AwardDetails: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // POST: /Kaizen/AssignAwardManager - Assign award for managers
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignAward(int kaizenId, string awardPrice, string committeeComments, string committeeSignature)
+        {
+            // Check if user is kaizen team
+            var username = User.Identity?.Name;
+            if (username?.ToLower().Contains("kaizenteam") != true)
+            {
+                return Json(new { success = false, message = "Access denied. Only kaizen team members can assign awards." });
+            }
+
+            try
+            {
+                var kaizen = await _context.KaizenForms.FindAsync(kaizenId);
+                if (kaizen == null)
+                {
+                    return Json(new { success = false, message = "Kaizen suggestion not found." });
+                }
+
+                kaizen.AwardPrice = awardPrice;
+                kaizen.CommitteeComments = committeeComments;
+                kaizen.CommitteeSignature = committeeSignature;
+                kaizen.AwardDate = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Award assigned successfully!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignAwardManager(int kaizenId, string awardPrice, string committeeComments, string committeeSignature)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow managers
+            if (!IsManagerRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                // Get current user's department
+                var currentUserDepartment = await GetCurrentUserDepartment();
+                if (string.IsNullOrEmpty(currentUserDepartment))
+                {
+                    TempData["Error"] = "Unable to determine your department. Please contact administrator.";
+                    return RedirectToAction("AwardTrackingManager");
+                }
+
+                var kaizen = _context.KaizenForms.FirstOrDefault(k => k.Id == kaizenId && k.Department == currentUserDepartment);
+                if (kaizen == null)
+                {
+                    return NotFound();
+                }
+
+                kaizen.AwardPrice = awardPrice;
+                kaizen.CommitteeComments = committeeComments;
+                kaizen.CommitteeSignature = committeeSignature;
+                kaizen.AwardDate = DateTime.Now;
+
+                _context.SaveChanges();
+
+                TempData["SuccessMessage"] = "Award assigned successfully!";
+                return RedirectToAction("AwardTrackingManager");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in AssignAwardManager: {ex.Message}");
+                TempData["Error"] = "An error occurred while assigning the award.";
+                return RedirectToAction("AwardTrackingManager");
+            }
+        }
+
+        // GET: /Kaizen/AboutSystem
+        [HttpGet]
+        public async Task<IActionResult> AboutSystem()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Allow kaizen team and managers
+            if (!IsKaizenTeamRole() && !IsManagerRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in AboutSystem: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // GET: /Kaizen/UserManagement
+        [HttpGet]
+        public async Task<IActionResult> UserManagement()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow kaizen team
+            if (!IsKaizenTeamRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                var users = _context.Users.ToList();
+                return View(users);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UserManagement: {ex.Message}");
                 return RedirectToAction("Error", "Home");
             }
         }

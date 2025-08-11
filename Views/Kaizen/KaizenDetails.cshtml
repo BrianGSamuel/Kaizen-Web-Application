@@ -1,0 +1,1061 @@
+@model KaizenWebApp.Models.KaizenForm
+
+@{
+    ViewData["Title"] = "Kaizen Details";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+    
+    // Determine if there are any action buttons to show
+    bool hasManagerCommentButton = (Model.ManagerStatus ?? "Pending") != "Pending" && string.IsNullOrEmpty(Model.ManagerComments);
+    bool hasFormBButton = string.IsNullOrEmpty(Model.Comments) && string.IsNullOrEmpty(Model.EngineerApprovedBy);
+    bool hasPrintButton = string.IsNullOrEmpty(Model.ManagerComments) && string.IsNullOrEmpty(Model.ManagerSignature);
+    bool hasAnyButtons = hasManagerCommentButton || hasFormBButton || hasPrintButton;
+}
+
+<style>
+    .details-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .header-section {
+        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 1.5rem;
+        margin: -2rem -2rem 2rem -2rem;
+    }
+
+    .header-section.no-buttons {
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .basic-info-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 1.5rem;
+        margin: -2rem -2rem 2rem -2rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--secondary-gray);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-red);
+        box-shadow: 0 0 0 0.2rem rgba(227, 30, 36, 0.25);
+    }
+
+    .btn-approve {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-right: 0.5rem;
+    }
+
+    .btn-approve:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
+
+    .btn-reject {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-right: 0.5rem;
+    }
+
+    .btn-reject:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        color: white;
+    }
+
+    .btn-executive {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
+        border: none;
+        color: white;
+        font-weight: 700;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-right: 0.5rem;
+    }
+
+    .btn-executive:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(111, 66, 193, 0.5);
+        color: white;
+    }
+
+    .btn-manager {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border: none;
+        color: white;
+        font-weight: 700;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-right: 0.5rem;
+    }
+
+    .btn-manager:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(23, 162, 184, 0.5);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: var(--secondary-gray);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+    }
+
+    .btn-secondary:hover {
+        background: #555;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .btn-approve, .btn-reject, .btn-executive, .btn-manager {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        margin-right: 0.25rem;
+    }
+
+    .image-preview {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        margin-top: 1rem;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+
+    .status-approved {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        width: fit-content;
+        min-width: 80px;
+    }
+
+    .status-rejected {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        width: fit-content;
+        min-width: 80px;
+    }
+
+    .section-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .form-control[readonly], .form-control[disabled] {
+        background-color: #f8f9fa;
+        color: #495057;
+        border-color: #ced4da;
+        cursor: not-allowed;
+    }
+
+    .form-check-input[disabled] {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .form-check-input[disabled]:checked {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    .kaizen-number {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        display: inline-block;
+        margin-top: 0.5rem;
+    }
+
+    .quick-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .quick-info-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+
+    .quick-info-label {
+        font-weight: 600;
+        margin-right: 0.5rem;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="details-container">
+        @if (hasAnyButtons)
+        {
+            <!-- Header Section with Buttons -->
+            <div class="header-section">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <h3 class="mb-0">
+                                <i class="fas fa-eye me-2"></i>Kaizen Details
+                            </h3>
+                        </div>
+                        <div class="kaizen-number">
+                            <i class="fas fa-hashtag me-2"></i>Kaizen No: @Model.KaizenNo
+                        </div>
+                        <div class="quick-info">
+                            <div class="quick-info-item">
+                                <span class="quick-info-label">Department:</span>@Model.Department
+                            </div>
+                            <div class="quick-info-item">
+                                <span class="quick-info-label">Employee:</span>@Model.EmployeeName
+                            </div>
+                            <div class="quick-info-item">
+                                <span class="quick-info-label">Date:</span>@Model.DateSubmitted.ToString("MMM dd, yyyy")
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="d-flex justify-content-end align-items-center gap-2 flex-wrap">
+                            @if (hasManagerCommentButton)
+                            {
+                                <button class="btn btn-manager btn-sm" onclick="showManagerComment()">
+                                    <i class="fas fa-comments me-1"></i>Manager Comment
+                                </button>
+                            }
+                            
+                            @if (hasFormBButton)
+                            {
+                                <button class="btn btn-secondary btn-sm" onclick="showFormB()" style="min-width: 120px;">
+                                    <i class="fas fa-file-alt me-1"></i>Form B
+                                </button>
+                            }
+                            
+                            @if (hasPrintButton)
+                            {
+                                <button class="btn btn-secondary btn-sm" onclick="showPrintData()" style="min-width: 100px;">
+                                    <i class="fas fa-print me-1"></i>Print
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Header Section without Buttons - Show Basic Info -->
+            <div class="basic-info-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <h3 class="mb-0">
+                                <i class="fas fa-eye me-2"></i>Kaizen Details
+                            </h3>
+                        </div>
+                        <div class="kaizen-number">
+                            <i class="fas fa-hashtag me-2"></i>Kaizen No: @Model.KaizenNo
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="status-badge @(Model.ManagerStatus == "Approved" ? "status-approved" : Model.ManagerStatus == "Rejected" ? "status-rejected" : "status-pending")">
+                            @(Model.ManagerStatus ?? "Pending")
+                        </div>
+                    </div>
+                </div>
+                <div class="quick-info">
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">Department:</span>@Model.Department
+                    </div>
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">Employee:</span>@Model.EmployeeName (@Model.EmployeeNo)
+                    </div>
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">Submitted:</span>@Model.DateSubmitted.ToString("MMM dd, yyyy")
+                    </div>
+                    @if (Model.DateImplemented.HasValue)
+                    {
+                        <div class="quick-info-item">
+                            <span class="quick-info-label">Implemented:</span>@Model.DateImplemented.Value.ToString("MMM dd, yyyy")
+                        </div>
+                    }
+                    @if (Model.CostSaving.HasValue)
+                    {
+                        <div class="quick-info-item">
+                            <span class="quick-info-label">Cost Saving:</span>$@Model.CostSaving.Value.ToString("N2")/year
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+
+
+        <!-- Suggestion Description -->
+        <div class="section-card">
+            <h5 class="mb-3">
+                <i class="fas fa-lightbulb me-2"></i>Suggestion Description
+            </h5>
+            <textarea class="form-control" rows="4" readonly>@Model.SuggestionDescription</textarea>
+        </div>
+
+        <!-- Images -->
+        <div class="section-card">
+            <h5 class="mb-3">
+                <i class="fas fa-images me-2"></i>Kaizen Images
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">
+                        <i class="fas fa-image me-2"></i>Before Kaizen Image
+                    </label>
+                    @if (!string.IsNullOrEmpty(Model.BeforeKaizenImagePath))
+                    {
+                        <div class="image-preview text-center">
+                            <img src="@Model.BeforeKaizenImagePath" alt="Before Kaizen" class="img-fluid rounded" style="max-height: 200px; max-width: 100%;" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted text-center py-3">
+                            <i class="fas fa-image fa-2x mb-2"></i>
+                            <p class="mb-0">No image available</p>
+                        </div>
+                    }
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">
+                        <i class="fas fa-image me-2"></i>After Kaizen Image
+                    </label>
+                    @if (!string.IsNullOrEmpty(Model.AfterKaizenImagePath))
+                    {
+                        <div class="image-preview text-center">
+                            <img src="@Model.AfterKaizenImagePath" alt="After Kaizen" class="img-fluid rounded" style="max-height: 200px; max-width: 100%;" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted text-center py-3">
+                            <i class="fas fa-image fa-2x mb-2"></i>
+                            <p class="mb-0">No image available</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Saving Information -->
+        <div class="section-card">
+            <h5 class="mb-3">
+                <i class="fas fa-coins me-2"></i>Cost Saving Information
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">
+                        <i class="fas fa-coins me-2"></i>Cost Saving ($ per year)
+                    </label>
+                    <input type="text" class="form-control" value="@(Model.CostSaving.HasValue ? $"${Model.CostSaving.Value:N2}" : "N/A")" readonly />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">
+                        <i class="fas fa-dollar-sign me-2"></i>Current Dollar Rate
+                    </label>
+                    <input type="text" class="form-control" value="@(Model.DollarRate.HasValue ? $"${Model.DollarRate.Value:N2}" : "N/A")" readonly />
+                </div>
+            </div>
+        </div>
+
+        <!-- Other Benefits -->
+        <div class="section-card">
+            <h5 class="mb-3">
+                <i class="fas fa-star me-2"></i>Other Benefits
+            </h5>
+            <textarea class="form-control" rows="3" readonly>@(Model.OtherBenefits ?? "No additional benefits specified")</textarea>
+        </div>
+
+        <!-- Executive Review Section (if exists) -->
+        @if (!string.IsNullOrEmpty(Model.Comments) || !string.IsNullOrEmpty(Model.EngineerApprovedBy))
+        {
+            <div class="section-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-user-tie me-2"></i>Executive/Engineer Review
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="fas fa-signature me-2"></i>Approved By
+                        </label>
+                        <input type="text" class="form-control" value="@Model.EngineerApprovedBy" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="fas fa-folder me-2"></i>Categories
+                        </label>
+                        <input type="text" class="form-control" value="@Model.Category" readonly />
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label class="form-label">
+                            <i class="fas fa-comments me-2"></i>Comments & Recommendations
+                        </label>
+                        <textarea class="form-control" rows="4" readonly>@Model.Comments</textarea>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.CanImplementInOtherFields))
+                {
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-question-circle me-2"></i>Can be implemented in other fields?
+                            </label>
+                            <input type="text" class="form-control" value="@Model.CanImplementInOtherFields" readonly />
+                        </div>
+                        @if (Model.CanImplementInOtherFields == "Yes" && !string.IsNullOrEmpty(Model.ImplementationArea))
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Implementation Area
+                                </label>
+                                <input type="text" class="form-control" value="@Model.ImplementationArea" readonly />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Manager Comments Section (if exists) -->
+        @if (!string.IsNullOrEmpty(Model.ManagerComments))
+        {
+            <div class="section-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-comments me-2"></i>Manager Comments
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="fas fa-signature me-2"></i>Manager Signature
+                        </label>
+                        <input type="text" class="form-control" value="@Model.ManagerSignature" readonly />
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label class="form-label">
+                            <i class="fas fa-comment-dots me-2"></i>Comments & Recommendations
+                        </label>
+                        <textarea class="form-control" rows="4" readonly>@Model.ManagerComments</textarea>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalModalLabel">
+                    <i class="fas fa-gavel me-2"></i>Kaizen Approval
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-question-circle fa-3x text-primary mb-3"></i>
+                    <h5>What would you like to do with this Kaizen suggestion?</h5>
+                    <p class="text-muted">Please select your decision below</p>
+                </div>
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-approve btn-lg" onclick="showNameInput('approve')">
+                        <i class="fas fa-check me-2"></i>Approve
+                    </button>
+                    <button type="button" class="btn btn-reject btn-lg" onclick="showNameInput('reject')">
+                        <i class="fas fa-times me-2"></i>Reject
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Name Input Modal -->
+<div class="modal fade" id="nameInputModal" tabindex="-1" aria-labelledby="nameInputModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nameInputModalLabel">
+                    <i class="fas fa-user me-2"></i>Enter Your Name
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="userNameInput" class="form-label">
+                        <i class="fas fa-signature me-2"></i>Your Name
+                    </label>
+                    <input type="text" id="userNameInput" class="form-control" placeholder="Enter your full name" required />
+                    <div class="invalid-feedback">
+                        Please enter your name.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn" onclick="confirmAction()">
+                    <i class="fas fa-check me-2"></i>Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Manager Comment Modal -->
+<div class="modal fade" id="managerCommentModal" tabindex="-1" aria-labelledby="managerCommentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="managerCommentModalLabel">
+                    <i class="fas fa-comments me-2"></i>Manager Comment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="managerCommentForm">
+                    <input type="hidden" id="managerCommentKaizenId" name="KaizenId" value="@Model.Id" />
+                    
+                    <div class="mb-3">
+                        <label for="managerCommentText" class="form-label">
+                            <i class="fas fa-comment-dots me-2"></i>Comments & Recommendations
+                        </label>
+                        <textarea id="managerCommentText" name="Comments" class="form-control" rows="4" 
+                                  placeholder="Enter your comments and recommendations..." required></textarea>
+                        <div class="invalid-feedback">
+                            Please provide comments and recommendations.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="managerSignature" class="form-label">
+                            <i class="fas fa-signature me-2"></i>Enter Name for Signature
+                        </label>
+                        <input type="text" id="managerSignature" name="Signature" class="form-control" 
+                               placeholder="Enter your name for signature" required />
+                        <div class="invalid-feedback">
+                            Please enter your name for signature.
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-manager" onclick="saveManagerComment()">
+                    <i class="fas fa-save me-2"></i>Save Comment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Form B Modal -->
+<div class="modal fade" id="formBModal" tabindex="-1" aria-labelledby="formBModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="formBModalLabel">
+                    <i class="fas fa-file-alt me-2"></i>Form B - Kaizen Implementation Report
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="section-card">
+                            <h6 class="mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Project Information
+                            </h6>
+                            <div class="mb-2">
+                                <strong>Kaizen No:</strong> @Model.KaizenNo
+                            </div>
+                            <div class="mb-2">
+                                <strong>Project Title:</strong> @Model.SuggestionDescription
+                            </div>
+                            <div class="mb-2">
+                                <strong>Department:</strong> @Model.Department
+                            </div>
+                            <div class="mb-2">
+                                <strong>Employee Name:</strong> @Model.EmployeeName
+                            </div>
+                            <div class="mb-2">
+                                <strong>Employee No:</strong> @Model.EmployeeNo
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="section-card">
+                            <h6 class="mb-3">
+                                <i class="fas fa-calendar me-2"></i>Timeline Information
+                            </h6>
+                            <div class="mb-2">
+                                <strong>Date Submitted:</strong> @Model.DateSubmitted.ToString("yyyy-MM-dd")
+                            </div>
+                            <div class="mb-2">
+                                <strong>Date Implemented:</strong> @(Model.DateImplemented?.ToString("yyyy-MM-dd") ?? "Not implemented")
+                            </div>
+                            <div class="mb-2">
+                                <strong>Implementation Status:</strong> @(Model.DateImplemented.HasValue ? "Completed" : "Pending")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="section-card">
+                            <h6 class="mb-3">
+                                <i class="fas fa-coins me-2"></i>Financial Impact
+                            </h6>
+                            <div class="mb-2">
+                                <strong>Cost Saving:</strong> @(Model.CostSaving.HasValue ? $"${Model.CostSaving.Value:N2} per year" : "Not specified")
+                            </div>
+                            <div class="mb-2">
+                                <strong>Dollar Rate:</strong> @(Model.DollarRate.HasValue ? $"${Model.DollarRate.Value:N2}" : "Not specified")
+                            </div>
+                            <div class="mb-2">
+                                <strong>Cost Saving Type:</strong> @(Model.CostSavingType ?? "Not specified")
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="section-card">
+                            <h6 class="mb-3">
+                                <i class="fas fa-star me-2"></i>Additional Benefits
+                            </h6>
+                            <div class="mb-2">
+                                <strong>Other Benefits:</strong>
+                                <div class="mt-2 p-2 bg-light rounded">
+                                    @(Model.OtherBenefits ?? "No additional benefits specified")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="section-card">
+                            <h6 class="mb-3">
+                                <i class="fas fa-images me-2"></i>Visual Documentation
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Before Implementation:</strong>
+                                    @if (!string.IsNullOrEmpty(Model.BeforeKaizenImagePath))
+                                    {
+                                        <div class="mt-2">
+                                            <img src="@Model.BeforeKaizenImagePath" alt="Before Implementation" class="img-fluid rounded" style="max-height: 150px;" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="mt-2 text-muted">No image available</div>
+                                    }
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>After Implementation:</strong>
+                                    @if (!string.IsNullOrEmpty(Model.AfterKaizenImagePath))
+                                    {
+                                        <div class="mt-2">
+                                            <img src="@Model.AfterKaizenImagePath" alt="After Implementation" class="img-fluid rounded" style="max-height: 150px;" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="mt-2 text-muted">No image available</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="section-card">
+                            <h6 class="mb-3">
+                                <i class="fas fa-comments me-2"></i>Review & Approval
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <strong>Manager Status:</strong> @(Model.ManagerStatus ?? "Pending")
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Manager Approved By:</strong> @(Model.ManagerApprovedBy ?? "Not approved")
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Manager Comments:</strong>
+                                        <div class="mt-2 p-2 bg-light rounded">
+                                            @(Model.ManagerComments ?? "No manager comments")
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <strong>Engineer Status:</strong> @(Model.EngineerStatus ?? "Pending")
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Engineer Approved By:</strong> @(Model.EngineerApprovedBy ?? "Not approved")
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Engineer Comments:</strong>
+                                        <div class="mt-2 p-2 bg-light rounded">
+                                            @(Model.Comments ?? "No engineer comments")
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manager Comment Display Modal -->
+<div class="modal fade" id="managerCommentDisplayModal" tabindex="-1" aria-labelledby="managerCommentDisplayModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="managerCommentDisplayModalLabel">
+                    <i class="fas fa-comments me-2"></i>Manager Comments
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+                    <h6 class="mb-3">
+                        <i class="fas fa-user-tie me-2"></i>Manager Review
+                    </h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-comment-dots me-2"></i>Comments & Recommendations
+                        </label>
+                        <div class="form-control" style="background-color: white; min-height: 100px; border: 1px solid #ced4da;">
+                            <p id="displayManagerComments" class="mb-0"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-signature me-2"></i>Manager Signature
+                        </label>
+                        <div class="form-control" style="background-color: white; border: 1px solid #ced4da;">
+                            <p id="displayManagerSignature" class="mb-0 fw-bold"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Data Modal -->
+<div class="modal fade" id="printDataModal" tabindex="-1" aria-labelledby="printDataModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="printDataModalLabel">
+                    <i class="fas fa-print me-2"></i>Print Data - Kaizen Summary Report
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="section-card">
+                            <h6 class="mb-3">
+                                <i class="fas fa-file-text me-2"></i>Print Summary
+                            </h6>
+                            <div class="mb-2">
+                                <strong>Document Type:</strong> Kaizen Implementation Report
+                            </div>
+                            <div class="mb-2">
+                                <strong>Report Date:</strong> @DateTime.Now.ToString("yyyy-MM-dd HH:mm")
+                            </div>
+                            <div class="mb-2">
+                                <strong>Total Pages:</strong> 1
+                            </div>
+                            <div class="mb-2">
+                                <strong>Print Format:</strong> A4 Portrait
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="section-card">
+                            <h6 class="mb-3">
+                                <i class="fas fa-cogs me-2"></i>Print Settings
+                            </h6>
+                            <div class="mb-2">
+                                <strong>Paper Size:</strong> A4 (210mm x 297mm)
+                            </div>
+                            <div class="mb-2">
+                                <strong>Orientation:</strong> Portrait
+                            </div>
+                            <div class="mb-2">
+                                <strong>Margins:</strong> Standard (1 inch)
+                            </div>
+                            <div class="mb-2">
+                                <strong>Color Mode:</strong> Black & White
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="section-card">
+                            <h6 class="mb-3">
+                                <i class="fas fa-list me-2"></i>Print Content Preview
+                            </h6>
+                            <div class="mb-2">
+                                <strong>Header:</strong> Company Logo, Kaizen No: @Model.KaizenNo, Date: @DateTime.Now.ToString("yyyy-MM-dd")
+                            </div>
+                            <div class="mb-2">
+                                <strong>Section 1:</strong> Project Information (Employee details, Department, Suggestion description)
+                            </div>
+                            <div class="mb-2">
+                                <strong>Section 2:</strong> Implementation Details (Timeline, Cost savings, Benefits)
+                            </div>
+                            <div class="mb-2">
+                                <strong>Section 3:</strong> Visual Documentation (Before/After images)
+                            </div>
+                            <div class="mb-2">
+                                <strong>Section 4:</strong> Approval Information (Manager and Engineer reviews)
+                            </div>
+                            <div class="mb-2">
+                                <strong>Footer:</strong> Page numbers, Print timestamp, System generated
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentAction = null;
+
+    function approveKaizen() {
+        currentAction = 'approve';
+        const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+        modal.show();
+    }
+
+    function rejectKaizen() {
+        currentAction = 'reject';
+        const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+        modal.show();
+    }
+
+    function showNameInput(action) {
+        currentAction = action;
+        document.getElementById('userNameInput').value = '';
+        const modal = new bootstrap.Modal(document.getElementById('nameInputModal'));
+        modal.show();
+    }
+
+    function confirmAction() {
+        const name = document.getElementById('userNameInput').value.trim();
+        if (name) {
+            if (currentAction === 'approve') {
+                updateManagerStatus('Approved', name);
+            } else if (currentAction === 'reject') {
+                updateManagerStatus('Rejected', name);
+            }
+            bootstrap.Modal.getInstance(document.getElementById('nameInputModal')).hide();
+        } else {
+            alert('Please enter your name to confirm the action.');
+            document.getElementById('userNameInput').focus();
+        }
+    }
+
+    function updateManagerStatus(status, name) {
+        if (confirm(`Are you sure you want to ${status.toLowerCase()} this Kaizen suggestion?`)) {
+            fetch(`/Kaizen/UpdateManagerStatus/@Model.Id`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ managerStatus: status, managerApprovedBy: name })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Kaizen suggestion ${status.toLowerCase()} successfully!`);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the status.');
+            });
+        }
+    }
+
+
+
+    function showManagerComment() {
+        // Show input form for new manager comments
+        const modal = new bootstrap.Modal(document.getElementById('managerCommentModal'));
+        modal.show();
+    }
+
+
+
+
+
+    function saveManagerComment() {
+        const comments = document.getElementById('managerCommentText').value.trim();
+        const signature = document.getElementById('managerSignature').value.trim();
+        
+        if (!comments) {
+            alert('Please provide comments and recommendations.');
+            document.getElementById('managerCommentText').focus();
+            return;
+        }
+        
+        if (!signature) {
+            alert('Please enter your name for signature.');
+            document.getElementById('managerSignature').focus();
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('Comments', comments);
+        formData.append('Signature', signature);
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        fetch(`/Kaizen/SaveManagerComment/@Model.Id`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Manager comment saved successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('managerCommentModal')).hide();
+                
+                // Clear the form
+                document.getElementById('managerCommentText').value = '';
+                document.getElementById('managerSignature').value = '';
+                
+                // Reload the page to show updated button state
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the manager comment.');
+        });
+    }
+
+
+
+    function showFormB() {
+        const modal = new bootstrap.Modal(document.getElementById('formBModal'));
+        modal.show();
+    }
+
+    function showPrintData() {
+        const modal = new bootstrap.Modal(document.getElementById('printDataModal'));
+        modal.show();
+    }
+</script>

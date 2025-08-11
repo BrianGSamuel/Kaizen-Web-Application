@@ -65,13 +65,46 @@
             font-size: 14px !important;
             margin-bottom: 10px !important;
         }
+        .form-title img {
+            height: 30px !important;
+            width: auto !important;
+        }
         .proposer-photo {
-            width: 50px !important;
-            height: 50px !important;
+            width: 80px !important;
+            height: 80px !important;
         }
         .proposer-photo-placeholder {
-            width: 50px !important;
-            height: 50px !important;
+            width: 80px !important;
+            height: 80px !important;
+        }
+        .signature-section {
+            gap: 8px !important;
+            margin-top: 10px !important;
+        }
+        .signature-box {
+            padding: 8px !important;
+        }
+        .form-value.large {
+            min-height: 160px !important;
+            padding: 12px 16px !important;
+            border: 1px solid #ddd !important;
+            border-radius: 4px !important;
+            background-color: #ffffff !important;
+        }
+        .signature-title {
+            font-size: 12px !important;
+            margin-bottom: 8px !important;
+        }
+        .signature-line {
+            height: 20px !important;
+            margin-top: 8px !important;
+            margin-bottom: 4px !important;
+        }
+        .signature-box small {
+            font-size: 10px !important;
+        }
+        .signature-box {
+            padding: 15px !important;
         }
         .kaizen-number {
             padding: 4px 10px !important;
@@ -294,14 +327,16 @@
         margin-top: 20px;
     }
 
-    .signature-box {
-        flex: 1;
-        border: 2px solid #3498db;
-        border-radius: 6px;
-        padding: 15px;
-        text-align: center;
-        background: #ffffff;
-    }
+            .signature-box {
+            flex: 1;
+            border: 2px solid #3498db;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+        }
 
     .signature-title {
         font-weight: bold;
@@ -312,12 +347,12 @@
         letter-spacing: 0.5px;
     }
 
-    .signature-line {
-        border-bottom: 1px solid #000;
-        height: 30px;
-        margin-top: 10px;
-        margin-bottom: 5px;
-    }
+            .signature-line {
+            border-bottom: 1px solid #000;
+            height: 30px;
+            margin-top: auto;
+            margin-bottom: 5px;
+        }
 
     .footer {
         text-align: right;
@@ -381,9 +416,9 @@
     }
 
     .proposer-photo {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        border-radius: 0;
         object-fit: cover;
         border: 3px solid #3498db;
         margin: 0 auto 5px;
@@ -391,9 +426,9 @@
     }
 
     .proposer-photo-placeholder {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        border-radius: 0;
         background: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%);
         display: flex;
         align-items: center;
@@ -420,19 +455,25 @@
 
 <div class="form-container">
     <div class="button-container no-print">
-        <button class="btn btn-primary" onclick="window.print()">
+        <button class="btn btn-info" onclick="window.open('/Kaizen/PrintFormB/@Model.Id', '_blank')">
             <i class="fas fa-print me-2"></i>Print Form
         </button>
     </div>
 
-    <div class="form-title">Section B (Kaizen Display Form)</div>
+    <div class="form-title">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <img src="/images/flintec-logo.png" alt="Flintec Logo" style="height: 40px; width: auto;">
+            <span>Section B (Kaizen Display Form)</span>
+            <div style="width: 40px;"></div> <!-- Spacer to balance the layout -->
+        </div>
+    </div>
 
     <!-- Header Section -->
     <div class="header-section">
         <div class="form-row">
             <div class="form-label">Kaizen Suggestion #:</div>
             <div class="kaizen-number">@Model.KaizenNo</div>
-            <div class="form-label" style="margin-left: 20px; margin-right: 5px;">කාර්තුව:</div>
+            <div class="form-label" style="margin-left: 20px; margin-right: 0px;">කාර්තුව:</div>
             <div class="checkbox-group" style="margin-left: 0; padding-left: 0px; padding: 0px;">
                 <div class="checkbox-item">
                     <input type="checkbox" id="task1" />
@@ -526,8 +567,7 @@
         </div>
 
         <div class="signature-box">
-            <div class="signature-title">අංශ ප්‍රධානීගේ සටහන/ Senior Manager Comments</div>
-            <div class="form-value large">@Model.ManagerComments</div>
+            <div class="signature-title">අංශ ප්‍රධානී (Senior Manager)</div>
             <div class="signature-line"></div>
             <small>අත්සන (Signature): @Model.ManagerSignature</small>
         </div>

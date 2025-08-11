@@ -99,12 +99,17 @@ namespace KaizenWebApp.Controllers
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-            // Check if username contains "admin", "user", or "manager" to determine navigation
+            // Check if username contains "admin", "user", "manager", or "kaizenteam" to determine navigation
             Console.WriteLine($"User logged in: {user.UserName}, redirecting...");
             if (user.UserName.ToLower() == "admin")
             {
                 Console.WriteLine($"Redirecting admin user to Dashboard");
                 return RedirectToAction("Dashboard", "Admin");
+            }
+            else if (user.UserName.ToLower().Contains("kaizenteam"))
+            {
+                Console.WriteLine($"Redirecting kaizen team user to KaizenTeamDashboard");
+                return RedirectToAction("KaizenTeamDashboard", "Kaizen");
             }
             else if (user.UserName.ToLower().Contains("user"))
             {
@@ -112,7 +117,7 @@ namespace KaizenWebApp.Controllers
             }
             else if (user.UserName.ToLower().Contains("manager"))
             {
-                return RedirectToAction("KaizenListManager", "Kaizen");
+                return RedirectToAction("ManagerDashboard", "Kaizen");
             }
             else
             {
@@ -372,9 +377,21 @@ namespace KaizenWebApp.Controllers
             {
                 return RedirectToAction("Kaizenform", "Kaizen");
             }
-            else
+            else if (username.ToLower().Contains("kaizenteam"))
+            {
+                return RedirectToAction("KaizenTeamDashboard", "Kaizen");
+            }
+            else if (username.ToLower().Contains("manager"))
+            {
+                return RedirectToAction("KaizenListManager", "Kaizen");
+            }
+            else if (username.ToLower().Contains("engineer"))
             {
                 return RedirectToAction("KaizenListEngineer", "Kaizen");
+            }
+            else
+            {
+                return RedirectToAction("KaizenListEngineer", "Kaizen"); // Default fallback
             }
         }
     }

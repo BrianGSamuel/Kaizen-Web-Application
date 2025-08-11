@@ -59,14 +59,21 @@ namespace KaizenWebApp.Controllers
 
         public IActionResult UserManagement()
         {
-            // Check if user is admin
+            // Check if user is admin or kaizen team
             var username = User.Identity?.Name;
-            if (username?.ToLower() != "admin")
+            if (username?.ToLower() != "admin" && !username?.ToLower().Contains("kaizenteam") == true)
             {
                 return RedirectToAction("AccessDenied", "Home");
             }
 
             var users = _context.Users.ToList();
+            
+            // If kaizen team user, return the kaizen team view
+            if (username?.ToLower().Contains("kaizenteam") == true)
+            {
+                return View("KaizenTeamUserManagement", users);
+            }
+            
             return View(users);
         }
 
@@ -356,9 +363,9 @@ namespace KaizenWebApp.Controllers
         [HttpGet]
         public IActionResult GetUserDetails(int id)
         {
-            // Check if user is admin
+            // Check if user is admin or kaizen team
             var username = User.Identity?.Name;
-            if (username?.ToLower() != "admin")
+            if (username?.ToLower() != "admin" && !username?.ToLower().Contains("kaizenteam") == true)
             {
                 return Json(new { success = false, message = "Access denied." });
             }
@@ -405,9 +412,9 @@ namespace KaizenWebApp.Controllers
         [HttpGet]
         public IActionResult EditUser(int id)
         {
-            // Check if user is admin
+            // Check if user is admin or kaizen team
             var username = User.Identity?.Name;
-            if (username?.ToLower() != "admin")
+            if (username?.ToLower() != "admin" && !username?.ToLower().Contains("kaizenteam") == true)
             {
                 return RedirectToAction("AccessDenied", "Home");
             }
@@ -424,9 +431,9 @@ namespace KaizenWebApp.Controllers
         [HttpPost]
         public IActionResult EditUser(Users model)
         {
-            // Check if user is admin
+            // Check if user is admin or kaizen team
             var username = User.Identity?.Name;
-            if (username?.ToLower() != "admin")
+            if (username?.ToLower() != "admin" && !username?.ToLower().Contains("kaizenteam") == true)
             {
                 return RedirectToAction("AccessDenied", "Home");
             }
@@ -463,6 +470,86 @@ namespace KaizenWebApp.Controllers
 
             TempData["SuccessMessage"] = "User updated successfully!";
             return RedirectToAction("UserManagement");
+        }
+
+        [HttpPost]
+        public IActionResult AddUser(string username, string department, string password)
+        {
+            // Check if user is admin or kaizen team
+            var currentUser = User.Identity?.Name;
+            if (currentUser?.ToLower() != "admin" && !currentUser?.ToLower().Contains("kaizenteam") == true)
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
+            try
+            {
+                // Check if username already exists
+                var existingUser = _context.Users.FirstOrDefault(u => u.UserName == username);
+                if (existingUser != null)
+                {
+                    return Json(new { success = false, message = "Username already exists." });
+                }
+
+                var newUser = new Users
+                {
+                    UserName = username,
+                    DepartmentName = department,
+                    Password = password
+                };
+
+                _context.Users.Add(newUser);
+                _context.SaveChanges();
+
+                return Json(new { success = true, message = "User added successfully." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error adding user: " + ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ExportUsers()
+        {
+            // Check if user is admin or kaizen team
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin" && !username?.ToLower().Contains("kaizenteam") == true)
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var users = _context.Users.ToList();
+            
+            // Create CSV content
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Username,Department,Role");
+            
+            foreach (var user in users)
+            {
+                var role = "User";
+                if (user.UserName?.ToLower().Contains("admin") == true)
+                {
+                    role = "Administrator";
+                }
+                else if (user.UserName?.ToLower().Contains("engineer") == true)
+                {
+                    role = "Engineer";
+                }
+                else if (user.UserName?.ToLower().Contains("manager") == true)
+                {
+                    role = "Manager";
+                }
+                else if (user.UserName?.ToLower().Contains("kaizenteam") == true)
+                {
+                    role = "Kaizen Team";
+                }
+                
+                csv.AppendLine($"{user.UserName},{user.DepartmentName},{role}");
+            }
+            
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            return File(bytes, "text/csv", "users.csv");
         }
 
         [HttpPost]
@@ -662,7 +749,6 @@ namespace KaizenWebApp.Controllers
             // Pass current filter values back to view
             ViewBag.CurrentFilters = new
             {
-                SearchString = searchString,
                 Department = department,
                 Status = status,
                 StartDate = startDate,
