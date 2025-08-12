@@ -288,22 +288,37 @@ namespace KaizenWebApp.Controllers
             {
                 Console.WriteLine("Starting form processing...");
                 
-                // Validate file uploads
+                // Track which step has validation errors
+                int errorStep = 1;
+                bool hasImageError = false;
+                
+                // Validate file uploads and track which step they belong to
                 if (viewModel.BeforeKaizenImage != null && !IsValidImage(viewModel.BeforeKaizenImage))
                 {
-                    ModelState.AddModelError("BeforeKaizenImage", "Invalid image file. Only PNG, JPG, JPEG, WebP up to 5MB allowed.");
-                    return View("~/Views/Home/Kaizenform.cshtml", viewModel);
+                    ModelState.AddModelError("BeforeKaizenImage", "Invalid image format. Only PNG, JPG, JPEG, WebP files up to 5MB are allowed.");
+                    errorStep = 3; // Step 3 contains BeforeKaizenImage
+                    hasImageError = true;
                 }
 
                 if (viewModel.AfterKaizenImage != null && !IsValidImage(viewModel.AfterKaizenImage))
                 {
-                    ModelState.AddModelError("AfterKaizenImage", "Invalid image file. Only PNG, JPG, JPEG, WebP up to 5MB allowed.");
-                    return View("~/Views/Home/Kaizenform.cshtml", viewModel);
+                    ModelState.AddModelError("AfterKaizenImage", "Invalid image format. Only PNG, JPG, JPEG, WebP files up to 5MB are allowed.");
+                    errorStep = 3; // Step 3 contains AfterKaizenImage
+                    hasImageError = true;
                 }
 
                 if (viewModel.EmployeePhoto != null && !IsValidImage(viewModel.EmployeePhoto))
                 {
-                    ModelState.AddModelError("EmployeePhoto", "Invalid image file. Only PNG, JPG, JPEG, WebP up to 5MB allowed.");
+                    ModelState.AddModelError("EmployeePhoto", "Invalid image format. Only PNG, JPG, JPEG, WebP files up to 5MB are allowed.");
+                    errorStep = 2; // Step 2 contains EmployeePhoto
+                    hasImageError = true;
+                }
+
+                // If there are image validation errors, return to the appropriate step
+                if (hasImageError)
+                {
+                    TempData["ErrorStep"] = errorStep;
+                    TempData["ImageValidationError"] = true;
                     return View("~/Views/Home/Kaizenform.cshtml", viewModel);
                 }
 
@@ -451,17 +466,23 @@ namespace KaizenWebApp.Controllers
                     var afterEngineerStatusFilter = await query.CountAsync();
                     Console.WriteLine($"Search - Kaizens after EngineerStatus filter: {afterEngineerStatusFilter}");
                     
-                                    // Filter to show only kaizens with executive filling data
-                query = query.Where(k => 
-                    !string.IsNullOrEmpty(k.Category) &&
-                    !string.IsNullOrEmpty(k.Comments) &&
-                    !string.IsNullOrEmpty(k.CanImplementInOtherFields)
-                );
+                    // Filter to show only kaizens with executive filling data
+                    query = query.Where(k => 
+                        !string.IsNullOrEmpty(k.Category) &&
+                        !string.IsNullOrEmpty(k.Comments) &&
+                        !string.IsNullOrEmpty(k.CanImplementInOtherFields)
+                    );
                     Console.WriteLine("Filtered to show only kaizens with completed executive filling");
                     
                     // Debug: Check after executive filling filter
                     var afterExecutiveFillingFilter = await query.CountAsync();
                     Console.WriteLine($"Search - Kaizens after executive filling filter: {afterExecutiveFillingFilter}");
+                }
+                // For engineers, show all kaizens in their department (including pending ones)
+                else if (IsEngineerRole())
+                {
+                    Console.WriteLine("Engineer search - showing all kaizens in department including pending ones");
+                    // No additional filtering needed - engineers can see all kaizens in their department
                 }
 
                 // Apply search filter
@@ -479,11 +500,19 @@ namespace KaizenWebApp.Controllers
                 // Department filter is now always applied based on user's department
                 // No additional department filtering needed
 
-                // Apply manager status filter
+                // Apply status filter based on user role
                 if (!string.IsNullOrEmpty(status))
                 {
-                    query = query.Where(k => (k.ManagerStatus ?? "Pending") == status);
-                    Console.WriteLine($"Applied manager status filter: {status}");
+                    if (isManager)
+                    {
+                        query = query.Where(k => (k.ManagerStatus ?? "Pending") == status);
+                        Console.WriteLine($"Applied manager status filter: {status}");
+                    }
+                    else if (IsEngineerRole())
+                    {
+                        query = query.Where(k => (k.EngineerStatus ?? "Pending") == status);
+                        Console.WriteLine($"Applied engineer status filter: {status}");
+                    }
                 }
 
                 // Apply category filter
@@ -1432,7 +1461,7 @@ namespace KaizenWebApp.Controllers
         // ------------------- MANAGER FUNCTIONALITY -------------------
 
         [HttpGet]
-        public async Task<IActionResult> KaizenListEngineer(string searchString, string status)
+        public async Task<IActionResult> KaizenListEngineer(string searchString, string startDate, string endDate, string category, string engineerStatus)
         {
             // Check for direct URL access and end session if detected
             if (await CheckAndEndSessionIfDirectAccess())
@@ -1450,7 +1479,7 @@ namespace KaizenWebApp.Controllers
             {
                 Console.WriteLine($"=== KAIZENLISTENGINEER DEBUG ===");
                 Console.WriteLine($"KaizenListEngineer called by: {User?.Identity?.Name}");
-                Console.WriteLine($"SearchString: {searchString}, Status: {status}");
+                Console.WriteLine($"SearchString: {searchString}, StartDate: {startDate}, EndDate: {endDate}, Category: {category}, EngineerStatus: {engineerStatus}");
 
                 var query = _context.KaizenForms.AsQueryable();
 
@@ -1470,14 +1499,9 @@ namespace KaizenWebApp.Controllers
                     return View("~/Views/Kaizen/KaizenListEngineer.cshtml", new List<KaizenForm>());
                 }
 
-                // Filter to show only Kaizen suggestions where executive filling fields are completed
-                // This ensures engineers can see the executive filling data that belongs to each specific kaizen
-                query = query.Where(k => 
-                    !string.IsNullOrEmpty(k.Category) &&
-                    !string.IsNullOrEmpty(k.Comments) &&
-                    !string.IsNullOrEmpty(k.CanImplementInOtherFields)
-                );
-                Console.WriteLine("Filtered to show only Kaizen suggestions with completed executive filling");
+                // Engineers can see all kaizens in their department, including pending ones
+                // No filtering for executive filling - engineers need to see pending items for approval
+                Console.WriteLine("Engineers can see all kaizens in their department including pending ones");
 
                 if (!string.IsNullOrEmpty(searchString))
                 {
@@ -1490,19 +1514,43 @@ namespace KaizenWebApp.Controllers
                     Console.WriteLine($"Applied search filter for: {searchString}");
                 }
 
-                if (!string.IsNullOrEmpty(status))
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
                 {
-                    query = query.Where(k => (k.EngineerStatus ?? "Pending") == status);
-                    Console.WriteLine($"Applied engineer status filter: {status}");
+                    query = query.Where(k => k.DateSubmitted >= start);
+                    Console.WriteLine($"Applied start date filter: {startDate}");
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                    Console.WriteLine($"Applied end date filter: {endDate}");
+                }
+
+                // Filter by category
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                    Console.WriteLine($"Applied category filter: {category}");
+                }
+
+                // Filter by engineer status
+                if (!string.IsNullOrEmpty(engineerStatus))
+                {
+                    query = query.Where(k => (k.EngineerStatus ?? "Pending") == engineerStatus);
+                    Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
                 }
 
                 var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
-                Console.WriteLine($"KaizenListEngineer returned {kaizens.Count} results with executive filling data");
+                Console.WriteLine($"KaizenListEngineer returned {kaizens.Count} results (all kaizens in department)");
                 
-                // Debug: Show sample results with executive filling data
+                // Debug: Show sample results
                 foreach (var k in kaizens.Take(3))
                 {
                     Console.WriteLine($"  - {k.KaizenNo}: {k.EmployeeName} ({k.Department})");
+                    Console.WriteLine($"    EngineerStatus: '{k.EngineerStatus}'");
                     Console.WriteLine($"    Category: '{k.Category}'");
                     Console.WriteLine($"    Comments: '{k.Comments}'");
                     Console.WriteLine($"    CanImplementInOtherFields: '{k.CanImplementInOtherFields}'");
@@ -2559,26 +2607,32 @@ namespace KaizenWebApp.Controllers
                 var canImplementInOtherFields = Request.Form["CanImplementInOtherFields"].ToString();
                 var implementationArea = Request.Form["ImplementationArea"].ToString();
 
-                // Validate required fields
-                if (string.IsNullOrEmpty(approvedBy?.Trim()))
+                // Validate that at least one field is filled (executive can fill only one field)
+                bool hasAnyFieldFilled = false;
+                
+                if (!string.IsNullOrEmpty(approvedBy?.Trim()))
                 {
-                    return Json(new { success = false, message = "Please enter your name for signature." });
+                    hasAnyFieldFilled = true;
                 }
-
-                if (string.IsNullOrEmpty(comments?.Trim()))
+                
+                if (!string.IsNullOrEmpty(comments?.Trim()))
                 {
-                    return Json(new { success = false, message = "Please provide comments and recommendations." });
+                    hasAnyFieldFilled = true;
                 }
-
-                if (string.IsNullOrEmpty(canImplementInOtherFields))
+                
+                if (!string.IsNullOrEmpty(canImplementInOtherFields))
                 {
-                    return Json(new { success = false, message = "Please select whether this suggestion can be implemented in other fields." });
+                    hasAnyFieldFilled = true;
                 }
-
-                // Validate that at least one category is selected
-                if (categories == null || categories.Length == 0)
+                
+                if (categories != null && categories.Length > 0)
                 {
-                    return Json(new { success = false, message = "Please select at least one recommended category." });
+                    hasAnyFieldFilled = true;
+                }
+                
+                if (!hasAnyFieldFilled)
+                {
+                    return Json(new { success = false, message = "Please fill in at least one field (Signature, Comments, Categories, or Implementation question)." });
                 }
 
                 // Update the kaizen with executive filling data
@@ -2594,7 +2648,7 @@ namespace KaizenWebApp.Controllers
 
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = "Executive review saved successfully!" });
+                return Json(new { success = true, message = "Review saved successfully!" });
             }
             catch (Exception ex)
             {
@@ -3919,6 +3973,20 @@ namespace KaizenWebApp.Controllers
                 Console.WriteLine($"Error in UserManagement: {ex.Message}");
                 return RedirectToAction("Error", "Home");
             }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> KaizenDetailsEngineer(int id)
+        {
+            var kaizen = await _context.KaizenForms
+                .FirstOrDefaultAsync(k => k.Id == id);
+
+            if (kaizen == null)
+            {
+                return NotFound();
+            }
+
+            return View(kaizen);
         }
     }
 

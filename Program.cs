@@ -1,10 +1,36 @@
 using KaizenWebApp.Extensions;
 using KaizenWebApp.Middleware;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization();
+
+// Add localization with explicit resource path
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+// Configure localization options
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[]
+    {
+        new CultureInfo("en"),
+        new CultureInfo("si"),
+        new CultureInfo("ta")
+    };
+
+    options.DefaultRequestCulture = new RequestCulture("en");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+    
+    // Add culture providers
+    options.RequestCultureProviders.Clear();
+    options.RequestCultureProviders.Add(new CookieRequestCultureProvider());
+});
 
 // Add application services using extension methods
 builder.Services.AddApplicationServices(builder.Configuration);
@@ -27,6 +53,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Add localization middleware
+app.UseRequestLocalization();
 
 // Add CORS
 app.UseCors("AllowSpecificOrigin");

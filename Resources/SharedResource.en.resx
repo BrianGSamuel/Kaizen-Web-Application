@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="BasicInfo" xml:space="preserve">
+    <value>Basic Info</value>
+  </data>
+  <data name="EmployeeDetails" xml:space="preserve">
+    <value>Employee Details</value>
+  </data>
+  <data name="KaizenImages" xml:space="preserve">
+    <value>Kaizen Images</value>
+  </data>
+  <data name="Benefits" xml:space="preserve">
+    <value>Benefits</value>
+  </data>
+  <data name="DateSubmitted" xml:space="preserve">
+    <value>Date Submitted</value>
+  </data>
+  <data name="DateImplemented" xml:space="preserve">
+    <value>Date Implemented</value>
+  </data>
+  <data name="KaizenNo" xml:space="preserve">
+    <value>Kaizen No</value>
+  </data>
+  <data name="DepartmentName" xml:space="preserve">
+    <value>Department Name</value>
+  </data>
+  <data name="EmployeeName" xml:space="preserve">
+    <value>Employee Name</value>
+  </data>
+  <data name="EmployeeNo" xml:space="preserve">
+    <value>Employee No</value>
+  </data>
+  <data name="EmployeePhoto" xml:space="preserve">
+    <value>Employee Photo</value>
+  </data>
+  <data name="SuggestionDescription" xml:space="preserve">
+    <value>Kaizen Suggestion Description</value>
+  </data>
+  <data name="BeforeKaizenImage" xml:space="preserve">
+    <value>Before Kaizen Image (Upload QR/Image)</value>
+  </data>
+  <data name="AfterKaizenImage" xml:space="preserve">
+    <value>After Kaizen Image (Upload QR/Image)</value>
+  </data>
+  <data name="CostSavingInformation" xml:space="preserve">
+    <value>Cost Saving Information</value>
+  </data>
+  <data name="NoCostSaving" xml:space="preserve">
+    <value>No Cost Saving</value>
+  </data>
+  <data name="HasCostSaving" xml:space="preserve">
+    <value>Has Cost Saving</value>
+  </data>
+  <data name="CostSaving" xml:space="preserve">
+    <value>Cost Saving ($ per year)</value>
+  </data>
+  <data name="DollarRate" xml:space="preserve">
+    <value>Current Dollar Rate</value>
+  </data>
+  <data name="OtherBenefits" xml:space="preserve">
+    <value>Other Benefits</value>
+  </data>
+  <data name="Previous" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="SubmitSuggestion" xml:space="preserve">
+    <value>Submit Suggestion</value>
+  </data>
+  <data name="English" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Sinhala" xml:space="preserve">
+    <value>සිංහල</value>
+  </data>
+  <data name="Tamil" xml:space="preserve">
+    <value>தமிழ்</value>
+  </data>
+  <data name="ImageFormatError" xml:space="preserve">
+    <value>Invalid image format. Only PNG, JPG, JPEG, WebP files up to 5MB are allowed.</value>
+  </data>
+  <data name="ImageSizeError" xml:space="preserve">
+    <value>Image file is too large. Maximum size is 5MB.</value>
+  </data>
+  <data name="RequiredFieldError" xml:space="preserve">
+    <value>This field is required.</value>
+  </data>
+  <data name="EmployeeNameRequired" xml:space="preserve">
+    <value>Employee Name is required.</value>
+  </data>
+  <data name="EmployeeNoRequired" xml:space="preserve">
+    <value>Employee Number is required.</value>
+  </data>
+  <data name="SuggestionDescriptionRequired" xml:space="preserve">
+    <value>Suggestion Description is required.</value>
+  </data>
+  <data name="CostSavingRequired" xml:space="preserve">
+    <value>Cost Saving amount is required when "Has Cost Saving" is selected.</value>
+  </data>
+  <data name="DollarRateRequired" xml:space="preserve">
+    <value>Dollar Rate is required when "Has Cost Saving" is selected.</value>
+  </data>
+  <data name="PleaseCompleteStep" xml:space="preserve">
+    <value>Please complete all required fields in this step.</value>
+  </data>
+  <data name="UploadImageHelp" xml:space="preserve">
+    <value>Upload employee photo (PNG, JPG, JPEG, WebP up to 5MB)</value>
+  </data>
+  <data name="DepartmentAutoSet" xml:space="preserve">
+    <value>Department Name is automatically set based on your registration</value>
+  </data>
+  <data name="NoDepartmentFound" xml:space="preserve">
+    <value>No department found for current user</value>
+  </data>
+  <data name="DepartmentLoaded" xml:space="preserve">
+    <value>Department Name loaded</value>
+  </data>
+</root>
+
+
+

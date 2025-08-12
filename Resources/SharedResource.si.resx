@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="BasicInfo" xml:space="preserve">
+    <value>මූලික තොරතුරු</value>
+  </data>
+  <data name="EmployeeDetails" xml:space="preserve">
+    <value>සේවක විස්තර</value>
+  </data>
+  <data name="KaizenImages" xml:space="preserve">
+    <value>කයිසෙන් රූප</value>
+  </data>
+  <data name="Benefits" xml:space="preserve">
+    <value>ප්‍රතිලාභ</value>
+  </data>
+  <data name="DateSubmitted" xml:space="preserve">
+    <value>ඉදිරිපත් කළ දිනය</value>
+  </data>
+  <data name="DateImplemented" xml:space="preserve">
+    <value>අනුග්‍රහ කළ දිනය</value>
+  </data>
+  <data name="KaizenNo" xml:space="preserve">
+    <value>කයිසෙන් අංකය</value>
+  </data>
+  <data name="DepartmentName" xml:space="preserve">
+    <value>අංශයේ නම</value>
+  </data>
+  <data name="EmployeeName" xml:space="preserve">
+    <value>සේවකයාගේ නම</value>
+  </data>
+  <data name="EmployeeNo" xml:space="preserve">
+    <value>සේවක අංකය</value>
+  </data>
+  <data name="EmployeePhoto" xml:space="preserve">
+    <value>සේවකයාගේ ඡායාරූපය</value>
+  </data>
+  <data name="SuggestionDescription" xml:space="preserve">
+    <value>කයිසෙන් යෝජනා විස්තරය</value>
+  </data>
+  <data name="BeforeKaizenImage" xml:space="preserve">
+    <value>කයිසෙන්ට පෙර රූපය (QR/රූපය උඩුගත කරන්න)</value>
+  </data>
+  <data name="AfterKaizenImage" xml:space="preserve">
+    <value>කයිසෙන්ට පසු රූපය (QR/රූපය උඩුගත කරන්න)</value>
+  </data>
+  <data name="CostSavingInformation" xml:space="preserve">
+    <value>පිරිවැය ඉතිරි කිරීමේ තොරතුරු</value>
+  </data>
+  <data name="NoCostSaving" xml:space="preserve">
+    <value>පිරිවැය ඉතිරි කිරීමක් නැත</value>
+  </data>
+  <data name="HasCostSaving" xml:space="preserve">
+    <value>පිරිවැය ඉතිරි කිරීමක් ඇත</value>
+  </data>
+  <data name="CostSaving" xml:space="preserve">
+    <value>පිරිවැය ඉතිරි කිරීම (වර්ෂයකට $)</value>
+  </data>
+  <data name="DollarRate" xml:space="preserve">
+    <value>වර්තමාන ඩොලර් අනුපාතය</value>
+  </data>
+  <data name="OtherBenefits" xml:space="preserve">
+    <value>වෙනත් ප්‍රතිලාභ</value>
+  </data>
+  <data name="Previous" xml:space="preserve">
+    <value>පෙර</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>ඊළඟ</value>
+  </data>
+  <data name="SubmitSuggestion" xml:space="preserve">
+    <value>යෝජනාව ඉදිරිපත් කරන්න</value>
+  </data>
+  <data name="English" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Sinhala" xml:space="preserve">
+    <value>සිංහල</value>
+  </data>
+  <data name="Tamil" xml:space="preserve">
+    <value>தமிழ்</value>
+  </data>
+  <data name="ImageFormatError" xml:space="preserve">
+    <value>අවලංගු රූප ආකෘතිය. PNG, JPG, JPEG, WebP ගොනු පමණක් 5MB දක්වා අවසර ඇත.</value>
+  </data>
+  <data name="ImageSizeError" xml:space="preserve">
+    <value>රූප ගොනුව ඉතා විශාලය. උපරිම ප්‍රමාණය 5MB වේ.</value>
+  </data>
+  <data name="RequiredFieldError" xml:space="preserve">
+    <value>මෙම ක්ෂේත්‍රය අවශ්‍ය වේ.</value>
+  </data>
+  <data name="EmployeeNameRequired" xml:space="preserve">
+    <value>සේවකයාගේ නම අවශ්‍ය වේ.</value>
+  </data>
+  <data name="EmployeeNoRequired" xml:space="preserve">
+    <value>සේවක අංකය අවශ්‍ය වේ.</value>
+  </data>
+  <data name="SuggestionDescriptionRequired" xml:space="preserve">
+    <value>යෝජනා විස්තරය අවශ්‍ය වේ.</value>
+  </data>
+  <data name="CostSavingRequired" xml:space="preserve">
+    <value>"පිරිවැය ඉතිරි කිරීමක් ඇත" තෝරාගත් විට පිරිවැය ඉතිරි කිරීමේ මුදල අවශ්‍ය වේ.</value>
+  </data>
+  <data name="DollarRateRequired" xml:space="preserve">
+    <value>"පිරිවැය ඉතිරි කිරීමක් ඇත" තෝරාගත් විට ඩොලර් අනුපාතය අවශ්‍ය වේ.</value>
+  </data>
+  <data name="PleaseCompleteStep" xml:space="preserve">
+    <value>මෙම පියවරේ අවශ්‍ය සියලු ක්ෂේත්‍ර සම්පූර්ණ කරන්න.</value>
+  </data>
+  <data name="UploadImageHelp" xml:space="preserve">
+    <value>සේවකයාගේ ඡායාරූපය උඩුගත කරන්න (PNG, JPG, JPEG, WebP 5MB දක්වා)</value>
+  </data>
+  <data name="DepartmentAutoSet" xml:space="preserve">
+    <value>අංශයේ නම ඔබගේ ලියාපදිංචිය මත පදනම්ව ස්වයංක්‍රීයව සකස් කර ඇත</value>
+  </data>
+  <data name="NoDepartmentFound" xml:space="preserve">
+    <value>වර්තමාන පරිශීලකයා සඳහා අංශයක් හමු නොවීය</value>
+  </data>
+  <data name="DepartmentLoaded" xml:space="preserve">
+    <value>අංශයේ නම පූරණය කර ඇත</value>
+  </data>
+</root>
+
+
+

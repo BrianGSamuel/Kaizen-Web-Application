@@ -1,0 +1,1074 @@
+@model KaizenWebApp.Models.KaizenForm
+
+@{
+    ViewData["Title"] = "Kaizen Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .kaizen-details-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+    }
+
+    .kaizen-header {
+        background: linear-gradient(135deg, var(--user-dark-blue) 0%, var(--user-light-blue) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kaizen-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .kaizen-no {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .kaizen-status {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-approved {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid var(--user-light-blue);
+    }
+
+    .info-section h5 {
+        color: var(--user-dark-blue);
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .info-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-value {
+        color: #212529;
+        font-size: 1rem;
+    }
+
+    .employee-card {
+        display: flex;
+        align-items: center;
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        margin-bottom: 1rem;
+    }
+
+    .employee-photo {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--user-light-blue);
+        margin-right: 1rem;
+    }
+
+    .employee-photo-placeholder {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--user-light-blue);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .employee-info h6 {
+        margin-bottom: 0.25rem;
+        color: var(--user-dark-blue);
+    }
+
+    .employee-info p {
+        margin-bottom: 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .image-section {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+        margin-bottom: 1.5rem;
+    }
+
+    .image-container {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .kaizen-image {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .cost-saving-card {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .cost-saving-amount {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .btn-kaizen {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-kaizen:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, var(--user-dark-blue) 0%, var(--user-light-blue) 100%);
+        color: white;
+    }
+
+    .btn-executive {
+        background: linear-gradient(135deg, #fd7e14 0%, #ff8c00 100%);
+        color: white;
+    }
+
+    .btn-back {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+
+    .btn-approval {
+        background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+        color: #212529;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .no-data i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    @@media (max-width: 768px) {
+        .kaizen-header {
+            padding: 1.5rem;
+        }
+        
+        .kaizen-no {
+            font-size: 2rem;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn-kaizen {
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="kaizen-details-container">
+                
+                <!-- Kaizen Header -->
+                <div class="kaizen-header">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="kaizen-no">@Model.KaizenNo</div>
+                            <div class="kaizen-status @(Model.EngineerStatus == "Approved" ? "status-approved" : Model.EngineerStatus == "Rejected" ? "status-rejected" : "status-pending")">
+                                <i class="fas fa-@(Model.EngineerStatus == "Approved" ? "check" : Model.EngineerStatus == "Rejected" ? "times" : "clock") me-2"></i>
+                                Engineer Status: @(Model.EngineerStatus ?? "Pending")
+                            </div>
+                            <p class="mb-0 opacity-75">Kaizen Suggestion Details</p>
+                        </div>
+                        <div class="text-end">
+                            <small class="opacity-75">Submitted on</small><br>
+                            <strong>@Model.DateSubmitted.ToString("MMMM dd, yyyy")</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employee Information -->
+                <div class="info-section">
+                    <h5><i class="fas fa-user me-2"></i>Employee Information</h5>
+                    <div class="employee-card">
+                        @if (!string.IsNullOrEmpty(Model.EmployeePhotoPath))
+                        {
+                            <img src="@Model.EmployeePhotoPath" alt="Employee Photo" class="employee-photo" />
+                        }
+                        else
+                        {
+                            <div class="employee-photo-placeholder">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        }
+                        <div class="employee-info">
+                            <h6>@Model.EmployeeName</h6>
+                            <p><i class="fas fa-id-badge me-1"></i>@Model.EmployeeNo</p>
+                            <p><i class="fas fa-building me-1"></i>@Model.Department</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kaizen Details -->
+                <div class="info-section">
+                    <h5><i class="fas fa-lightbulb me-2"></i>Suggestion Details</h5>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Category</div>
+                            <div class="info-value">@Model.Category</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Date Implemented</div>
+                            <div class="info-value">
+                                @(Model.DateImplemented?.ToString("MMMM dd, yyyy") ?? "Not implemented yet")
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="info-label">Suggestion Description</div>
+                        <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; min-height: 100px;">
+                            @Model.SuggestionDescription
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cost Saving Information -->
+                @if (Model.CostSaving.HasValue && Model.CostSaving > 0)
+                {
+                    <div class="cost-saving-card">
+                        <h5><i class="fas fa-coins me-2"></i>Cost Saving Information</h5>
+                        <div class="cost-saving-amount">$@Model.CostSaving.Value.ToString("N2")</div>
+                        <p class="mb-0">Annual cost saving</p>
+                        @if (Model.DollarRate.HasValue)
+                        {
+                            <small>Dollar Rate: $@Model.DollarRate.Value.ToString("N2")</small>
+                        }
+                    </div>
+                }
+
+                <!-- Other Benefits -->
+                @if (!string.IsNullOrEmpty(Model.OtherBenefits))
+                {
+                    <div class="info-section">
+                        <h5><i class="fas fa-star me-2"></i>Other Benefits</h5>
+                        <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef;">
+                            @Model.OtherBenefits
+                        </div>
+                    </div>
+                }
+
+                <!-- Images Section -->
+                <div class="info-section">
+                    <h5><i class="fas fa-images me-2"></i>Before & After Images</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="image-section">
+                                <h6 class="text-center mb-3">Before Kaizen</h6>
+                                @if (!string.IsNullOrEmpty(Model.BeforeKaizenImagePath))
+                                {
+                                    <div class="image-container">
+                                        <img src="@Model.BeforeKaizenImagePath" alt="Before Kaizen" class="kaizen-image" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="no-data">
+                                        <i class="fas fa-image"></i>
+                                        <p>No before image available</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="image-section">
+                                <h6 class="text-center mb-3">After Kaizen</h6>
+                                @if (!string.IsNullOrEmpty(Model.AfterKaizenImagePath))
+                                {
+                                    <div class="image-container">
+                                        <img src="@Model.AfterKaizenImagePath" alt="After Kaizen" class="kaizen-image" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="no-data">
+                                        <i class="fas fa-image"></i>
+                                        <p>No after image available</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Executive/Engineer Review Section -->
+                @if (!string.IsNullOrEmpty(Model.Comments) || !string.IsNullOrEmpty(Model.EngineerApprovedBy))
+                {
+                    <div class="info-section">
+                        <h5><i class="fas fa-user-tie me-2"></i>Engineer Review</h5>
+                        <div class="info-grid">
+                            @if (!string.IsNullOrEmpty(Model.EngineerApprovedBy))
+                            {
+                                <div class="info-item">
+                                    <div class="info-label">Reviewed By</div>
+                                    <div class="info-value">@Model.EngineerApprovedBy</div>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.CanImplementInOtherFields))
+                            {
+                                <div class="info-item">
+                                    <div class="info-label">Can be implemented in other fields</div>
+                                    <div class="info-value">@Model.CanImplementInOtherFields</div>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.ImplementationArea))
+                            {
+                                <div class="info-item">
+                                    <div class="info-label">Implementation Area</div>
+                                    <div class="info-value">@Model.ImplementationArea</div>
+                                </div>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.Comments))
+                        {
+                            <div class="mt-3">
+                                <div class="info-label">Comments & Recommendations</div>
+                                <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; min-height: 100px;">
+                                    @Model.Comments
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <a href="@Url.Action("KaizenListEngineer", "Kaizen")" class="btn-kaizen btn-back">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to List
+                    </a>
+                    
+                    <button type="button" class="btn-kaizen btn-edit" onclick="editKaizen(@Model.Id)">
+                        <i class="fas fa-edit"></i>
+                        Edit Kaizen
+                    </button>
+                    
+                    @if ((Model.EngineerStatus ?? "Pending") == "Pending")
+                    {
+                        <button type="button" class="btn-kaizen btn-executive" onclick="executiveFilling(@Model.Id)">
+                            <i class="fas fa-user-tie"></i>
+                            Executive Filling
+                        </button>
+                        
+                        <button type="button" class="btn-kaizen btn-approval" onclick="showApprovalPopup(@Model.Id)">
+                            <i class="fas fa-gavel"></i>
+                            Approval Decision
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editKaizenModal" tabindex="-1" aria-labelledby="editKaizenModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editKaizenModalLabel">
+                    <i class="fas fa-edit me-2"></i>Edit Kaizen Suggestion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editKaizenForm" enctype="multipart/form-data">
+                    <input type="hidden" id="editKaizenId" name="Id" />
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editDateSubmitted" class="form-label">
+                                <i class="fas fa-calendar me-2"></i>Date Submitted
+                            </label>
+                            <input type="date" id="editDateSubmitted" name="DateSubmitted" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editDateImplemented" class="form-label">
+                                <i class="fas fa-calendar-check me-2"></i>Date Implemented
+                            </label>
+                            <input type="date" id="editDateImplemented" name="DateImplemented" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editKaizenNo" class="form-label">
+                                <i class="fas fa-hashtag me-2"></i>Kaizen No
+                            </label>
+                            <input type="text" id="editKaizenNo" name="KaizenNo" class="form-control" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editDepartment" class="form-label">
+                                <i class="fas fa-building me-2"></i>Department Name
+                            </label>
+                            <input type="text" id="editDepartment" name="Department" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editEmployeeName" class="form-label">
+                                <i class="fas fa-user me-2"></i>Employee Name
+                            </label>
+                            <input type="text" id="editEmployeeName" name="EmployeeName" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editEmployeeNo" class="form-label">
+                                <i class="fas fa-id-badge me-2"></i>Employee No
+                            </label>
+                            <input type="text" id="editEmployeeNo" name="EmployeeNo" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editSuggestionDescription" class="form-label">
+                            <i class="fas fa-lightbulb me-2"></i>Kaizen Suggestion Description
+                        </label>
+                        <textarea id="editSuggestionDescription" name="SuggestionDescription" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editBeforeKaizenImage" class="form-label">
+                                <i class="fas fa-image me-2"></i>Before Kaizen Image
+                            </label>
+                            <input type="file" id="editBeforeKaizenImage" name="BeforeKaizenImage" class="form-control" accept="image/*" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editAfterKaizenImage" class="form-label">
+                                <i class="fas fa-image me-2"></i>After Kaizen Image
+                            </label>
+                            <input type="file" id="editAfterKaizenImage" name="AfterKaizenImage" class="form-control" accept="image/*" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editOtherBenefits" class="form-label">
+                            <i class="fas fa-star me-2"></i>Other Benefits
+                        </label>
+                        <textarea id="editOtherBenefits" name="OtherBenefits" class="form-control" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveKaizenEdit()">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Edit Modal -->
+<div class="modal fade" id="enhancedEditModal" tabindex="-1" aria-labelledby="enhancedEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="enhancedEditModalLabel">
+                    <i class="fas fa-user-tie me-2"></i>Executive/Engineer Review
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="enhancedEditForm" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="enhancedEditKaizenId" name="Id" />
+
+                    <!-- Hidden required fields -->
+                    <input type="hidden" id="enhancedEditKaizenNoHidden" name="KaizenNo" />
+                    <input type="hidden" id="enhancedEditEmployeeNoHidden" name="EmployeeNo" />
+                    <input type="hidden" id="enhancedEditEmployeeNameHidden" name="EmployeeName" />
+                    <input type="hidden" id="enhancedEditSuggestionDescriptionHidden" name="SuggestionDescription" />
+                    <input type="hidden" id="enhancedEditDateSubmittedHidden" name="DateSubmitted" />
+
+                    <!-- Executive/Engineer Form Section -->
+                    <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+                        <h6 class="mb-3">
+                            <i class="fas fa-user-tie me-2"></i>Executive/Engineer Review
+                        </h6>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="enhancedEditCategory" class="form-label">
+                                    <i class="fas fa-folder me-2"></i>Recommended Categories
+                                </label>
+                                <div class="mt-2">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryCostSaving" value="Cost reduction">
+                                        <label class="form-check-label" for="enhanced_categoryCostSaving">Major Cost reduction by innovation</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryProductivity" value="Productivity Improvement">
+                                        <label class="form-check-label" for="enhanced_categoryProductivity">Productivity Improvement</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryOHS" value="OHS Improvement">
+                                        <label class="form-check-label" for="enhanced_categoryOHS">OHS Improvement</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryQuality" value="Quality Improvements">
+                                        <label class="form-check-label" for="enhanced_categoryQuality">Quality Improvements</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryEnvironment" value="Environmental friendly">
+                                        <label class="form-check-label" for="enhanced_categoryEnvironment">Environmental friendly Innovation</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_category5S" value="5S Improvement">
+                                        <label class="form-check-label" for="enhanced_category5S">5S Improvement</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryErgonomics" value="Ergonomics Improvements">
+                                        <label class="form-check-label" for="enhanced_categoryErgonomics">Ergonomics Improvements</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryEnergySaving" value="Energy Saving Improvement">
+                                        <label class="form-check-label" for="enhanced_categoryEnergySaving">Energy Saving Improvement</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="enhancedEditApprovedBy" class="form-label">
+                                    <i class="fas fa-signature me-2"></i>Signature (Add Name)
+                                </label>
+                                <input type="text" id="enhancedEditApprovedBy" name="ApprovedBy" class="form-control" placeholder="Enter your name" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="enhancedEditComments" class="form-label">
+                                <i class="fas fa-comments me-2"></i>Comment & Recommendations
+                            </label>
+                            <textarea id="enhancedEditComments" name="Comments" class="form-control" rows="4" placeholder="Enter your comments and recommendations..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-question-circle me-2"></i>Can this suggestion be implemented in other fields?
+                            </label>
+                            <div class="mt-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="enhanced_implementYes" value="Yes" onchange="toggleEnhancedImplementationArea()">
+                                    <label class="form-check-label" for="enhanced_implementYes">Yes</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="enhanced_implementNo" value="No" onchange="toggleEnhancedImplementationArea()">
+                                    <label class="form-check-label" for="enhanced_implementNo">No</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="implementationAreaField" style="display: none;">
+                            <label for="enhancedEditImplementationArea" class="form-label">
+                                <i class="fas fa-map-marker-alt me-2"></i>Specify Area
+                            </label>
+                            <input type="text" id="enhancedEditImplementationArea" name="ImplementationArea" class="form-control" placeholder="Enter the specific area where this can be implemented..." />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-warning" onclick="saveExecutiveFilling()">
+                    <i class="fas fa-save me-2"></i>Save Executive Review
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Popup Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalModalLabel">
+                    <i class="fas fa-gavel me-2"></i>Kaizen Approval
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-question-circle fa-3x text-primary mb-3"></i>
+                    <h5>What would you like to do with this Kaizen suggestion?</h5>
+                    <p class="text-muted">Please select your decision below</p>
+                </div>
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-success btn-lg" onclick="showNameInput('approve')">
+                        <i class="fas fa-check me-2"></i>Approve
+                    </button>
+                    <button type="button" class="btn btn-danger btn-lg" onclick="showNameInput('reject')">
+                        <i class="fas fa-times me-2"></i>Reject
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Name Input Modal -->
+<div class="modal fade" id="nameInputModal" tabindex="-1" aria-labelledby="nameInputModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nameInputModalLabel">
+                    <i class="fas fa-user me-2"></i>Enter Your Name
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="userNameInput" class="form-label">
+                        <i class="fas fa-signature me-2"></i>Your Name
+                    </label>
+                    <input type="text" id="userNameInput" class="form-control" placeholder="Enter your full name" required />
+                    <div class="invalid-feedback">
+                        Please enter your name.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn" onclick="confirmAction()">
+                    <i class="fas fa-check me-2"></i>Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script>
+    let currentKaizenId = null;
+
+    function editKaizen(id) {
+        currentKaizenId = id;
+        
+        // Fetch kaizen data
+        fetch(`/Kaizen/Edit/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Populate form fields
+                    document.getElementById('editKaizenId').value = data.data.id;
+                    document.getElementById('editKaizenNo').value = data.data.kaizenNo;
+                    document.getElementById('editDateSubmitted').value = data.data.dateSubmitted.split('T')[0];
+                    document.getElementById('editDateImplemented').value = data.data.dateImplemented ? data.data.dateImplemented.split('T')[0] : '';
+                    document.getElementById('editDepartment').value = data.data.department;
+                    document.getElementById('editEmployeeName').value = data.data.employeeName;
+                    document.getElementById('editEmployeeNo').value = data.data.employeeNo;
+                    document.getElementById('editSuggestionDescription').value = data.data.suggestionDescription || '';
+                    document.getElementById('editOtherBenefits').value = data.data.otherBenefits || '';
+
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById('editKaizenModal'));
+                    modal.show();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while loading the kaizen data.');
+            });
+    }
+
+    function saveKaizenEdit() {
+        const form = document.getElementById('editKaizenForm');
+        const formData = new FormData(form);
+        const id = document.getElementById('editKaizenId').value;
+
+        // Add antiforgery token
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        formData.append('__RequestVerificationToken', token);
+
+        fetch(`/Kaizen/Edit/${id}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                bootstrap.Modal.getInstance(document.getElementById('editKaizenModal')).hide();
+                // Reload the page to show updated data
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the changes.');
+        });
+    }
+
+    function executiveFilling(id) {
+        currentKaizenId = id;
+        
+        // Fetch kaizen data for enhanced edit
+        fetch(`/Kaizen/Edit/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Populate form fields
+                    document.getElementById('enhancedEditKaizenId').value = data.data.id;
+
+                    // Populate hidden fields for form submission
+                    document.getElementById('enhancedEditKaizenNoHidden').value = data.data.kaizenNo || '';
+                    document.getElementById('enhancedEditEmployeeNoHidden').value = data.data.employeeNo || '';
+                    document.getElementById('enhancedEditEmployeeNameHidden').value = data.data.employeeName || '';
+                    document.getElementById('enhancedEditSuggestionDescriptionHidden').value = data.data.suggestionDescription || '';
+                    document.getElementById('enhancedEditDateSubmittedHidden').value = data.data.dateSubmitted || '';
+
+                    // Set category checkboxes
+                    const category = data.data.category || '';
+                    if (category) {
+                        const categories = category.split(',').map(cat => cat.trim());
+                        categories.forEach(cat => {
+                            const checkbox = document.querySelector(`#enhancedEditModal input[name="Category"][value="${cat}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+
+                    // Set other fields
+                    document.getElementById('enhancedEditApprovedBy').value = data.data.engineerApprovedBy || '';
+                    document.getElementById('enhancedEditComments').value = data.data.comments || '';
+
+                    // Set implementation area fields
+                    const canImplement = data.data.canImplementInOtherFields || '';
+                    if (canImplement === 'Yes') {
+                        document.getElementById('enhanced_implementYes').checked = true;
+                        document.getElementById('implementationAreaField').style.display = 'block';
+                        document.getElementById('enhancedEditImplementationArea').value = data.data.implementationArea || '';
+                    } else if (canImplement === 'No') {
+                        document.getElementById('enhanced_implementNo').checked = true;
+                        document.getElementById('implementationAreaField').style.display = 'none';
+                    }
+
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById('enhancedEditModal'));
+                    modal.show();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while loading the kaizen data.');
+            });
+    }
+
+    function saveExecutiveFilling() {
+        const kaizenId = document.getElementById('enhancedEditKaizenId').value;
+        
+        // Validate form
+        const approvedBy = document.getElementById('enhancedEditApprovedBy').value.trim();
+        const comments = document.getElementById('enhancedEditComments').value.trim();
+        const canImplementInOtherFields = document.querySelector('input[name="CanImplementInOtherFields"]:checked')?.value;
+        const selectedCategories = document.querySelectorAll('#enhancedEditModal input[name="Category"]:checked');
+        
+        if (!approvedBy) {
+            alert('Please enter your name for signature.');
+            document.getElementById('enhancedEditApprovedBy').focus();
+            return;
+        }
+        
+        if (!comments) {
+            alert('Please provide comments and recommendations.');
+            document.getElementById('enhancedEditComments').focus();
+            return;
+        }
+
+        if (selectedCategories.length === 0) {
+            alert('Please select at least one recommended category.');
+            return;
+        }
+
+        if (!canImplementInOtherFields) {
+            alert('Please select whether this suggestion can be implemented in other fields.');
+            return;
+        }
+
+        // Show loading state
+        const saveBtn = document.querySelector('#enhancedEditModal .btn-warning');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        saveBtn.disabled = true;
+
+        // Prepare form data
+        const formData = new FormData();
+        
+        const categoryCheckboxes = document.querySelectorAll('#enhancedEditModal input[name="Category"]:checked');
+        categoryCheckboxes.forEach(checkbox => {
+            formData.append('Category', checkbox.value);
+        });
+        
+        formData.append('ApprovedBy', approvedBy);
+        formData.append('Comments', comments);
+        formData.append('CanImplementInOtherFields', canImplementInOtherFields);
+        
+        if (canImplementInOtherFields === 'Yes') {
+            const implementationArea = document.getElementById('enhancedEditImplementationArea').value.trim();
+            formData.append('ImplementationArea', implementationArea);
+        }
+        
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        // Send the data to the server
+        fetch(`/Kaizen/SaveExecutiveFilling/${kaizenId}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Executive review saved successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('enhancedEditModal')).hide();
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the executive review.');
+        })
+        .finally(() => {
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    }
+
+    function showApprovalPopup(id) {
+        currentKaizenId = id;
+        const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+        modal.show();
+    }
+
+    function showNameInput(action) {
+        document.getElementById('userNameInput').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('nameInputModal'));
+        modal.show();
+        
+        document.getElementById('confirmActionBtn').onclick = function() {
+            const name = document.getElementById('userNameInput').value.trim();
+            if (name) {
+                if (action === 'approve') {
+                    approveKaizen(currentKaizenId, name);
+                } else if (action === 'reject') {
+                    rejectKaizen(currentKaizenId, name);
+                }
+                modal.hide();
+            } else {
+                alert('Please enter your name to confirm the action.');
+                document.getElementById('userNameInput').focus();
+            }
+        };
+    }
+
+    function confirmAction() {
+        // Handled by onclick attribute
+    }
+
+    function approveKaizen(id, name) {
+        if (!id) return;
+
+        if (confirm(`Are you sure you want to approve this Kaizen suggestion?`)) {
+            fetch(`/Kaizen/UpdateEngineerStatus/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ engineerStatus: 'Approved', engineerApprovedBy: name })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Kaizen suggestion approved successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while approving the suggestion.');
+            });
+        }
+    }
+
+    function rejectKaizen(id, name) {
+        if (!id) return;
+
+        if (confirm(`Are you sure you want to reject this Kaizen suggestion?`)) {
+            fetch(`/Kaizen/UpdateEngineerStatus/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ engineerStatus: 'Rejected', engineerApprovedBy: name })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Kaizen suggestion rejected successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while rejecting the suggestion.');
+            });
+        }
+    }
+
+    function toggleEnhancedImplementationArea() {
+        const implementYes = document.getElementById('enhanced_implementYes');
+        const implementationAreaField = document.getElementById('implementationAreaField');
+        
+        if (implementYes.checked) {
+            implementationAreaField.style.display = 'block';
+        } else {
+            implementationAreaField.style.display = 'none';
+            document.getElementById('enhancedEditImplementationArea').value = '';
+        }
+    }
+</script>

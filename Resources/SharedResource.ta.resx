@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="BasicInfo" xml:space="preserve">
+    <value>அடிப்படை தகவல்</value>
+  </data>
+  <data name="EmployeeDetails" xml:space="preserve">
+    <value>ஊழியர் விவரங்கள்</value>
+  </data>
+  <data name="KaizenImages" xml:space="preserve">
+    <value>கைசென் படங்கள்</value>
+  </data>
+  <data name="Benefits" xml:space="preserve">
+    <value>நன்மைகள்</value>
+  </data>
+  <data name="DateSubmitted" xml:space="preserve">
+    <value>சமர்ப்பிக்கப்பட்ட தேதி</value>
+  </data>
+  <data name="DateImplemented" xml:space="preserve">
+    <value>செயல்படுத்தப்பட்ட தேதி</value>
+  </data>
+  <data name="KaizenNo" xml:space="preserve">
+    <value>கைசென் எண்</value>
+  </data>
+  <data name="DepartmentName" xml:space="preserve">
+    <value>துறை பெயர்</value>
+  </data>
+  <data name="EmployeeName" xml:space="preserve">
+    <value>ஊழியர் பெயர்</value>
+  </data>
+  <data name="EmployeeNo" xml:space="preserve">
+    <value>ஊழியர் எண்</value>
+  </data>
+  <data name="EmployeePhoto" xml:space="preserve">
+    <value>ஊழியர் புகைப்படம்</value>
+  </data>
+  <data name="SuggestionDescription" xml:space="preserve">
+    <value>கைசென் பரிந்துரை விளக்கம்</value>
+  </data>
+  <data name="BeforeKaizenImage" xml:space="preserve">
+    <value>கைசெனுக்கு முன் படம் (QR/படம் பதிவேற்று)</value>
+  </data>
+  <data name="AfterKaizenImage" xml:space="preserve">
+    <value>கைசெனுக்கு பிறகு படம் (QR/படம் பதிவேற்று)</value>
+  </data>
+  <data name="CostSavingInformation" xml:space="preserve">
+    <value>செலவு சேமிப்பு தகவல்</value>
+  </data>
+  <data name="NoCostSaving" xml:space="preserve">
+    <value>செலவு சேமிப்பு இல்லை</value>
+  </data>
+  <data name="HasCostSaving" xml:space="preserve">
+    <value>செலவு சேமிப்பு உள்ளது</value>
+  </data>
+  <data name="CostSaving" xml:space="preserve">
+    <value>செலவு சேமிப்பு (ஆண்டுக்கு $)</value>
+  </data>
+  <data name="DollarRate" xml:space="preserve">
+    <value>தற்போதைய டாலர் விகிதம்</value>
+  </data>
+  <data name="OtherBenefits" xml:space="preserve">
+    <value>மற்ற நன்மைகள்</value>
+  </data>
+  <data name="Previous" xml:space="preserve">
+    <value>முந்தைய</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>அடுத்த</value>
+  </data>
+  <data name="SubmitSuggestion" xml:space="preserve">
+    <value>பரிந்துரையை சமர்ப்பிக்கவும்</value>
+  </data>
+  <data name="English" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Sinhala" xml:space="preserve">
+    <value>සිංහල</value>
+  </data>
+  <data name="Tamil" xml:space="preserve">
+    <value>தமிழ்</value>
+  </data>
+  <data name="ImageFormatError" xml:space="preserve">
+    <value>தவறான பட வடிவம். PNG, JPG, JPEG, WebP கோப்புகள் மட்டும் 5MB வரை அனுமதிக்கப்படுகின்றன.</value>
+  </data>
+  <data name="ImageSizeError" xml:space="preserve">
+    <value>பட கோப்பு மிகவும் பெரியது. அதிகபட்ச அளவு 5MB ஆகும்.</value>
+  </data>
+  <data name="RequiredFieldError" xml:space="preserve">
+    <value>இந்த புலம் தேவை.</value>
+  </data>
+  <data name="EmployeeNameRequired" xml:space="preserve">
+    <value>ஊழியர் பெயர் தேவை.</value>
+  </data>
+  <data name="EmployeeNoRequired" xml:space="preserve">
+    <value>ஊழியர் எண் தேவை.</value>
+  </data>
+  <data name="SuggestionDescriptionRequired" xml:space="preserve">
+    <value>பரிந்துரை விளக்கம் தேவை.</value>
+  </data>
+  <data name="CostSavingRequired" xml:space="preserve">
+    <value>"செலவு சேமிப்பு உள்ளது" தேர்ந்தெடுக்கப்பட்டால் செலவு சேமிப்பு தொகை தேவை.</value>
+  </data>
+  <data name="DollarRateRequired" xml:space="preserve">
+    <value>"செலவு சேமிப்பு உள்ளது" தேர்ந்தெடுக்கப்பட்டால் டாலர் விகிதம் தேவை.</value>
+  </data>
+  <data name="PleaseCompleteStep" xml:space="preserve">
+    <value>இந்த படியில் தேவையான அனைத்து புலங்களையும் நிரப்பவும்.</value>
+  </data>
+  <data name="UploadImageHelp" xml:space="preserve">
+    <value>ஊழியர் புகைப்படத்தை பதிவேற்றவும் (PNG, JPG, JPEG, WebP 5MB வரை)</value>
+  </data>
+  <data name="DepartmentAutoSet" xml:space="preserve">
+    <value>துறை பெயர் உங்கள் பதிவின் அடிப்படையில் தானாக அமைக்கப்பட்டுள்ளது</value>
+  </data>
+  <data name="NoDepartmentFound" xml:space="preserve">
+    <value>தற்போதைய பயனருக்கு துறை கிடைக்கவில்லை</value>
+  </data>
+  <data name="DepartmentLoaded" xml:space="preserve">
+    <value>துறை பெயர் ஏற்றப்பட்டது</value>
+  </data>
+</root>
+
+
+

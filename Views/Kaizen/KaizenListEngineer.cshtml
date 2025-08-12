@@ -6,494 +6,297 @@
 }
 
 <style>
-    .kaizen-list-header {
-        background: linear-gradient(135deg, #E31E24 0%, #c41e3a 100%);
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
+    /* Admin card styling to match AwardTrackingManager */
+    .admin-card {
+        background: white;
         border-radius: 15px;
-        box-shadow: 0 8px 25px rgba(227, 30, 36, 0.3);
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
-    body {
+    /* Enhanced table styling */
+    .table-hover tbody tr:hover {
         background-color: #f8f9fa;
-    }
-
-    .search-section {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .search-form {
-        display: flex;
-        gap: 1rem;
-        align-items: end;
-        flex-wrap: wrap;
-    }
-
-    .search-input-group {
-        flex: 1;
-        min-width: 250px;
-    }
-
-    .status-select-group {
-        min-width: 200px;
-    }
-
-    .btn-search {
-        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
     }
 
-        .btn-search:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(227, 30, 36, 0.4);
-            color: white;
-        }
-
-    .btn-clear {
-        background: var(--secondary-gray);
-        border: none;
-        color: white;
+    /* Badge enhancements */
+    .badge {
         font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
+        padding: 0.5rem 0.75rem;
+        border-radius: 20px;
     }
 
-        .btn-clear:hover {
-            background: #555;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-    .table-container {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .kaizen-table {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-        .kaizen-table thead {
-            background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
-            color: white;
-        }
-
-        .kaizen-table th {
-            border: none;
-            padding: 1rem;
-            font-weight: 600;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        .kaizen-table td {
-            border: none;
-            border-bottom: 1px solid #f0f0f0;
-            padding: 1rem;
-            vertical-align: middle;
-        }
-
-        .kaizen-table tbody tr {
-            transition: all 0.3s ease;
-        }
-
-            .kaizen-table tbody tr:hover {
-                background-color: #f8f9fa;
-                transform: translateY(-1px);
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
-
-    .btn-approve {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        font-size: 0.875rem;
+    /* Button group improvements */
+    .btn-group .btn {
         margin-right: 0.25rem;
-    }
-
-        .btn-approve:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
-            color: white;
-        }
-
-    .btn-reject {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
         border-radius: 6px;
-        transition: all 0.3s ease;
-        font-size: 0.875rem;
-        margin-right: 0.25rem;
-    }
-
-        .btn-reject:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-            color: white;
-        }
-
-    .btn-approval {
-        background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
-        border: none;
-        color: white;
         font-weight: 600;
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
         transition: all 0.3s ease;
-        font-size: 0.8rem;
-        margin-right: 0.25rem;
     }
 
-        .btn-approval:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
-            color: white;
-        }
-
-
-
-    .btn-view {
-        background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        font-size: 0.875rem;
-        margin-right: 0.25rem;
+    .btn-group .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-        .btn-view:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
-            color: white;
-        }
-
-    .btn-edit {
-        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-        border: none;
-        color: #212529;
-        font-weight: 700;
-        padding: 0.6rem 1.2rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        font-size: 0.9rem;
-        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
-        border: 2px solid #e0a800;
-    }
-
-        .btn-edit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.5);
-            color: #212529;
-            background: linear-gradient(135deg, #ffca2c 0%, #e0a800 100%);
-            border-color: #d39e00;
-        }
-
+    /* Executive button styling */
     .btn-executive {
-        background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
-        border: none;
+        background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
         color: white;
-        font-weight: 700;
-        padding: 0.6rem 1.2rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        font-size: 0.9rem;
-        box-shadow: 0 2px 8px rgba(111, 66, 193, 0.3);
-        border: 2px solid #5a2d91;
+        border: none;
     }
 
-        .btn-executive:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.5);
-            color: white;
-            background: linear-gradient(135deg, #7c4dcc 0%, #6f42c1 100%);
-            border-color: #5a2d91;
-        }
-
-    .status-pending {
-        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-        color: #212529;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
-
-    .status-approved {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    .btn-executive:hover {
+        background: linear-gradient(135deg, #5a32a3 0%, #7d3c98 100%);
         color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.875rem;
     }
 
-    .status-rejected {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
-
-    .cost-saving {
-        font-weight: 600;
-        color: var(--success-green);
-    }
-
-    .no-data-alert {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border: none;
-        border-radius: 10px;
-        padding: 2rem;
-        text-align: center;
-        color: #1976d2;
-    }
-
-    .success-alert {
-        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
-        border: none;
-        border-radius: 10px;
-        color: var(--success-green);
-    }
-
-    .modal-content {
-        border-radius: 15px;
-        border: none;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-
-    .modal-header {
-        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
-        color: white;
-        border-radius: 15px 15px 0 0;
-        border: none;
-    }
-
-    .modal-title {
-        font-weight: 600;
-    }
-
-    .form-label {
-        font-weight: 600;
-        color: var(--secondary-gray);
-        margin-bottom: 0.5rem;
-    }
-
-    .form-control, .form-select {
-        border-radius: 8px;
+    /* Employee photo styling */
+    .rounded-circle {
         border: 2px solid #e9ecef;
-        padding: 0.75rem;
         transition: all 0.3s ease;
     }
 
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-red);
-            box-shadow: 0 0 0 0.2rem rgba(227, 30, 36, 0.25);
-        }
-
-    .btn-update {
-        background: linear-gradient(135deg, var(--primary-red) 0%, #c41e3a 100%);
-        border: none;
-        color: white;
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
+    .rounded-circle:hover {
+        border-color: #6c757d;
+        transform: scale(1.05);
     }
 
-        .btn-update:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(227, 30, 36, 0.4);
-            color: white;
-        }
-
-    .image-preview {
-        border-radius: 8px;
-        border: 2px solid #e9ecef;
-        padding: 0.5rem;
-        background: #f8f9fa;
+    /* Cost saving styling */
+    .text-success.fw-bold {
+        font-size: 0.95rem;
     }
 
-    @@media (max-width: 768px) {
-        .search-form {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .search-input-group,
-        .status-select-group {
-            min-width: auto;
-        }
-
-        .kaizen-table {
-            font-size: 0.875rem;
-        }
-
-            .kaizen-table th,
-            .kaizen-table td {
-                padding: 0.75rem 0.5rem;
-            }
+    /* Status badge icons */
+    .badge i {
+        font-size: 0.8rem;
     }
+
+
 </style>
 
 <div class="container-fluid">
-    <!-- Header Section -->
-    <div class="kaizen-list-header text-center">
-        <div class="row align-items-center">
-            <div class="col-md-8 mx-auto">
-                <h1 class="display-5 fw-bold mb-3">
-                    <i class="fas fa-tasks me-3"></i>Kaizen Management
-                </h1>
-                <p class="lead mb-0">Review and manage Kaizen suggestions for approval</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Search Section -->
-    <div class="search-section">
-        <div class="row">
-            <div class="col-12">
-                <div class="search-form">
-                    <div class="search-input-group">
-                        <label for="searchString" class="form-label">
-                            <i class="fas fa-search me-2"></i>Search
-                        </label>
-                        <input type="text" id="searchString" class="form-control"
-                               placeholder="Search by Kaizen No, Employee Name, or Employee No..." />
+    <div class="row">
+        <div class="col-12">
+                        <div class="admin-card">
+                
+                <!-- Search Section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-search me-2"></i>
+                            Search & Filter
+                        </h5>
                     </div>
-                    <div class="status-select-group">
-                        <label for="status" class="form-label">
-                            <i class="fas fa-info-circle me-2"></i>Engineer Status
-                        </label>
-                        <select id="status" class="form-select">
-                            <option value="">All Status</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" id="clearBtn" class="btn btn-clear">
-                            <i class="fas fa-times me-2"></i>Clear
-                        </button>
+                    <div class="card-body">
+                        <form method="get" action="@Url.Action("KaizenListEngineer", "Kaizen")" id="searchForm">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="startDate" class="form-label fw-bold">Start Date</label>
+                                        <input type="date" class="form-control" id="startDate" name="startDate" 
+                                               value="@Context.Request.Query["startDate"]">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="endDate" class="form-label fw-bold">End Date</label>
+                                        <input type="date" class="form-control" id="endDate" name="endDate" 
+                                               value="@Context.Request.Query["endDate"]">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="category" class="form-label fw-bold">Category</label>
+                                        <select class="form-select" id="category" name="category">
+                                            <option value="">All Categories</option>
+                                            <option value="Cost reduction" selected="@(Context.Request.Query["category"].ToString() == "Cost reduction")">Major Cost reduction by innovation</option>
+                                            <option value="Productivity Improvement" selected="@(Context.Request.Query["category"].ToString() == "Productivity Improvement")">Productivity Improvement</option>
+                                            <option value="OHS Improvement" selected="@(Context.Request.Query["category"].ToString() == "OHS Improvement")">OHS Improvement</option>
+                                            <option value="Quality Improvements" selected="@(Context.Request.Query["category"].ToString() == "Quality Improvements")">Quality Improvements</option>
+                                            <option value="Environmental friendly" selected="@(Context.Request.Query["category"].ToString() == "Environmental friendly")">Environmental friendly Innovation</option>
+                                            <option value="5S Improvement" selected="@(Context.Request.Query["category"].ToString() == "5S Improvement")">5S Improvement</option>
+                                            <option value="Ergonomics Improvements" selected="@(Context.Request.Query["category"].ToString() == "Ergonomics Improvements")">Ergonomics Improvements</option>
+                                            <option value="Energy Saving Improvement" selected="@(Context.Request.Query["category"].ToString() == "Energy Saving Improvement")">Energy Saving Improvement</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="engineerStatus" class="form-label fw-bold">Engineer Status</label>
+                                        <select class="form-select" id="engineerStatus" name="engineerStatus">
+                                            <option value="">All Status</option>
+                                            <option value="Approved" selected="@(Context.Request.Query["engineerStatus"].ToString() == "Approved")">Approved</option>
+                                            <option value="Rejected" selected="@(Context.Request.Query["engineerStatus"].ToString() == "Rejected")">Rejected</option>
+                                            <option value="Pending" selected="@(Context.Request.Query["engineerStatus"].ToString() == "Pending")">Pending</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="searchString" class="form-label fw-bold">Search</label>
+                                        <input type="text" class="form-control" id="searchString" name="searchString" 
+                                               placeholder="Search by Kaizen No, Employee Name, or Employee No..."
+                                               value="@Context.Request.Query["searchString"]">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search me-2"></i>
+                                            Search
+                                        </button>
+                                        <a href="@Url.Action("KaizenListEngineer", "Kaizen")" class="btn btn-outline-secondary">
+                                            <i class="fas fa-times me-2"></i>
+                                            Clear Filters
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
 
-
-    <!-- Table Section -->
-    <div class="table-container">
-        <div id="searchResults">
-            @if (!Model?.Any() ?? true)
-            {
-                <div class="no-data-alert">
-                    <i class="fas fa-inbox fa-3x mb-3"></i>
-                    <h4>No Kaizen suggestions available</h4>
-                    <p class="mb-0">Start typing to search for Kaizen suggestions</p>
-                </div>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table kaizen-table">
-                        <thead>
-                            <tr>
-                                <th><i class="fas fa-calendar me-2"></i>Date Submitted</th>
-                                <th><i class="fas fa-hashtag me-2"></i>Kaizen No</th>
-                                <th><i class="fas fa-building me-2"></i>Department Name</th>
-                                <th><i class="fas fa-user me-2"></i>Employee Name</th>
-                                <th><i class="fas fa-id-badge me-2"></i>Employee No</th>
-                                <th><i class="fas fa-coins me-2"></i>Cost Saving</th>
-                                <th><i class="fas fa-info-circle me-2"></i>Engineer Status</th>
-                                <th><i class="fas fa-cogs me-2"></i>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model)
-                            {
+                @if (!Model?.Any() ?? true)
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Kaizen Suggestions Found</h5>
+                        <p class="text-muted">No kaizens match your current search criteria.</p>
+                        <a href="@Url.Action("KaizenListEngineer", "Kaizen")" class="btn btn-manager">
+                            <i class="fas fa-times me-2"></i>
+                            Clear Filters
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="text-muted">
+                            <i class="fas fa-list me-2"></i>
+                            Showing @Model.Count() kaizen suggestion(s)
+                        </div>
+                        @if (!string.IsNullOrEmpty(Context.Request.Query["startDate"]) || 
+                              !string.IsNullOrEmpty(Context.Request.Query["endDate"]) || 
+                              !string.IsNullOrEmpty(Context.Request.Query["category"]) ||
+                              !string.IsNullOrEmpty(Context.Request.Query["engineerStatus"]) ||
+                              !string.IsNullOrEmpty(Context.Request.Query["searchString"]))
+                        {
+                            <div class="text-muted small">
+                                <i class="fas fa-filter me-1"></i>
+                                Filters applied
+                            </div>
+                        }
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
                                 <tr>
-                                    <td class="text-center">@item.DateSubmitted.ToString("yyyy-MM-dd")</td>
-                                    <td class="text-center fw-bold">@Html.DisplayFor(modelItem => item.KaizenNo)</td>
-                                    <td class="text-center">@Html.DisplayFor(modelItem => item.Department)</td>
-                                    <td>@Html.DisplayFor(modelItem => item.EmployeeName)</td>
-                                    <td class="text-center">@Html.DisplayFor(modelItem => item.EmployeeNo)</td>
-                                    <td class="text-center cost-saving">
-                                        @(item.CostSaving.HasValue ? $"$ {item.CostSaving.Value:N2}" : "N/A")
-                                    </td>
-                                    <td class="text-center">
-                                        @{
-                                            var engineerStatus = item.EngineerStatus ?? "Pending";
-                                            var statusClass = engineerStatus switch
-                                            {
-                                                "Approved" => "status-approved",
-                                                "Rejected" => "status-rejected",
-                                                _ => "status-pending"
-                                            };
-                                        }
-                                        <span class="@statusClass">@engineerStatus</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="btn-group" role="group">
-                                            <button class="btn btn-view" onclick="viewKaizen(@item.Id)">
-                                                <i class="fas fa-eye me-1"></i>View
-                                            </button>
-                                            @if ((item.EngineerStatus ?? "Pending") == "Approved" && (item.ManagerStatus ?? "Pending") == "Approved")
-                                            {
-                                                <button class="btn btn-success" onclick="openFormB(@item.Id)">
-                                                    <i class="fas fa-file-alt me-1"></i>Form B
-                                                </button>
-                                                <button class="btn btn-info" onclick="printFormB(@item.Id)">
-                                                    <i class="fas fa-print me-1"></i>Print
-                                                </button>
-                                            }
-                                            @if ((item.EngineerStatus ?? "Pending") == "Pending")
-                                            {
-                                                <button class="btn btn-approval" onclick="showApprovalPopup(@item.Id)">
-                                                    <i class="fas fa-gavel me-1"></i>Approval
-                                                </button>
-                                            }
-                                        </div>
-                                    </td>
+                                    <th>Date Submitted</th>
+                                    <th>Kaizen No</th>
+                                    <th>Employee</th>
+                                    <th>Cost Saving</th>
+                                    <th>Engineer Status</th>
+                                    <th>Actions</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <small>@item.DateSubmitted.ToString("MMM dd, yyyy")</small>
+                                        </td>
+                                        <td>
+                                            <strong>@Html.DisplayFor(modelItem => item.KaizenNo)</strong>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(item.EmployeePhotoPath))
+                                                {
+                                                    <img src="@item.EmployeePhotoPath" 
+                                                         alt="Employee Photo" 
+                                                         class="rounded-circle me-2" 
+                                                         style="width: 30px; height: 30px; object-fit: cover;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                         style="width: 30px; height: 30px;">
+                                                        <i class="fas fa-user text-white" style="font-size: 12px;"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <div class="fw-bold">@Html.DisplayFor(modelItem => item.EmployeeName)</div>
+                                                    <small class="text-muted">@Html.DisplayFor(modelItem => item.EmployeeNo)</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (item.CostSaving.HasValue && item.CostSaving > 0)
+                                            {
+                                                <span class="text-success fw-bold">
+                                                    $@item.CostSaving.Value.ToString("N2")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No cost saving</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @{
+                                                var engineerStatus = item.EngineerStatus ?? "Pending";
+                                                var statusClass = engineerStatus switch
+                                                {
+                                                    "Approved" => "badge bg-success",
+                                                    "Rejected" => "badge bg-danger",
+                                                    _ => "badge bg-warning text-dark"
+                                                };
+                                            }
+                                            <span class="@statusClass">
+                                                <i class="fas fa-@(engineerStatus == "Approved" ? "check" : engineerStatus == "Rejected" ? "times" : "clock") me-1"></i>
+                                                @engineerStatus
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="@Url.Action("KaizenDetailsEngineer", "Kaizen", new { id = item.Id })" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye me-1"></i>
+                                                    View Details
+                                                </a>
+                                                @if (((item.EngineerStatus ?? "Pending") == "Approved" || (item.EngineerStatus ?? "Pending") == "Rejected") && 
+                                                     (string.IsNullOrEmpty(item.Category) && string.IsNullOrEmpty(item.Comments) && string.IsNullOrEmpty(item.CanImplementInOtherFields)))
+                                                {
+                                                    <button class="btn btn-sm btn-executive" onclick="executiveFilling(@item.Id)">
+                                                        <i class="fas fa-user-tie me-1"></i>Add Review
+                                                    </button>
+                                                }
+                                                @if ((item.EngineerStatus ?? "Pending") == "Pending")
+                                                {
+                                                    <button class="btn btn-sm btn-warning" onclick="showApprovalPopup(@item.Id)">
+                                                        <i class="fas fa-gavel me-1"></i>Approval
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
         </div>
     </div>
-</div>
 
 <!-- Edit Modal -->
 <div class="modal fade" id="editKaizenModal" tabindex="-1" aria-labelledby="editKaizenModalLabel" aria-hidden="true">
@@ -504,11 +307,8 @@
                     <h5 class="modal-title mb-0" id="editKaizenModalLabel">
                         <i class="fas fa-eye me-2"></i>View Kaizen Suggestion
                     </h5>
-                    <button type="button" class="btn btn-edit ms-3" id="enableEditBtn" onclick="enableEdit()" style="display: none;">
-                        <i class="fas fa-edit me-1"></i>Edit
-                    </button>
                     <button type="button" class="btn btn-executive ms-2" id="executiveFillingBtn" onclick="executiveFilling()" style="display: none;">
-                        <i class="fas fa-user-tie me-1"></i>Executive Filling
+                        <i class="fas fa-user-tie me-1"></i>Add Review
                     </button>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -645,20 +445,23 @@
     </div>
 </div>
 
-
-
 <!-- Enhanced Edit Modal -->
 <div class="modal fade" id="enhancedEditModal" tabindex="-1" aria-labelledby="enhancedEditModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="enhancedEditModalLabel">
-                    <i class="fas fa-edit me-2"></i>To be filled by Executive/Engineer
+                    <i class="fas fa-user-tie me-2"></i>Add Review
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> You can fill in any one or more of the following fields. At least one field must be completed.
+                </div>
                 <form id="enhancedEditForm" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" id="enhancedEditKaizenId" name="Id" />
 
                     <!-- Hidden required fields to ensure they're included in form submission -->
@@ -668,96 +471,55 @@
                     <input type="hidden" id="enhancedEditSuggestionDescriptionHidden" name="SuggestionDescription" />
                     <input type="hidden" id="enhancedEditDateSubmittedHidden" name="DateSubmitted" />
 
-                    <!-- Required Fields Section (Read-only) -->
-                    <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #e9ecef;">
-                        <h6 class="mb-3">
-                            <i class="fas fa-info-circle me-2"></i>Kaizen Information
-                        </h6>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="enhancedEditKaizenNo" class="form-label">
-                                    <i class="fas fa-hashtag me-2"></i>Kaizen No
-                                </label>
-                                <input type="text" id="enhancedEditKaizenNo" class="form-control" readonly />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="enhancedEditEmployeeNo" class="form-label">
-                                    <i class="fas fa-id-badge me-2"></i>Employee Number
-                                </label>
-                                <input type="text" id="enhancedEditEmployeeNo" class="form-control" readonly />
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="enhancedEditEmployeeName" class="form-label">
-                                    <i class="fas fa-user me-2"></i>Employee Name
-                                </label>
-                                <input type="text" id="enhancedEditEmployeeName" class="form-control" readonly />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="enhancedEditDepartment" class="form-label">
-                                    <i class="fas fa-building me-2"></i>Department
-                                </label>
-                                <input type="text" id="enhancedEditDepartment" name="Department" class="form-control" readonly />
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="enhancedEditSuggestionDescription" class="form-label">
-                                <i class="fas fa-lightbulb me-2"></i>Suggestion Description
-                            </label>
-                            <textarea id="enhancedEditSuggestionDescription" class="form-control" rows="3" readonly></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Executive/Engineer Form Section -->
+                    <!-- Review Form Section -->
                     <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
                         <h6 class="mb-3">
-                            <i class="fas fa-user-tie me-2"></i>Executive/Engineer Review
+                            <i class="fas fa-user-tie me-2"></i>Review Details
                         </h6>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="enhancedEditCategory" class="form-label">
-                                    <i class="fas fa-folder me-2"></i>Recommended Categories
+                                    <i class="fas fa-folder me-2"></i>Recommended Categories <span class="text-muted">(Optional)</span>
                                 </label>
                                 <div class="mt-2">
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryCostSaving" value="Cost reduction">
-                                        <label class="form-check-label" for="categoryCostSaving">Major Cost reduction by innovation</label>
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryCostSaving" value="Cost reduction">
+                                        <label class="form-check-label" for="enhanced_categoryCostSaving">Major Cost reduction by innovation</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryProductivity" value="Productivity Improvement">
-                                        <label class="form-check-label" for="categoryProductivity">Productivity Improvement</label>
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryProductivity" value="Productivity Improvement">
+                                        <label class="form-check-label" for="enhanced_categoryProductivity">Productivity Improvement</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryOHS" value="OHS Improvement">
-                                        <label class="form-check-label" for="categoryOHS">OHS Improvement</label>
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryOHS" value="OHS Improvement">
+                                        <label class="form-check-label" for="enhanced_categoryOHS">OHS Improvement</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryQuality" value="Quality Improvements">
-                                        <label class="form-check-label" for="categoryQuality">Quality Improvements</label>
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryQuality" value="Quality Improvements">
+                                        <label class="form-check-label" for="enhanced_categoryQuality">Quality Improvements</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryEnvironment" value="Environmental friendly">
-                                        <label class="form-check-label" for="categoryEnvironment">Environmental friendly Innovation</label>
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryEnvironment" value="Environmental friendly">
+                                        <label class="form-check-label" for="enhanced_categoryEnvironment">Environmental friendly Innovation</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="category5S" value="5S Improvement">
-                                        <label class="form-check-label" for="category5S">5S Improvement</label>
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_category5S" value="5S Improvement">
+                                        <label class="form-check-label" for="enhanced_category5S">5S Improvement</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryErgonomics" value="Ergonomics Improvements">
-                                        <label class="form-check-label" for="categoryErgonomics">Ergonomics Improvements</label>
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryErgonomics" value="Ergonomics Improvements">
+                                        <label class="form-check-label" for="enhanced_categoryErgonomics">Ergonomics Improvements</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="categoryEnergySaving" value="Energy Saving Improvement">
-                                        <label class="form-check-label" for="categoryEnergySaving">Energy Saving Improvement</label>
+                                        <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryEnergySaving" value="Energy Saving Improvement">
+                                        <label class="form-check-label" for="enhanced_categoryEnergySaving">Energy Saving Improvement</label>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label for="enhancedEditApprovedBy" class="form-label">
-                                    <i class="fas fa-signature me-2"></i>Signature (Add Name)
+                                    <i class="fas fa-signature me-2"></i>Signature (Add Name) <span class="text-muted">(Optional)</span>
                                 </label>
                                 <input type="text" id="enhancedEditApprovedBy" name="ApprovedBy" class="form-control" placeholder="Enter your name" />
                             </div>
@@ -765,23 +527,23 @@
 
                         <div class="mb-3">
                             <label for="enhancedEditComments" class="form-label">
-                                <i class="fas fa-comments me-2"></i>Comment & Recommendations
+                                <i class="fas fa-comments me-2"></i>Comment & Recommendations <span class="text-muted">(Optional)</span>
                             </label>
                             <textarea id="enhancedEditComments" name="Comments" class="form-control" rows="4" placeholder="Enter your comments and recommendations..."></textarea>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">
-                                <i class="fas fa-question-circle me-2"></i>Can this suggestion be implemented in other fields?
+                                <i class="fas fa-question-circle me-2"></i>Can this suggestion be implemented in other fields? <span class="text-muted">(Optional)</span>
                             </label>
                             <div class="mt-2">
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="implementYes" value="Yes" onchange="toggleImplementationArea()">
-                                    <label class="form-check-label" for="implementYes">Yes</label>
+                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="enhanced_implementYes" value="Yes" onchange="toggleEnhancedImplementationArea()">
+                                    <label class="form-check-label" for="enhanced_implementYes">Yes</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="implementNo" value="No" onchange="toggleImplementationArea()">
-                                    <label class="form-check-label" for="implementNo">No</label>
+                                    <input class="form-check-input" type="radio" name="CanImplementInOtherFields" id="enhanced_implementNo" value="No" onchange="toggleEnhancedImplementationArea()">
+                                    <label class="form-check-label" for="enhanced_implementNo">No</label>
                                 </div>
                             </div>
                         </div>
@@ -799,8 +561,8 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <button type="button" class="btn btn-update" onclick="saveEnhancedEdit()">
-                    <i class="fas fa-save me-2"></i>Save Changes
+                <button type="button" class="btn btn-executive" id="saveExecutiveBtn" onclick="saveExecutiveFilling()">
+                    <i class="fas fa-save me-2"></i>Save Review
                 </button>
             </div>
         </div>
@@ -879,148 +641,33 @@
 }
 
 <script>
-    // Real-time search functionality
-    let searchTimeout;
-    const searchInput = document.getElementById('searchString');
-    const statusSelect = document.getElementById('status');
-    const clearBtn = document.getElementById('clearBtn');
-    const searchResults = document.getElementById('searchResults');
+    // Search functionality enhancements
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchForm = document.getElementById('searchForm');
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
 
-    // Search function with debouncing
-    function performSearch() {
-        const searchTerm = searchInput.value.trim();
-        const status = statusSelect.value;
-
-        // Show loading state
-        searchResults.innerHTML = `
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Searching...</p>
-            </div>
-        `;
-
-        // Make AJAX request
-        fetch(`/Kaizen/Search?searchString=${encodeURIComponent(searchTerm)}&status=${encodeURIComponent(status)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    displaySearchResults(data.kaizens, searchTerm, status);
-                } else {
-                    searchResults.innerHTML = `
-                        <div class="no-data-alert">
-                            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                            <h4>Error occurred</h4>
-                            <p class="mb-0">${data.message}</p>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Search error:', error);
-                searchResults.innerHTML = `
-                    <div class="no-data-alert">
-                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                        <h4>Search failed</h4>
-                        <p class="mb-0">An error occurred while searching. Please try again.</p>
-                    </div>
-                `;
-            });
-    }
-
-    // Display search results
-    function displaySearchResults(kaizens, searchTerm, status) {
-        if (!kaizens || kaizens.length === 0) {
-            let message = 'No Kaizen suggestions found';
-            if (searchTerm || status) {
-                message += ` for "${searchTerm || status}"`;
-            }
-            searchResults.innerHTML = `
-                <div class="no-data-alert">
-                    <i class="fas fa-search fa-3x mb-3"></i>
-                    <h4>${message}</h4>
-                    <p class="mb-0">Try adjusting your search criteria</p>
-                </div>
-            `;
-            return;
+        // Set default date range to last 30 days if no dates are selected
+        if (!startDateInput.value && !endDateInput.value) {
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            
+            startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+            endDateInput.value = today.toISOString().split('T')[0];
         }
 
-        const tableHTML = `
-            <div class="table-responsive">
-                <table class="table kaizen-table">
-                    <thead>
-                        <tr>
-                            <th><i class="fas fa-calendar me-2"></i>Date Submitted</th>
-                            <th><i class="fas fa-hashtag me-2"></i>Kaizen No</th>
-                            <th><i class="fas fa-building me-2"></i>Department Name</th>
-                            <th><i class="fas fa-user me-2"></i>Employee Name</th>
-                            <th><i class="fas fa-id-badge me-2"></i>Employee No</th>
-                            <th><i class="fas fa-coins me-2"></i>Cost Saving</th>
-                            <th><i class="fas fa-info-circle me-2"></i>Engineer Status</th>
-                            <th><i class="fas fa-cogs me-2"></i>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${kaizens.map(item => {
-                            const engineerStatus = item.engineerStatus || 'Pending';
-                            const statusClass = engineerStatus === 'Approved' ? 'status-approved' :
-                                               engineerStatus === 'Rejected' ? 'status-rejected' : 'status-pending';
-                            return `
-                                <tr>
-                                    <td class="text-center">${new Date(item.dateSubmitted).toLocaleDateString()}</td>
-                                    <td class="text-center fw-bold">${item.kaizenNo}</td>
-                                    <td class="text-center">${item.department}</td>
-                                    <td>${item.employeeName}</td>
-                                    <td class="text-center">${item.employeeNo}</td>
-                                    <td class="text-center cost-saving">
-                                        ${item.costSaving ? `$ ${parseFloat(item.costSaving).toFixed(2)}` : 'N/A'}
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="${statusClass}">${engineerStatus}</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <button class="btn btn-view" onclick="viewKaizen(${item.id})">
-                                            <i class="fas fa-eye me-1"></i>View
-                                        </button>
-                                        ${engineerStatus === 'Pending' ? `
-                                            <button class="btn btn-approval" onclick="showApprovalPopup(${item.id})">
-                                                <i class="fas fa-gavel me-1"></i>Approval
-                                            </button>
-                                        ` : ''}
-
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-
-        searchResults.innerHTML = tableHTML;
-    }
-
-    // Event listeners
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(performSearch, 300); // 300ms delay
-    });
-
-    statusSelect.addEventListener('change', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(performSearch, 300);
-    });
-
-    clearBtn.addEventListener('click', function() {
-        searchInput.value = '';
-        statusSelect.value = '';
-        performSearch();
-    });
-
-    // Load initial data
-    document.addEventListener('DOMContentLoaded', function() {
-        performSearch();
+        // Validate date range
+        searchForm.addEventListener('submit', function(e) {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            
+            if (startDateInput.value && endDateInput.value && startDate > endDate) {
+                e.preventDefault();
+                alert('Start date cannot be after end date.');
+                return false;
+            }
+        });
 
         // Add event listeners for cost saving radio buttons in edit modal
         const editNoCostSavingRadio = document.getElementById('editNoCostSaving');
@@ -1053,7 +700,6 @@
         // Reset form to view-only mode
         setFormReadOnly(true);
         document.getElementById('saveEditBtn').style.display = 'none';
-        document.getElementById('enableEditBtn').style.display = 'none';
         document.getElementById('executiveFillingBtn').style.display = 'none';
 
         // Fetch kaizen data
@@ -1096,10 +742,9 @@
                         afterImageContainer.style.display = 'none';
                     }
 
-                    // Check if kaizen is rejected or pending and hide buttons accordingly
+                    // Check if kaizen is pending, approved, or rejected and show executive filling button
                     const engineerStatus = data.data.engineerStatus || 'Pending';
-                    if (engineerStatus !== 'Rejected' && engineerStatus !== 'Pending') {
-                        document.getElementById('enableEditBtn').style.display = 'block';
+                    if (engineerStatus === 'Pending' || engineerStatus === 'Approved' || engineerStatus === 'Rejected') {
                         document.getElementById('executiveFillingBtn').style.display = 'block';
                     }
                 } else {
@@ -1114,26 +759,9 @@
             });
     }
 
-    function openFormB(id) {
-        window.open(`/Kaizen/FormB/${id}`, '_blank');
-    }
-
-    function printFormB(id) {
-        window.open(`/Kaizen/PrintFormB/${id}`, '_blank');
-    }
-
-    function enableEdit() {
-        setFormReadOnly(false);
-        document.getElementById('saveEditBtn').style.display = 'block';
-        document.getElementById('enableEditBtn').style.display = 'none';
-    }
-
-    function executiveFilling() {
-        // Get the current kaizen ID from the edit modal
-        const kaizenId = document.getElementById('editKaizenId').value;
-
-        // Close the current modal
-        bootstrap.Modal.getInstance(document.getElementById('editKaizenModal')).hide();
+    function executiveFilling(id) {
+        // Use the provided kaizen ID
+        const kaizenId = id;
 
         // Show the enhanced edit modal (Executive/Engineer form)
         const enhancedModal = new bootstrap.Modal(document.getElementById('enhancedEditModal'));
@@ -1150,15 +778,10 @@
                     // Populate form fields
                     document.getElementById('enhancedEditKaizenId').value = data.data.id;
 
-                    // Populate required fields (read-only) and hidden fields for form submission
-                    document.getElementById('enhancedEditKaizenNo').value = data.data.kaizenNo || '';
+                    // Populate hidden fields for form submission
                     document.getElementById('enhancedEditKaizenNoHidden').value = data.data.kaizenNo || '';
-                    document.getElementById('enhancedEditEmployeeNo').value = data.data.employeeNo || '';
                     document.getElementById('enhancedEditEmployeeNoHidden').value = data.data.employeeNo || '';
-                    document.getElementById('enhancedEditEmployeeName').value = data.data.employeeName || '';
                     document.getElementById('enhancedEditEmployeeNameHidden').value = data.data.employeeName || '';
-                    document.getElementById('enhancedEditDepartment').value = data.data.department || '';
-                    document.getElementById('enhancedEditSuggestionDescription').value = data.data.suggestionDescription || '';
                     document.getElementById('enhancedEditSuggestionDescriptionHidden').value = data.data.suggestionDescription || '';
                     document.getElementById('enhancedEditDateSubmittedHidden').value = data.data.dateSubmitted || '';
 
@@ -1168,7 +791,8 @@
                         // Split comma-separated categories and check corresponding checkboxes
                         const categories = category.split(',').map(cat => cat.trim());
                         categories.forEach(cat => {
-                            const checkbox = document.querySelector(`input[name="Category"][value="${cat}"]`);
+                            // Use the enhanced modal checkboxes
+                            const checkbox = document.querySelector(`#enhancedEditModal input[name="Category"][value="${cat}"]`);
                             if (checkbox) {
                                 checkbox.checked = true;
                             }
@@ -1184,12 +808,36 @@
                     // Set implementation area fields
                     const canImplement = data.data.canImplementInOtherFields || '';
                     if (canImplement === 'Yes') {
-                        document.getElementById('implementYes').checked = true;
+                        document.getElementById('enhanced_implementYes').checked = true;
                         document.getElementById('implementationAreaField').style.display = 'block';
                         document.getElementById('enhancedEditImplementationArea').value = data.data.implementationArea || '';
                     } else if (canImplement === 'No') {
-                        document.getElementById('implementNo').checked = true;
+                        document.getElementById('enhanced_implementNo').checked = true;
                         document.getElementById('implementationAreaField').style.display = 'none';
+                    }
+
+                    // For rejected kaizens, make category and implementation fields optional
+                    const engineerStatus = data.data.engineerStatus || 'Pending';
+                    if (engineerStatus === 'Rejected') {
+                        // Add visual indication that these fields are optional for rejected kaizens
+                        const categorySection = document.querySelector('#enhancedEditModal .mb-4');
+                        if (categorySection) {
+                            const categoryLabel = categorySection.querySelector('label[for="enhancedEditCategory"]');
+                            if (categoryLabel) {
+                                categoryLabel.innerHTML = '<i class="fas fa-folder me-2"></i>Recommended Categories (Optional for rejected kaizens)';
+                            }
+                        }
+                        
+                        const implementationLabel = document.querySelector('#enhancedEditModal label[for="enhanced_implementYes"]');
+                        if (implementationLabel) {
+                            const parentDiv = implementationLabel.closest('.mb-3');
+                            if (parentDiv) {
+                                const label = parentDiv.querySelector('label');
+                                if (label) {
+                                    label.innerHTML = '<i class="fas fa-question-circle me-2"></i>Can this suggestion be implemented in other fields? (Optional for rejected kaizens)';
+                                }
+                            }
+                        }
                     }
                 } else {
                     alert('Error: ' + data.message);
@@ -1235,8 +883,6 @@
         // Add antiforgery token
         const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
         formData.append('__RequestVerificationToken', token);
-
-
 
         fetch(`/Kaizen/Edit/${id}`, {
             method: 'POST',
@@ -1353,72 +999,129 @@
         }
     }
 
-
-
-    function editKaizen(id) {
-        // Show enhanced edit modal
-        const modal = new bootstrap.Modal(document.getElementById('enhancedEditModal'));
-        modal.show();
-
-        // Fetch kaizen data for enhanced edit
-        fetch(`/Kaizen/Edit/${id}`)
+    function saveExecutiveFilling() {
+        // Get the kaizen ID
+        const kaizenId = document.getElementById('enhancedEditKaizenId').value;
+        
+        // Get current engineer status to determine validation rules
+        let currentEngineerStatus = '';
+        
+        // Fetch current kaizen status
+        fetch(`/Kaizen/Edit/${kaizenId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Populate form fields
-                    document.getElementById('enhancedEditKaizenId').value = data.data.id;
-
-                    // Populate required fields (read-only) and hidden fields for form submission
-                    document.getElementById('enhancedEditKaizenNo').value = data.data.kaizenNo || '';
-                    document.getElementById('enhancedEditKaizenNoHidden').value = data.data.kaizenNo || '';
-                    document.getElementById('enhancedEditEmployeeNo').value = data.data.employeeNo || '';
-                    document.getElementById('enhancedEditEmployeeNoHidden').value = data.data.employeeNo || '';
-                    document.getElementById('enhancedEditEmployeeName').value = data.data.employeeName || '';
-                    document.getElementById('enhancedEditEmployeeNameHidden').value = data.data.employeeName || '';
-                    document.getElementById('enhancedEditDepartment').value = data.data.department || '';
-                    document.getElementById('enhancedEditSuggestionDescription').value = data.data.suggestionDescription || '';
-                    document.getElementById('enhancedEditSuggestionDescriptionHidden').value = data.data.suggestionDescription || '';
-                    document.getElementById('enhancedEditDateSubmittedHidden').value = data.data.dateSubmitted || '';
-
-                    // Set category checkboxes (handle multiple selections)
-                    const category = data.data.category || '';
-                    if (category) {
-                        // Split comma-separated categories and check corresponding checkboxes
-                        const categories = category.split(',').map(cat => cat.trim());
-                        categories.forEach(cat => {
-                            const checkbox = document.querySelector(`input[name="Category"][value="${cat}"]`);
-                            if (checkbox) {
-                                checkbox.checked = true;
-                            }
-                        });
-                    }
-
-                    // Set signature field
-                    document.getElementById('enhancedEditApprovedBy').value = data.data.engineerApprovedBy || '';
-
-                    // Set comments field
-                    document.getElementById('enhancedEditComments').value = data.data.comments || '';
-
-                    // Set implementation area fields
-                    const canImplement = data.data.canImplementInOtherFields || '';
-                    if (canImplement === 'Yes') {
-                        document.getElementById('implementYes').checked = true;
-                        document.getElementById('implementationAreaField').style.display = 'block';
-                        document.getElementById('enhancedEditImplementationArea').value = data.data.implementationArea || '';
-                    } else if (canImplement === 'No') {
-                        document.getElementById('implementNo').checked = true;
-                        document.getElementById('implementationAreaField').style.display = 'none';
-                    }
+                    currentEngineerStatus = data.data.engineerStatus || 'Pending';
+                    validateAndSaveExecutiveFilling(kaizenId, currentEngineerStatus);
                 } else {
                     alert('Error: ' + data.message);
-                    modal.hide();
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while loading the kaizen data.');
-                modal.hide();
+                alert('An error occurred while validating the form.');
             });
+    }
+
+    function validateAndSaveExecutiveFilling(kaizenId, engineerStatus) {
+        // Validate that at least one field is filled (executive can fill only one field)
+        const approvedBy = document.getElementById('enhancedEditApprovedBy').value.trim();
+        const comments = document.getElementById('enhancedEditComments').value.trim();
+        const canImplementInOtherFields = document.querySelector('input[name="CanImplementInOtherFields"]:checked')?.value;
+        const selectedCategories = document.querySelectorAll('#enhancedEditModal input[name="Category"]:checked');
+        
+        let hasAnyFieldFilled = false;
+        
+        if (approvedBy) {
+            hasAnyFieldFilled = true;
+        }
+        
+        if (comments) {
+            hasAnyFieldFilled = true;
+        }
+        
+        if (canImplementInOtherFields) {
+            hasAnyFieldFilled = true;
+        }
+        
+        if (selectedCategories.length > 0) {
+            hasAnyFieldFilled = true;
+        }
+        
+        if (!hasAnyFieldFilled) {
+            alert('Please fill in at least one field (Signature, Comments, Categories, or Implementation question).');
+            return;
+        }
+
+        // Show loading state
+        const saveBtn = document.getElementById('saveExecutiveBtn');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        saveBtn.disabled = true;
+
+        // Prepare form data
+        const formData = new FormData();
+        
+        // Add category checkboxes from enhanced modal (only if categories are selected)
+        const categoryCheckboxes = document.querySelectorAll('#enhancedEditModal input[name="Category"]:checked');
+        categoryCheckboxes.forEach(checkbox => {
+            formData.append('Category', checkbox.value);
+        });
+        
+        formData.append('ApprovedBy', approvedBy);
+        formData.append('Comments', comments);
+        
+        // Only add implementation fields if they are selected (not required for rejected kaizens)
+        if (canImplementInOtherFields) {
+            formData.append('CanImplementInOtherFields', canImplementInOtherFields);
+            
+            // Add implementation area if "Yes" is selected
+            if (canImplementInOtherFields === 'Yes') {
+                const implementationArea = document.getElementById('enhancedEditImplementationArea').value.trim();
+                formData.append('ImplementationArea', implementationArea);
+            }
+        }
+        
+        formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        // Send the data to the server
+        fetch(`/Kaizen/SaveExecutiveFilling/${kaizenId}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Review saved successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('enhancedEditModal')).hide();
+                
+                // Reload the page to show updated data
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the executive review.');
+        })
+        .finally(() => {
+            // Restore button state
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    }
+
+    function toggleImplementationArea() {
+        const implementYes = document.getElementById('implementYes');
+        const implementationAreaField = document.getElementById('implementationAreaField');
+        
+        if (implementYes.checked) {
+            implementationAreaField.style.display = 'block';
+        } else {
+            implementationAreaField.style.display = 'none';
+            document.getElementById('enhancedEditImplementationArea').value = '';
+        }
     }
 
     function clearExecutiveForm() {
@@ -1445,86 +1148,19 @@
         document.getElementById('enhancedEditImplementationArea').value = '';
     }
 
-    function toggleImplementationArea() {
-        const yesRadio = document.getElementById('implementYes');
-        const areaField = document.getElementById('implementationAreaField');
-
-        if (yesRadio.checked) {
-            areaField.style.display = 'block';
+    function toggleEnhancedImplementationArea() {
+        const implementYes = document.getElementById('enhanced_implementYes');
+        const implementationAreaField = document.getElementById('implementationAreaField');
+        
+        if (implementYes.checked) {
+            implementationAreaField.style.display = 'block';
         } else {
-            areaField.style.display = 'none';
+            implementationAreaField.style.display = 'none';
             document.getElementById('enhancedEditImplementationArea').value = '';
         }
     }
 
-    function saveEnhancedEdit() {
-        const form = document.getElementById('enhancedEditForm');
-        const formData = new FormData(form);
-        const id = document.getElementById('enhancedEditKaizenId').value;
 
-        // Validate required fields
-        const approvedBy = document.getElementById('enhancedEditApprovedBy').value.trim();
-        const comments = document.getElementById('enhancedEditComments').value.trim();
-        const canImplementInOtherFields = document.querySelector('input[name="CanImplementInOtherFields"]:checked')?.value;
-        const selectedCategories = document.querySelectorAll('input[name="Category"]:checked');
 
-        if (!approvedBy) {
-            alert('Please enter your name for signature.');
-            document.getElementById('enhancedEditApprovedBy').focus();
-            return;
-        }
-        
-        if (!comments) {
-            alert('Please provide comments and recommendations.');
-            document.getElementById('enhancedEditComments').focus();
-            return;
-        }
 
-        if (selectedCategories.length === 0) {
-            alert('Please select at least one recommended category.');
-            return;
-        }
-
-        if (!canImplementInOtherFields) {
-            alert('Please select whether this suggestion can be implemented in other fields.');
-            return;
-        }
-
-        // Handle multiple category selections
-        const selectedCategoriesArray = [];
-        selectedCategories.forEach(checkbox => {
-            selectedCategoriesArray.push(checkbox.value);
-        });
-
-        // Remove existing Category entries and add the combined one
-        formData.delete('Category');
-        if (selectedCategoriesArray.length > 0) {
-            formData.append('Category', selectedCategoriesArray.join(', '));
-        }
-
-        // Add antiforgery token
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        formData.append('__RequestVerificationToken', token);
-
-        // Use the dedicated SaveExecutiveFilling endpoint instead of Edit
-        fetch(`/Kaizen/SaveExecutiveFilling/${id}`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                bootstrap.Modal.getInstance(document.getElementById('enhancedEditModal')).hide();
-                // Reload the page to show updated data
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while saving the changes.');
-        });
-    }
 </script> 

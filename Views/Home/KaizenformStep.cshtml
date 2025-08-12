@@ -1,6 +1,4 @@
 @model KaizenWebApp.Models.KaizenFormViewModel
-@using Microsoft.AspNetCore.Mvc.Localization
-@inject IViewLocalizer Localizer
 @{
     ViewData["Title"] = "Kaizen Suggestion Form";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -57,6 +55,22 @@
         display: block;
     }
 
+    .is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    .field-error-message {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .summary-error {
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Step Wizard Styles */
     .step-wizard {
         margin-bottom: 30px;
     }
@@ -67,8 +81,6 @@
         align-items: center;
         margin-bottom: 30px;
         position: relative;
-        gap: 20px;
-        padding: 0 40px;
     }
 
     .step-indicator::before {
@@ -116,13 +128,10 @@
         top: 60px;
         left: 50%;
         transform: translateX(-50%);
-        white-space: normal;
-        text-align: center;
+        white-space: nowrap;
         font-size: 0.875rem;
         font-weight: 500;
         color: #6c757d;
-        max-width: 120px;
-        line-height: 1.2;
     }
 
     .step-item.active .step-label {
@@ -138,45 +147,10 @@
     .step-content {
         display: none;
         animation: fadeIn 0.5s ease-in-out;
-        opacity: 0;
-        transform: translateY(20px);
-        min-height: 200px;
     }
 
     .step-content.active {
-        display: block !important;
-        opacity: 1;
-        transform: translateY(0);
-        visibility: visible !important;
-        position: relative;
-        width: 100%;
-        margin-bottom: 20px;
-    }
-
-    /* Specific styling for step 4 to ensure it's properly contained */
-    #step4 {
-        position: relative;
-        width: 100%;
-        display: none;
-    }
-
-    #step4.active {
-        display: block !important;
-        position: relative;
-        width: 100%;
-        opacity: 1;
-        visibility: visible !important;
-    }
-
-    /* Ensure all steps are properly contained within the form */
-    .step-content {
-        display: none;
-        animation: fadeIn 0.5s ease-in-out;
-        opacity: 0;
-        transform: translateY(20px);
-        min-height: 200px;
-        position: relative;
-        width: 100%;
+        display: block;
     }
 
     @@keyframes fadeIn {
@@ -191,43 +165,6 @@
         margin-top: 30px;
         padding-top: 20px;
         border-top: 1px solid #e9ecef;
-        position: relative;
-        width: 100%;
-        clear: both;
-    }
-
-    /* Ensure navigation buttons are properly contained */
-    .step-navigation button {
-        position: relative;
-        z-index: 10;
-    }
-
-    /* Ensure form container properly contains all content */
-    #kaizenForm {
-        position: relative;
-        width: 100%;
-        overflow: visible;
-        min-height: 400px;
-    }
-
-    /* Ensure step content doesn't overflow and is properly contained */
-    .step-content {
-        overflow: visible;
-        margin-bottom: 20px;
-        position: relative;
-        width: 100%;
-        display: none;
-    }
-
-    /* Ensure the card container properly contains the form */
-    .card {
-        overflow: visible;
-        position: relative;
-    }
-
-    /* Ensure the container properly contains all content */
-    .container {
-        overflow: visible;
     }
 
     .btn-nav {
@@ -281,6 +218,13 @@
         background-color: #218838;
         border-color: #1e7e34;
         color: white;
+    }
+
+    .btn-nav:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
     }
 
     .step-validation-error {
@@ -339,73 +283,23 @@
         transition: width 0.5s ease;
         border-radius: 3px;
     }
-
-    .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .loading-spinner {
-        background: white;
-        padding: 30px;
-        border-radius: 10px;
-        text-align: center;
-    }
-
-    /* Responsive adjustments for step indicator */
-    @@media (max-width: 1200px) {
-        .step-indicator {
-            padding: 0 20px;
-            gap: 15px;
-        }
-        
-        .step-label {
-            max-width: 100px;
-            font-size: 0.8rem;
-        }
-    }
-
-    @@media (max-width: 768px) {
-        .step-indicator {
-            padding: 0 10px;
-            gap: 10px;
-        }
-        
-        .step-label {
-            max-width: 80px;
-            font-size: 0.75rem;
-        }
-        
-        .step-item {
-            width: 40px;
-            height: 40px;
-        }
-    }
 </style>
 
-<div class="container-fluid mt-5">
+<div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-xl-11 col-lg-12">
+        <div class="col-lg-10">
             <div class="card shadow-lg p-4 rounded-4 border-0">
 
                 <!-- Language Selector -->
                 <div class="d-flex justify-content-end mb-3">
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-globe me-2"></i><span id="currentLanguage">@Localizer["English"]</span>
+                            <i class="fas fa-globe me-2"></i><span id="currentLanguage">English</span>
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="languageDropdown">
-                            <li><a class="dropdown-item" href="#" onclick="changeLanguage('en')">@Localizer["English"]</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeLanguage('si')">@Localizer["Sinhala"]</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeLanguage('ta')">@Localizer["Tamil"]</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeLanguage('en')">English</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeLanguage('si')">සිංහල</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeLanguage('ta')">தமிழ்</a></li>
                         </ul>
                     </div>
                 </div>
@@ -429,19 +323,19 @@
                     <div class="step-indicator">
                         <div class="step-item active" data-step="1">
                             <span>1</span>
-                            <div class="step-label">@Localizer["BasicInfo"]</div>
+                            <div class="step-label">Basic Info</div>
                         </div>
                         <div class="step-item" data-step="2">
                             <span>2</span>
-                            <div class="step-label">@Localizer["EmployeeDetails"]</div>
+                            <div class="step-label">Employee Details</div>
                         </div>
                         <div class="step-item" data-step="3">
                             <span>3</span>
-                            <div class="step-label">@Localizer["KaizenImages"]</div>
+                            <div class="step-label">Kaizen Images</div>
                         </div>
                         <div class="step-item" data-step="4">
                             <span>4</span>
-                            <div class="step-label">@Localizer["Benefits"]</div>
+                            <div class="step-label">Benefits & Submit</div>
                         </div>
                     </div>
                 </div>
@@ -450,48 +344,48 @@
                     
                     <!-- Step 1: Basic Information -->
                     <div class="step-content active" id="step1">
-                        
+                        <div class="step-header">
+                            <div class="step-title">Step 1: Basic Information</div>
+                            <div class="step-description">Please provide the basic details about your Kaizen suggestion</div>
+                        </div>
                         
                         <div class="step-validation-error" id="step1Error">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            <span id="step1ErrorMessage">@Localizer["PleaseCompleteStep"]</span>
+                            <span id="step1ErrorMessage">Please complete all required fields in this step.</span>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label asp-for="DateSubmitted" class="form-label">@Localizer["DateSubmitted"]</label>
+                                <label asp-for="DateSubmitted" class="form-label" data-lang-key="dateSubmitted"></label>
                                 <input asp-for="DateSubmitted" type="date" class="form-control" />
                                 <span asp-validation-for="DateSubmitted" class="text-danger"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="DateImplemented" class="form-label">@Localizer["DateImplemented"]</label>
-                                <input asp-for="DateImplemented" type="date" class="form-control" />
+                                <label asp-for="DateImplemented" class="form-label" data-lang-key="dateImplemented">Date Implemented *</label>
+                                <input asp-for="DateImplemented" type="date" class="form-control" required />
                                 <span asp-validation-for="DateImplemented" class="text-danger"></span>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label asp-for="KaizenNo" class="form-label">@Localizer["KaizenNo"]</label>
+                                <label asp-for="KaizenNo" class="form-label" data-lang-key="kaizenNo"></label>
                                 <input asp-for="KaizenNo" id="KaizenNo" class="form-control" readonly />
                                 <span asp-validation-for="KaizenNo" class="text-danger"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="Department" class="form-label">@Localizer["DepartmentName"]</label>
+                                <label asp-for="Department" class="form-label">Department Name</label>
                                 <input asp-for="Department" class="form-control" readonly />
                                 <span asp-validation-for="Department" class="text-danger"></span>
-                                <small class="form-text text-muted">@Localizer["DepartmentAutoSet"]</small>
-                                
-                                <!-- Hidden field to ensure Department is always sent -->
-                                <input type="hidden" name="Department" value="@Model?.Department" />
+                                <small class="form-text text-muted">Department Name is automatically set based on your registration</small>
 
                                 @if (Model?.Department == null || string.IsNullOrEmpty(Model.Department))
                                 {
-                                    <small class="form-text text-warning">@Localizer["NoDepartmentFound"]: @User.Identity?.Name</small>
+                                    <small class="form-text text-warning">No department found for current user: @User.Identity?.Name</small>
                                 }
                                 else
                                 {
-                                    <small class="form-text text-success">@Localizer["DepartmentLoaded"]: @Model.Department</small>
+                                    <small class="form-text text-success">Department Name loaded: @Model.Department</small>
                                 }
                             </div>
                         </div>
@@ -499,21 +393,24 @@
 
                     <!-- Step 2: Employee Details -->
                     <div class="step-content" id="step2">
-                        
+                        <div class="step-header">
+                            <div class="step-title">Step 2: Employee Details</div>
+                            <div class="step-description">Provide employee information and photo</div>
+                        </div>
                         
                         <div class="step-validation-error" id="step2Error">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            <span id="step2ErrorMessage">@Localizer["PleaseCompleteStep"]</span>
+                            <span id="step2ErrorMessage">Please complete all required fields in this step.</span>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label asp-for="EmployeeName" class="form-label">@Localizer["EmployeeName"]</label>
+                                <label asp-for="EmployeeName" class="form-label" data-lang-key="employeeName"></label>
                                 <input asp-for="EmployeeName" class="form-control" />
                                 <span asp-validation-for="EmployeeName" class="text-danger"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="EmployeeNo" class="form-label">@Localizer["EmployeeNo"]</label>
+                                <label asp-for="EmployeeNo" class="form-label" data-lang-key="employeeNo"></label>
                                 <input asp-for="EmployeeNo" class="form-control" />
                                 <span asp-validation-for="EmployeeNo" class="text-danger"></span>
                             </div>
@@ -521,10 +418,10 @@
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label asp-for="EmployeePhoto" class="form-label">@Localizer["EmployeePhoto"]</label>
-                                <input asp-for="EmployeePhoto" type="file" class="form-control" accept="image/*" />
+                                <label asp-for="EmployeePhoto" class="form-label" data-lang-key="employeePhoto">Employee Photo *</label>
+                                <input asp-for="EmployeePhoto" type="file" class="form-control" accept="image/*" required />
                                 <span asp-validation-for="EmployeePhoto" class="text-danger"></span>
-                                <small class="form-text text-muted">@Localizer["UploadImageHelp"]</small>
+                                <small class="form-text text-muted">Upload employee photo (PNG, JPG, JPEG, WebP up to 5MB)</small>
                             </div>
                             <div class="col-md-6">
                                 <!-- Empty column for layout balance -->
@@ -534,65 +431,71 @@
 
                     <!-- Step 3: Kaizen Images -->
                     <div class="step-content" id="step3">
-                        
+                        <div class="step-header">
+                            <div class="step-title">Step 3: Kaizen Images</div>
+                            <div class="step-description">Upload before and after images of your Kaizen improvement</div>
+                        </div>
                         
                         <div class="step-validation-error" id="step3Error">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            <span id="step3ErrorMessage">@Localizer["PleaseCompleteStep"]</span>
+                            <span id="step3ErrorMessage">Please complete all required fields in this step.</span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="SuggestionDescription" class="form-label">@Localizer["SuggestionDescription"]</label>
+                            <label asp-for="SuggestionDescription" class="form-label" data-lang-key="suggestionDescription"></label>
                             <textarea asp-for="SuggestionDescription" class="form-control" rows="3"></textarea>
                             <span asp-validation-for="SuggestionDescription" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="BeforeKaizenImage" class="form-label">@Localizer["BeforeKaizenImage"]</label>
-                            <input asp-for="BeforeKaizenImage" type="file" class="form-control" accept="image/*" />
+                            <label asp-for="BeforeKaizenImage" class="form-label" data-lang-key="beforeKaizenImage">Before Kaizen Image (Upload QR/Image) *</label>
+                            <input asp-for="BeforeKaizenImage" type="file" class="form-control" accept="image/*" required />
                             <span asp-validation-for="BeforeKaizenImage" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="AfterKaizenImage" class="form-label">@Localizer["AfterKaizenImage"]</label>
-                            <input asp-for="AfterKaizenImage" type="file" class="form-control" accept="image/*" />
+                            <label asp-for="AfterKaizenImage" class="form-label" data-lang-key="afterKaizenImage">After Kaizen Image (Upload QR/Image) *</label>
+                            <input asp-for="AfterKaizenImage" type="file" class="form-control" accept="image/*" required />
                             <span asp-validation-for="AfterKaizenImage" class="text-danger"></span>
                         </div>
                     </div>
 
-                                         <!-- Step 4: Benefits & Submit -->
-                     <div class="step-content" id="step4">
+                    <!-- Step 4: Benefits & Submit -->
+                    <div class="step-content" id="step4">
+                        <div class="step-header">
+                            <div class="step-title">Step 4: Benefits & Submit</div>
+                            <div class="step-description">Provide cost savings information and other benefits</div>
+                        </div>
                         
-                         
-                         <div class="step-validation-error" id="step4Error">
+                        <div class="step-validation-error" id="step4Error">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            <span id="step4ErrorMessage">@Localizer["PleaseCompleteStep"]</span>
+                            <span id="step4ErrorMessage">Please complete all required fields in this step.</span>
                         </div>
 
                         <!-- Cost Saving Section -->
                         <div class="cost-saving-section">
-                            <h5 class="mb-3">@Localizer["CostSavingInformation"]</h5>
+                            <h5 class="mb-3" data-lang-key="costSavingTitle">Cost Saving Information</h5>
 
                             <div class="radio-group">
                                 <div class="radio-item">
                                     <input type="radio" asp-for="CostSavingType" id="noCostSaving" value="NoCostSaving" checked />
-                                    <label for="noCostSaving">@Localizer["NoCostSaving"]</label>
+                                    <label for="noCostSaving" data-lang-key="noCostSaving">No Cost Saving</label>
                                 </div>
                                 <div class="radio-item">
                                     <input type="radio" asp-for="CostSavingType" id="hasCostSaving" value="HasCostSaving" />
-                                    <label for="hasCostSaving">@Localizer["HasCostSaving"]</label>
+                                    <label for="hasCostSaving" data-lang-key="hasCostSaving">Has Cost Saving</label>
                                 </div>
                             </div>
 
                             <div id="costSavingFields" class="conditional-field @(Model?.CostSavingType == "HasCostSaving" ? "show" : "")">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <label asp-for="CostSaving" class="form-label">@Localizer["CostSaving"]</label>
+                                        <label asp-for="CostSaving" class="form-label" data-lang-key="costSaving"></label>
                                         <input asp-for="CostSaving" class="form-control" type="number" step="0.01" min="0" />
                                         <span asp-validation-for="CostSaving" class="text-danger"></span>
                                     </div>
                                     <div class="col-md-6">
-                                        <label asp-for="DollarRate" class="form-label">@Localizer["DollarRate"]</label>
+                                        <label asp-for="DollarRate" class="form-label" data-lang-key="dollarRate"></label>
                                         <input asp-for="DollarRate" class="form-control" type="number" step="0.01" min="0" />
                                         <span asp-validation-for="DollarRate" class="text-danger"></span>
                                     </div>
@@ -601,8 +504,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="OtherBenefits" class="form-label">@Localizer["OtherBenefits"]</label>
-                            <textarea asp-for="OtherBenefits" class="form-control" rows="2"></textarea>
+                            <label asp-for="OtherBenefits" class="form-label" data-lang-key="otherBenefits">Other Benefits *</label>
+                            <textarea asp-for="OtherBenefits" class="form-control" rows="2" required></textarea>
                             <span asp-validation-for="OtherBenefits" class="text-danger"></span>
                         </div>
                     </div>
@@ -611,68 +514,21 @@
                     <div class="step-navigation">
                         <button type="button" class="btn btn-nav btn-prev" id="prevBtn" style="display: none;">
                             <i class="fas fa-arrow-left"></i>
-                            @Localizer["Previous"]
+                            Previous
                         </button>
                         <div></div> <!-- Spacer -->
                         <button type="button" class="btn btn-nav btn-next" id="nextBtn">
-                            @Localizer["Next"]
+                            Next
                             <i class="fas fa-arrow-right"></i>
                         </button>
                         <button type="submit" class="btn btn-nav btn-submit" id="submitBtn" style="display: none;">
                             <i class="fas fa-check"></i>
-                            @Localizer["SubmitSuggestion"]
+                            Submit Suggestion
                         </button>
                     </div>
                 </form>
-                
-                <!-- Success Message Display -->
-                @if (TempData["Success"] != null)
-                {
-                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                        <i class="fas fa-check-circle me-2"></i>
-                        @TempData["Success"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                }
-
-                <!-- Debug Information (only show in development) -->
-                @if (Context.Request.Query.ContainsKey("debug"))
-                {
-                    <div class="alert alert-info mt-3">
-                        <h6><i class="fas fa-info-circle me-2"></i>Debug Information</h6>
-                        <p><strong>Current User:</strong> @User.Identity?.Name</p>
-                        <p><strong>Department:</strong> @Model?.Department</p>
-                        <p><strong>Kaizen No:</strong> @Model?.KaizenNo</p>
-                        <p><strong>Date Submitted:</strong> @Model?.DateSubmitted.ToString("yyyy-MM-dd")</p>
-                        <p><strong>Form Action:</strong> @Url.Action("Kaizenform", "Kaizen")</p>
-                        <p><strong>Success Page:</strong> @Url.Action("SuccessMessage", "Home")</p>
-                    </div>
-                }
-
-                <!-- Test Form Button (for debugging) -->
-                @if (Context.Request.Query.ContainsKey("test"))
-                {
-                    <div class="alert alert-warning mt-3">
-                        <h6><i class="fas fa-flask me-2"></i>Test Mode</h6>
-                        <p>This is a test mode to verify form submission. Fill in the form and submit to test the complete flow.</p>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="fillTestData()">
-                            <i class="fas fa-magic me-1"></i>Fill Test Data
-                        </button>
-                    </div>
-                }
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Loading Overlay -->
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-spinner">
-        <div class="spinner-border text-primary mb-3" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <h5>Submitting Kaizen Suggestion...</h5>
-        <p class="text-muted">Please wait while we save your data.</p>
     </div>
 </div>
 
@@ -681,7 +537,6 @@
 }
 
 <script>
-    // Translations object
     const translations = {
         en: {
             title: "Kaizen Suggestion Form",
@@ -696,19 +551,14 @@
             suggestionDescription: "Kaizen Suggestion Description",
             beforeKaizenImage: "Before Kaizen Image (Upload QR/Image) *",
             afterKaizenImage: "After Kaizen Image (Upload QR/Image) *",
+
             costSavingTitle: "Cost Saving Information",
             noCostSaving: "No Cost Saving",
             hasCostSaving: "Has Cost Saving",
             costSaving: "Cost Saving ($ per year)",
             dollarRate: "Current Dollar Rate",
             otherBenefits: "Other Benefits *",
-            submitButton: "Submit Suggestion",
-            basicInfo: "Basic Info",
-            employeeDetails: "Employee Details",
-            kaizenImages: "Kaizen Images",
-            benefits: "Benefits",
-            previous: "Previous",
-            next: "Next"
+            submitButton: "Submit Suggestion"
         },
         si: {
             title: "කයිසන් යෝජනා පෝරමය",
@@ -723,19 +573,14 @@
             suggestionDescription: "කයිසන් යෝජනා විස්තරය",
             beforeKaizenImage: "කයිසන් පෙර රූපය (QR/රූපය උඩුගත කරන්න) *",
             afterKaizenImage: "කයිසන් පසු රූපය (QR/රූපය උඩුගත කරන්න) *",
+
             costSavingTitle: "පිරිවැය ඉතිරිකිරීමේ තොරතුරු",
             noCostSaving: "පිරිවැය ඉතිරිකිරීමක් නැත",
             hasCostSaving: "පිරිවැය ඉතිරිකිරීමක් ඇත",
             costSaving: "පිරිවැය ඉතිරිකිරීම (වර්ෂයකට ඩොලර්)",
             dollarRate: "වර්තමාන ඩොලර් අනුපාතය",
             otherBenefits: "වෙනත් ප්‍රතිලාභ *",
-            submitButton: "යෝජනාව ඉදිරිපත් කරන්න",
-            basicInfo: "මූලික තොරතුරු",
-            employeeDetails: "සේවක විස්තර",
-            kaizenImages: "කයිසන් රූප",
-            benefits: "ප්‍රතිලාභ",
-            previous: "පෙර",
-            next: "ඊළඟ"
+            submitButton: "යෝජනාව ඉදිරිපත් කරන්න"
         },
         ta: {
             title: "கைசென் பரிந்துரை படிவம்",
@@ -750,19 +595,14 @@
             suggestionDescription: "கைசென் பரிந்துரை விளக்கம்",
             beforeKaizenImage: "கைசென் முன் படம் (QR/படம் பதிவேற்றவும்) *",
             afterKaizenImage: "கைசென் பின் படம் (QR/படம் பதிவேற்றவும்) *",
+
             costSavingTitle: "செலவு சேமிப்பு தகவல்",
             noCostSaving: "செலவு சேமிப்பு இல்லை",
             hasCostSaving: "செலவு சேமிப்பு உள்ளது",
             costSaving: "செலவு சேமிப்பு (வருடத்திற்கு டாலர்)",
             dollarRate: "தற்போதைய டாலர் விகிதம்",
             otherBenefits: "மற்ற நன்மைகள் *",
-            submitButton: "பரிந்துரையை சமர்ப்பிக்கவும்",
-            basicInfo: "அடிப்படை தகவல்",
-            employeeDetails: "ஊழியர் விவரங்கள்",
-            kaizenImages: "கைசென் படங்கள்",
-            benefits: "நன்மைகள்",
-            previous: "முந்தைய",
-            next: "அடுத்த"
+            submitButton: "பரிந்துரையை சமர்ப்பிக்கவும்"
         }
     };
 
@@ -770,12 +610,16 @@
     let currentStep = 1;
     const totalSteps = 4;
 
-    // Check if there's a validation error step from server
-    @if (TempData["ErrorStep"] != null)
-    {
-        <text>
-        currentStep = @TempData["ErrorStep"];
-        </text>
+    function changeLanguage(lang) {
+        const langData = translations[lang];
+        document.getElementById('currentLanguage').textContent = { en: 'English', si: 'සිංහල', ta: 'தமிழ்' }[lang];
+
+        document.querySelectorAll('[data-lang-key]').forEach(el => {
+            const key = el.getAttribute('data-lang-key');
+            if (langData[key]) el.textContent = langData[key];
+        });
+
+        localStorage.setItem('selectedLanguage', lang);
     }
 
     function generateKaizenNo() {
@@ -800,70 +644,98 @@
         }
     }
 
-    // Step validation functions - Enhanced with better error messages
+    // Step validation functions
     function validateStep1() {
-        console.log('Validating step 1...');
-        // Step 1 is mostly auto-filled, so we'll be lenient
+        const dateImplemented = document.getElementById('DateImplemented').value.trim();
+        const department = document.getElementById('Department').value.trim();
+        
+        if (!dateImplemented) {
+            showStepError(1, 'Date Implemented is required.');
+            return false;
+        }
+        
+        if (!department) {
+            showStepError(1, 'Department information is required.');
+            return false;
+        }
+        
         hideStepError(1);
-        console.log('Step 1 validation passed');
         return true;
     }
 
     function validateStep2() {
-        console.log('Validating step 2...');
         const employeeName = document.getElementById('EmployeeName').value.trim();
         const employeeNo = document.getElementById('EmployeeNo').value.trim();
+        const employeePhoto = document.getElementById('EmployeePhoto');
         
         if (!employeeName) {
-            showStepError(2, '@Localizer["EmployeeNameRequired"]');
+            showStepError(2, 'Employee Name is required.');
             return false;
         }
         
         if (!employeeNo) {
-            showStepError(2, '@Localizer["EmployeeNoRequired"]');
+            showStepError(2, 'Employee Number is required.');
+            return false;
+        }
+        
+        if (!employeePhoto.files || employeePhoto.files.length === 0) {
+            showStepError(2, 'Employee Photo is required.');
             return false;
         }
         
         hideStepError(2);
-        console.log('Step 2 validation passed');
         return true;
     }
 
     function validateStep3() {
-        console.log('Validating step 3...');
         const suggestionDescription = document.getElementById('SuggestionDescription').value.trim();
+        const beforeKaizenImage = document.getElementById('BeforeKaizenImage');
+        const afterKaizenImage = document.getElementById('AfterKaizenImage');
         
         if (!suggestionDescription) {
-            showStepError(3, '@Localizer["SuggestionDescriptionRequired"]');
+            showStepError(3, 'Suggestion Description is required.');
+            return false;
+        }
+        
+        if (!beforeKaizenImage.files || beforeKaizenImage.files.length === 0) {
+            showStepError(3, 'Before Kaizen Image is required.');
+            return false;
+        }
+        
+        if (!afterKaizenImage.files || afterKaizenImage.files.length === 0) {
+            showStepError(3, 'After Kaizen Image is required.');
             return false;
         }
         
         hideStepError(3);
-        console.log('Step 3 validation passed');
         return true;
     }
 
     function validateStep4() {
-        console.log('Validating step 4...');
-        const costSavingType = document.querySelector('input[name="CostSavingType"]:checked')?.value;
+        const otherBenefits = document.getElementById('OtherBenefits').value.trim();
+        const hasCostSaving = document.getElementById('hasCostSaving').checked;
         
-        if (costSavingType === 'HasCostSaving') {
-            const costSaving = document.getElementById('CostSaving').value;
-            const dollarRate = document.getElementById('DollarRate').value;
+        if (!otherBenefits) {
+            showStepError(4, 'Other Benefits is required.');
+            return false;
+        }
+        
+        if (hasCostSaving) {
+            const costSaving = document.getElementById('CostSaving').value.trim();
+            const dollarRate = document.getElementById('DollarRate').value.trim();
             
             if (!costSaving || parseFloat(costSaving) <= 0) {
-                showStepError(4, '@Localizer["CostSavingRequired"]');
+                showStepError(4, 'Cost Saving amount is required when "Has Cost Saving" is selected.');
                 return false;
             }
             
             if (!dollarRate || parseFloat(dollarRate) <= 0) {
-                showStepError(4, '@Localizer["DollarRateRequired"]');
+                showStepError(4, 'Dollar Rate is required when "Has Cost Saving" is selected.');
                 return false;
             }
         }
         
         hideStepError(4);
-        console.log('Step 4 validation passed');
         return true;
     }
 
@@ -913,10 +785,7 @@
         });
 
         // Show current step
-        const currentStepElement = document.getElementById(`step${step}`);
-        if (currentStepElement) {
-            currentStepElement.classList.add('active');
-        }
+        document.getElementById(`step${step}`).classList.add('active');
         
         // Update step indicator
         updateStepIndicator();
@@ -953,110 +822,10 @@
         }
     }
 
-    function showLoading() {
-        document.getElementById('loadingOverlay').style.display = 'flex';
-    }
-
-    function hideLoading() {
-        document.getElementById('loadingOverlay').style.display = 'none';
-    }
-
-    // Language change function
-    function changeLanguage(lang) {
-        // Set the culture cookie
-        document.cookie = `ASPNET_CORE_CULTURE=${lang}; path=/; max-age=31536000`;
-        
-        // Update all text elements with the new language
-        updatePageLanguage(lang);
-        
-        // Update current language display
-        setCurrentLanguageDisplay();
-    }
-
-    // Function to update page language
-    function updatePageLanguage(lang) {
-        const currentTranslations = translations[lang] || translations['en'];
-        
-        // Update form labels
-        updateLabel('DateSubmitted', currentTranslations.dateSubmitted);
-        updateLabel('DateImplemented', currentTranslations.dateImplemented);
-        updateLabel('KaizenNo', currentTranslations.kaizenNo);
-        updateLabel('Department', currentTranslations.department);
-        updateLabel('EmployeeName', currentTranslations.employeeName);
-        updateLabel('EmployeeNo', currentTranslations.employeeNo);
-        updateLabel('EmployeePhoto', currentTranslations.employeePhoto);
-        updateLabel('SuggestionDescription', currentTranslations.suggestionDescription);
-        updateLabel('BeforeKaizenImage', currentTranslations.beforeKaizenImage);
-        updateLabel('AfterKaizenImage', currentTranslations.afterKaizenImage);
-        updateLabel('OtherBenefits', currentTranslations.otherBenefits);
-        
-        // Update step labels
-        updateStepLabel('step1', currentTranslations.basicInfo);
-        updateStepLabel('step2', currentTranslations.employeeDetails);
-        updateStepLabel('step3', currentTranslations.kaizenImages);
-        updateStepLabel('step4', currentTranslations.benefits);
-        
-        // Update cost saving section
-        updateElementText('.cost-saving-section h5', currentTranslations.costSavingTitle);
-        updateElementText('#noCostSaving + label', currentTranslations.noCostSaving);
-        updateElementText('#hasCostSaving + label', currentTranslations.hasCostSaving);
-        updateLabel('CostSaving', currentTranslations.costSaving);
-        updateLabel('DollarRate', currentTranslations.dollarRate);
-        
-        // Update buttons
-        updateElementText('#prevBtn', currentTranslations.previous);
-        updateElementText('#nextBtn', currentTranslations.next);
-        updateElementText('#submitBtn', currentTranslations.submitButton);
-        
-        // Update language dropdown
-        const languageMap = {
-            'en': 'English',
-            'si': 'සිංහල',
-            'ta': 'தமிழ்'
-        };
-        updateElementText('#currentLanguage', languageMap[lang] || languageMap['en']);
-    }
-
-    // Helper function to update label text
-    function updateLabel(forAttribute, newText) {
-        const label = document.querySelector(`label[for="${forAttribute}"]`);
-        if (label) {
-            label.textContent = newText;
-        }
-    }
-
-    // Helper function to update step label
-    function updateStepLabel(stepId, newText) {
-        const stepElement = document.querySelector(`[data-step="${stepId.replace('step', '')}"] .step-label`);
-        if (stepElement) {
-            stepElement.textContent = newText;
-        }
-    }
-
-    // Helper function to update element text
-    function updateElementText(selector, newText) {
-        const element = document.querySelector(selector);
-        if (element) {
-            element.textContent = newText;
-        }
-    }
-
-    // Set current language display
-    function setCurrentLanguageDisplay() {
-        const currentLang = document.cookie.match(/ASPNET_CORE_CULTURE=([^;]+)/)?.[1] || 'en';
-        const languageMap = {
-            'en': 'English',
-            'si': 'සිංහල',
-            'ta': 'தமிழ்'
-        };
-        
-        const currentLanguageSpan = document.getElementById('currentLanguage');
-        if (currentLanguageSpan) {
-            currentLanguageSpan.textContent = languageMap[currentLang] || languageMap['en'];
-        }
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
+        const savedLang = localStorage.getItem('selectedLanguage') || 'en';
+        changeLanguage(savedLang);
+
         const kaizenInput = document.getElementById('KaizenNo');
         if (kaizenInput && !kaizenInput.value) {
             kaizenInput.value = generateKaizenNo();
@@ -1070,148 +839,25 @@
         document.getElementById('nextBtn').addEventListener('click', nextStep);
         document.getElementById('prevBtn').addEventListener('click', prevStep);
 
-        // Set current language display and update page language
-        const currentLang = document.cookie.match(/ASPNET_CORE_CULTURE=([^;]+)/)?.[1] || 'en';
-        setCurrentLanguageDisplay();
-        updatePageLanguage(currentLang);
-
         // Initialize step display
-        showStep(currentStep);
-
-        // Show validation errors if any from server
-        @if (TempData["ImageValidationError"] != null)
-        {
-            <text>
-            // Show image validation error message
-            const errorStep = @TempData["ErrorStep"];
-            if (errorStep) {
-                showStepError(errorStep, '@Localizer["ImageFormatError"]');
-            }
-            </text>
-        }
+        showStep(1);
     });
 
-    // Enhanced form submission handling
+    function validateForm(event) {
+        // Final validation before submit
+        if (!validateStep1() || !validateStep2() || !validateStep3() || !validateStep4()) {
+            event.preventDefault();
+            // Show the first step with error
+            currentStep = 1;
+            showStep(1);
+            return false;
+        }
+        return true;
+    }
+
+    // Add form validation
     const kaizenForm = document.getElementById('kaizenForm');
     if (kaizenForm) {
-        kaizenForm.addEventListener('submit', function(event) {
-            console.log('Form submit event triggered');
-            
-            // Show loading overlay
-            showLoading();
-            
-            // Use enhanced validation
-            if (!validateAndSubmitForm()) {
-                hideLoading();
-                event.preventDefault();
-                return false;
-            }
-            
-            console.log('Form validation passed, submitting to server...');
-            
-            // Log form data for debugging
-            const formData = new FormData(this);
-            console.log('Form data being submitted:');
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}: ${value}`);
-            }
-            
-            // Allow form submission - server will handle the rest
-            return true;
-        });
-    }
-
-    // Function to fill test data (for debugging)
-    function fillTestData() {
-        console.log('Filling test data...');
-        document.getElementById('EmployeeName').value = 'Test Employee';
-        document.getElementById('EmployeeNo').value = 'EMP001';
-        document.getElementById('DateSubmitted').value = new Date().toISOString().slice(0, 10);
-        document.getElementById('DateImplemented').value = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        document.getElementById('KaizenNo').value = generateKaizenNo();
-        document.getElementById('SuggestionDescription').value = 'This is a test description for a Kaizen suggestion.';
-        document.getElementById('CostSaving').value = '10000';
-        document.getElementById('DollarRate').value = '200';
-        document.getElementById('OtherBenefits').value = 'This is a test other benefit for a Kaizen suggestion.';
-        document.getElementById('BeforeKaizenImage').value = ''; // Clear previous file input
-        document.getElementById('AfterKaizenImage').value = ''; // Clear previous file input
-        console.log('Test data filled.');
-    }
-
-    // Function to test form submission (for debugging)
-    function testFormSubmission() {
-        console.log('Testing form submission...');
-        
-        // Fill test data
-        fillTestData();
-        
-        // Show all steps to ensure all data is visible
-        for (let i = 1; i <= 4; i++) {
-            showStep(i);
-        }
-        
-        // Log form data before submission
-        const formData = new FormData(document.getElementById('kaizenForm'));
-        console.log('Form data to be submitted:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-        
-        // Submit the form
-        document.getElementById('kaizenForm').submit();
-    }
-
-    // Enhanced form validation and submission
-    function validateAndSubmitForm() {
-        console.log('Validating and submitting form...');
-        
-        // Collect all form data
-        const formData = {
-            employeeName: document.getElementById('EmployeeName')?.value?.trim(),
-            employeeNo: document.getElementById('EmployeeNo')?.value?.trim(),
-            suggestionDescription: document.getElementById('SuggestionDescription')?.value?.trim(),
-            dateSubmitted: document.getElementById('DateSubmitted')?.value,
-            dateImplemented: document.getElementById('DateImplemented')?.value,
-            kaizenNo: document.getElementById('KaizenNo')?.value,
-            department: document.getElementById('Department')?.value,
-            costSavingType: document.querySelector('input[name="CostSavingType"]:checked')?.value,
-            costSaving: document.getElementById('CostSaving')?.value,
-            dollarRate: document.getElementById('DollarRate')?.value,
-            otherBenefits: document.getElementById('OtherBenefits')?.value?.trim()
-        };
-        
-        console.log('Collected form data:', formData);
-        
-        // Validate essential fields
-        if (!formData.employeeName) {
-            alert('@Localizer["EmployeeNameRequired"]');
-            return false;
-        }
-        
-        if (!formData.employeeNo) {
-            alert('@Localizer["EmployeeNoRequired"]');
-            return false;
-        }
-        
-        if (!formData.suggestionDescription) {
-            alert('@Localizer["SuggestionDescriptionRequired"]');
-            return false;
-        }
-        
-        // Validate cost saving fields if "Has Cost Saving" is selected
-        if (formData.costSavingType === 'HasCostSaving') {
-            if (!formData.costSaving || parseFloat(formData.costSaving) <= 0) {
-                alert('@Localizer["CostSavingRequired"]');
-                return false;
-            }
-            
-            if (!formData.dollarRate || parseFloat(formData.dollarRate) <= 0) {
-                alert('@Localizer["DollarRateRequired"]');
-                return false;
-            }
-        }
-        
-        console.log('Form validation passed, submitting...');
-        return true;
+        kaizenForm.addEventListener('submit', validateForm);
     }
 </script>
