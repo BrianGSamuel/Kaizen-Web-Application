@@ -121,7 +121,7 @@ namespace KaizenWebApp.Controllers
             }
             else
             {
-                return RedirectToAction("KaizenListEngineer", "Kaizen");
+                return RedirectToAction("EngineerDashboard", "Kaizen");
             }
         }
 
@@ -387,12 +387,168 @@ namespace KaizenWebApp.Controllers
             }
             else if (username.ToLower().Contains("engineer"))
             {
-                return RedirectToAction("KaizenListEngineer", "Kaizen");
+                return RedirectToAction("EngineerDashboard", "Kaizen");
             }
             else
             {
-                return RedirectToAction("KaizenListEngineer", "Kaizen"); // Default fallback
+                return RedirectToAction("EngineerDashboard", "Kaizen"); // Default fallback
             }
+        }
+
+        // ------------------- CHANGE PASSWORD FOR MANAGERS -------------------
+
+        [Authorize]
+        public async Task<IActionResult> ChangeManagerPassword()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login");
+            }
+
+            var username = User.Identity.Name;
+            
+            // Only allow managers (users with "manager" in their username)
+            if (username == null || !username.ToLower().Contains("manager"))
+            {
+                TempData["AlertMessage"] = "Access Denied: Only managers can access this page.";
+                return RedirectToAction("AccessDenied", "Home");
+            }
+            
+            return View("ChangeManagerPassword", new ChangePasswordViewModel { Username = username });
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeManagerPassword(ChangePasswordViewModel model)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login");
+            }
+
+            var username = User.Identity.Name;
+            
+            // Only allow managers (users with "manager" in their username)
+            if (username == null || !username.ToLower().Contains("manager"))
+            {
+                TempData["AlertMessage"] = "Access Denied: Only managers can access this page.";
+                return RedirectToAction("AccessDenied", "Home");
+            }
+            
+            if (!ModelState.IsValid)
+                return View("ChangeManagerPassword", model);
+
+            if (username != model.Username)
+            {
+                ModelState.AddModelError("", "You can only change your own password.");
+                return View("ChangeManagerPassword", model);
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.UserName == model.Username);
+            if (user == null)
+            {
+                ModelState.AddModelError("", "User not found!");
+                return View("ChangeManagerPassword", model);
+            }
+
+            // Verify current password
+            if (user.Password != model.CurrentPassword) // ⚠ Use hashing in production
+            {
+                ModelState.AddModelError("CurrentPassword", "Current password is incorrect.");
+                return View("ChangeManagerPassword", model);
+            }
+
+            // Update password
+            user.Password = model.NewPassword; // ⚠ Use hashing in production
+            _context.SaveChanges();
+
+            TempData["Success"] = "Password changed successfully!";
+            return RedirectToAction("KaizenListManager", "Kaizen");
+        }
+
+        // ------------------- CHANGE PASSWORD FOR ENGINEERS -------------------
+
+        [Authorize]
+        public async Task<IActionResult> ChangeEngineerPassword()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login");
+            }
+
+            var username = User.Identity.Name;
+            
+            // Only allow engineers (users without "user", "manager", "admin", "kaizenteam" in their username)
+            if (username == null || 
+                username.ToLower().Contains("user") || 
+                username.ToLower().Contains("manager") || 
+                username.ToLower().Contains("admin") || 
+                username.ToLower().Contains("kaizenteam"))
+            {
+                TempData["AlertMessage"] = "Access Denied: Only engineers can access this page.";
+                return RedirectToAction("AccessDenied", "Home");
+            }
+            
+            return View("ChangeEngineerPassword", new ChangePasswordViewModel { Username = username });
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeEngineerPassword(ChangePasswordViewModel model)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login");
+            }
+
+            var username = User.Identity.Name;
+            
+            // Only allow engineers (users without "user", "manager", "admin", "kaizenteam" in their username)
+            if (username == null || 
+                username.ToLower().Contains("user") || 
+                username.ToLower().Contains("manager") || 
+                username.ToLower().Contains("admin") || 
+                username.ToLower().Contains("kaizenteam"))
+            {
+                TempData["AlertMessage"] = "Access Denied: Only engineers can access this page.";
+                return RedirectToAction("AccessDenied", "Home");
+            }
+            
+            if (!ModelState.IsValid)
+                return View("ChangeEngineerPassword", model);
+
+            if (username != model.Username)
+            {
+                ModelState.AddModelError("", "You can only change your own password.");
+                return View("ChangeEngineerPassword", model);
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.UserName == model.Username);
+            if (user == null)
+            {
+                ModelState.AddModelError("", "User not found!");
+                return View("ChangeEngineerPassword", model);
+            }
+
+            // Verify current password
+            if (user.Password != model.CurrentPassword) // ⚠ Use hashing in production
+            {
+                ModelState.AddModelError("CurrentPassword", "Current password is incorrect.");
+                return View("ChangeEngineerPassword", model);
+            }
+
+            // Update password
+            user.Password = model.NewPassword; // ⚠ Use hashing in production
+            _context.SaveChanges();
+
+            TempData["Success"] = "Password changed successfully!";
+            return RedirectToAction("EngineerDashboard", "Kaizen");
         }
     }
 }

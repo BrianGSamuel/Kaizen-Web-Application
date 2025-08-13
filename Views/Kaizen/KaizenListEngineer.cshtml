@@ -76,6 +76,28 @@
         font-size: 0.8rem;
     }
 
+    /* Table column styling */
+    .table th:last-child,
+    .table td:last-child {
+        white-space: nowrap;
+        min-width: 200px;
+    }
+
+    .table th:nth-child(2),
+    .table td:nth-child(2) {
+        word-wrap: break-word;
+        max-width: 120px;
+    }
+
+    /* Responsive table adjustments */
+    @@media (max-width: 768px) {
+        .table th:nth-child(2),
+        .table td:nth-child(2) {
+            max-width: 80px;
+            font-size: 0.9rem;
+        }
+    }
+
 
 </style>
 
@@ -138,24 +160,38 @@
                                 </div>
                                 <div class="col-md-2">
                                     <div class="mb-3">
+                                        <label for="managerStatus" class="form-label fw-bold">Manager Status</label>
+                                        <select class="form-select" id="managerStatus" name="managerStatus">
+                                            <option value="">All Status</option>
+                                            <option value="Approved" selected="@(Context.Request.Query["managerStatus"].ToString() == "Approved")">Approved</option>
+                                            <option value="Rejected" selected="@(Context.Request.Query["managerStatus"].ToString() == "Rejected")">Rejected</option>
+                                            <option value="Pending" selected="@(Context.Request.Query["managerStatus"].ToString() == "Pending")">Pending</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-3">
                                         <label for="searchString" class="form-label fw-bold">Search</label>
                                         <input type="text" class="form-control" id="searchString" name="searchString" 
                                                placeholder="Search by Kaizen No, Employee Name, or Employee No..."
                                                value="@Context.Request.Query["searchString"]">
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="d-flex gap-2">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-search me-2"></i>
-                                            Search
-                                        </button>
-                                        <a href="@Url.Action("KaizenListEngineer", "Kaizen")" class="btn btn-outline-secondary">
-                                            <i class="fas fa-times me-2"></i>
-                                            Clear Filters
-                                        </a>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">&nbsp;</label>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-search me-2"></i>
+                                                Search
+                                            </button>
+                                            <a href="@Url.Action("KaizenListEngineer", "Kaizen")" class="btn btn-outline-secondary">
+                                                <i class="fas fa-times me-2"></i>
+                                                Clear Filters
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -187,6 +223,7 @@
                               !string.IsNullOrEmpty(Context.Request.Query["endDate"]) || 
                               !string.IsNullOrEmpty(Context.Request.Query["category"]) ||
                               !string.IsNullOrEmpty(Context.Request.Query["engineerStatus"]) ||
+                              !string.IsNullOrEmpty(Context.Request.Query["managerStatus"]) ||
                               !string.IsNullOrEmpty(Context.Request.Query["searchString"]))
                         {
                             <div class="text-muted small">
@@ -204,6 +241,7 @@
                                     <th>Employee</th>
                                     <th>Cost Saving</th>
                                     <th>Engineer Status</th>
+                                    <th>Manager Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -265,6 +303,41 @@
                                                 <i class="fas fa-@(engineerStatus == "Approved" ? "check" : engineerStatus == "Rejected" ? "times" : "clock") me-1"></i>
                                                 @engineerStatus
                                             </span>
+                                        </td>
+                                        <td>
+                                            @{
+                                                var currentEngineerStatus = item.EngineerStatus ?? "Pending";
+                                                string managerStatusDisplay;
+                                                string managerStatusClass;
+                                                
+                                                if (currentEngineerStatus == "Rejected")
+                                                {
+                                                    managerStatusDisplay = null;
+                                                    managerStatusClass = "text-muted";
+                                                }
+                                                else
+                                                {
+                                                    var managerStatus = item.ManagerStatus ?? "Pending";
+                                                    managerStatusDisplay = managerStatus;
+                                                    managerStatusClass = managerStatus switch
+                                                    {
+                                                        "Approved" => "badge bg-success",
+                                                        "Rejected" => "badge bg-danger",
+                                                        _ => "badge bg-warning text-dark"
+                                                    };
+                                                }
+                                            }
+                                            @if (currentEngineerStatus == "Rejected")
+                                            {
+                                                <span class="@managerStatusClass">-</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="@managerStatusClass">
+                                                    <i class="fas fa-@(managerStatusDisplay == "Approved" ? "check" : managerStatusDisplay == "Rejected" ? "times" : "clock") me-1"></i>
+                                                    @managerStatusDisplay
+                                                </span>
+                                            }
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">

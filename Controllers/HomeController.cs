@@ -82,7 +82,7 @@ namespace KaizenWebApp.Controllers
             }
             else
             {
-                return RedirectToAction("KaizenListEngineer", "Kaizen");
+                return RedirectToAction("EngineerDashboard", "Kaizen");
             }
         }
 
@@ -146,6 +146,117 @@ namespace KaizenWebApp.Controllers
             }
         }
 
+        public async Task<IActionResult> DepartmentTargetEngineer(int? year, int? month)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow engineers (users without "user", "manager", "admin", "kaizenteam" in their username)
+            var username = User?.Identity?.Name;
+            if (username?.ToLower().Contains("user") == true || 
+                username?.ToLower().Contains("manager") == true || 
+                username?.ToLower().Contains("admin") == true || 
+                username?.ToLower().Contains("kaizenteam") == true)
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                // Set default year and month if not provided
+                year ??= DateTime.Now.Year;
+                month ??= DateTime.Now.Month;
+
+                // Get the current engineer's department
+                var engineerDepartment = await GetCurrentUserDepartment();
+                if (string.IsNullOrEmpty(engineerDepartment))
+                {
+                    _logger.LogWarning($"No department found for engineer: {username}");
+                    return View(new DepartmentTargetsPageViewModel());
+                }
+
+                var viewModel = new DepartmentTargetsPageViewModel
+                {
+                    SelectedYear = year.Value,
+                    SelectedMonth = month.Value,
+                    AvailableYears = Enumerable.Range(DateTime.Now.Year - 2, 3).ToList(),
+                    AvailableMonths = Enumerable.Range(1, 12).ToList(),
+                    DepartmentTargets = new List<DepartmentTargetViewModel>()
+                };
+
+                // Get department target for the engineer's department in the selected year and month
+                var departmentTarget = await _context.DepartmentTargets
+                    .Where(dt => dt.Department == engineerDepartment && dt.Year == year && dt.Month == month)
+                    .FirstOrDefaultAsync();
+
+                var targetCount = departmentTarget?.TargetCount ?? 0;
+
+                // Count achieved kaizens for the engineer's department in the selected month/year
+                var achievedCount = await _context.KaizenForms
+                    .Where(k => k.Department == engineerDepartment && 
+                               k.DateSubmitted.Year == year && 
+                               k.DateSubmitted.Month == month)
+                    .CountAsync();
+
+                viewModel.DepartmentTargets.Add(new DepartmentTargetViewModel
+                {
+                    Department = engineerDepartment,
+                    TargetCount = targetCount,
+                    AchievedCount = achievedCount,
+                    Year = year.Value,
+                    Month = month.Value
+                });
+
+                viewModel.TotalTarget = viewModel.DepartmentTargets.Sum(dt => dt.TargetCount);
+                viewModel.TotalAchieved = viewModel.DepartmentTargets.Sum(dt => dt.AchievedCount);
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving department targets for engineer");
+                return View(new DepartmentTargetsPageViewModel());
+            }
+        }
+
+        private async Task<string> GetCurrentUserDepartment()
+        {
+            try
+            {
+                if (User?.Identity?.IsAuthenticated == true)
+                {
+                    var username = User.Identity.Name;
+                    
+                    if (string.IsNullOrEmpty(username))
+                    {
+                        return null;
+                    }
+                    
+                    var user = await _context.Users
+                        .Where(u => u.UserName == username)
+                        .FirstOrDefaultAsync();
+                    
+                    if (user != null)
+                    {
+                        return user.DepartmentName;
+                    }
+                    
+                    return null;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting current user department");
+                return null;
+            }
+        }
+
+
+
         public IActionResult SuccessMessage()
         {
             // Check for direct URL access and end session if detected
@@ -185,7 +296,7 @@ namespace KaizenWebApp.Controllers
             }
             else
             {
-                return RedirectToAction("KaizenListEngineer", "Kaizen");
+                return RedirectToAction("EngineerDashboard", "Kaizen");
             }
         }
 

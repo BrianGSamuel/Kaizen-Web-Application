@@ -208,11 +208,11 @@ namespace KaizenWebApp.Controllers
                 // Check if user is an engineer
                 else if (IsEngineerRole())
                 {
-                    return RedirectToAction("KaizenListEngineer");
+                    return RedirectToAction("EngineerDashboard");
                 }
                 else
                 {
-                    return RedirectToAction("KaizenListEngineer");
+                    return RedirectToAction("EngineerDashboard");
                 }
             }
 
@@ -1461,7 +1461,7 @@ namespace KaizenWebApp.Controllers
         // ------------------- MANAGER FUNCTIONALITY -------------------
 
         [HttpGet]
-        public async Task<IActionResult> KaizenListEngineer(string searchString, string startDate, string endDate, string category, string engineerStatus)
+        public async Task<IActionResult> KaizenListEngineer(string searchString, string startDate, string endDate, string category, string engineerStatus, string managerStatus)
         {
             // Check for direct URL access and end session if detected
             if (await CheckAndEndSessionIfDirectAccess())
@@ -1479,7 +1479,7 @@ namespace KaizenWebApp.Controllers
             {
                 Console.WriteLine($"=== KAIZENLISTENGINEER DEBUG ===");
                 Console.WriteLine($"KaizenListEngineer called by: {User?.Identity?.Name}");
-                Console.WriteLine($"SearchString: {searchString}, StartDate: {startDate}, EndDate: {endDate}, Category: {category}, EngineerStatus: {engineerStatus}");
+                Console.WriteLine($"SearchString: {searchString}, StartDate: {startDate}, EndDate: {endDate}, Category: {category}, EngineerStatus: {engineerStatus}, ManagerStatus: {managerStatus}");
 
                 var query = _context.KaizenForms.AsQueryable();
 
@@ -1536,11 +1536,32 @@ namespace KaizenWebApp.Controllers
                     Console.WriteLine($"Applied category filter: {category}");
                 }
 
-                // Filter by engineer status
+                // Apply engineer status filter
                 if (!string.IsNullOrEmpty(engineerStatus))
                 {
-                    query = query.Where(k => (k.EngineerStatus ?? "Pending") == engineerStatus);
+                    if (engineerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.EngineerStatus == null || k.EngineerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.EngineerStatus == engineerStatus);
+                    }
                     Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
+                }
+
+                // Apply manager status filter
+                if (!string.IsNullOrEmpty(managerStatus))
+                {
+                    if (managerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.ManagerStatus == null || k.ManagerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.ManagerStatus == managerStatus);
+                    }
+                    Console.WriteLine($"Applied manager status filter: {managerStatus}");
                 }
 
                 var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
@@ -1569,7 +1590,7 @@ namespace KaizenWebApp.Controllers
 
         // GET: /Kaizen/KaizenListManager - For users with "manager" in their username
         [HttpGet]
-        public async Task<IActionResult> KaizenListManager(string searchString, string status, string category, string managerStatus, string startDate, string endDate)
+        public async Task<IActionResult> KaizenListManager(string searchString, string status, string category, string engineerStatus, string managerStatus, string startDate, string endDate)
         {
             // Check for direct URL access and end session if detected
             if (await CheckAndEndSessionIfDirectAccess())
@@ -1592,11 +1613,11 @@ namespace KaizenWebApp.Controllers
                 }
                 else if (IsEngineerRole())
                 {
-                    return RedirectToAction("KaizenListEngineer");
+                    return RedirectToAction("EngineerDashboard");
                 }
                 else
                 {
-                    return RedirectToAction("KaizenListEngineer"); // Default fallback
+                    return RedirectToAction("EngineerDashboard"); // Default fallback
                 }
             }
 
@@ -1604,7 +1625,7 @@ namespace KaizenWebApp.Controllers
             {
                 Console.WriteLine($"=== KAIZENLISTMANAGER DEBUG ===");
                 Console.WriteLine($"KaizenListManager called by: {username}");
-                Console.WriteLine($"SearchString: {searchString}, Status: {status}, Category: {category}, ManagerStatus: {managerStatus}, StartDate: {startDate}, EndDate: {endDate}");
+                Console.WriteLine($"SearchString: {searchString}, Status: {status}, Category: {category}, EngineerStatus: {engineerStatus}, ManagerStatus: {managerStatus}, StartDate: {startDate}, EndDate: {endDate}");
 
                 var query = _context.KaizenForms.AsQueryable();
 
@@ -1640,25 +1661,15 @@ namespace KaizenWebApp.Controllers
                     Console.WriteLine($"  - {statusItem.Status}: {statusItem.Count}");
                 }
 
-                // Filter to show only kaizens where engineer has approved (for manager review)
-                query = query.Where(k => k.EngineerStatus == "Approved");
-                Console.WriteLine("Filtered to show only kaizens where engineer has approved (for manager review)");
+                // Show all kaizens in the database (no engineer status filter)
+                Console.WriteLine("Showing all kaizens in the database");
                 
                 // Debug: Check count after EngineerStatus filter
                 var afterEngineerStatusFilter = await query.CountAsync();
                 Console.WriteLine($"Kaizens after EngineerStatus filter: {afterEngineerStatusFilter}");
 
-                // Filter to show only kaizens with executive filling data
-                query = query.Where(k => 
-                    !string.IsNullOrEmpty(k.Category) &&
-                    !string.IsNullOrEmpty(k.Comments) &&
-                    !string.IsNullOrEmpty(k.CanImplementInOtherFields)
-                );
-                Console.WriteLine("Filtered to show only kaizens with completed executive filling");
-                
-                // Debug: Check count after executive filling filter
-                var afterExecutiveFillingFilter = await query.CountAsync();
-                Console.WriteLine($"Kaizens after executive filling filter: {afterExecutiveFillingFilter}");
+                // Note: For rejected kaizens, we don't require executive filling data
+                Console.WriteLine("No executive filling filter applied for rejected kaizens");
 
                 if (!string.IsNullOrEmpty(searchString))
                 {
@@ -1678,30 +1689,34 @@ namespace KaizenWebApp.Controllers
                     Console.WriteLine($"Applied category filter: {category}");
                 }
 
+                // Filter by engineer status
+                if (!string.IsNullOrEmpty(engineerStatus))
+                {
+                    if (engineerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.EngineerStatus == null || k.EngineerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.EngineerStatus == engineerStatus);
+                    }
+                    Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
+                }
+
                 // Filter by manager status
                 if (!string.IsNullOrEmpty(managerStatus))
                 {
-                    query = query.Where(k => (k.ManagerStatus ?? "Pending") == managerStatus);
+                    if (managerStatus == "Pending")
+                    {
+                        // For pending manager status, exclude kaizens that have been rejected by engineer
+                        query = query.Where(k => (k.ManagerStatus == null || k.ManagerStatus == "Pending") && 
+                                                (k.EngineerStatus != "Rejected"));
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.ManagerStatus == managerStatus);
+                    }
                     Console.WriteLine($"Applied manager status filter: {managerStatus}");
-                }
-                else if (!string.IsNullOrEmpty(status))
-                {
-                    // Fallback to the old 'status' parameter for backward compatibility
-                    query = query.Where(k => (k.ManagerStatus ?? "Pending") == status);
-                    Console.WriteLine($"Applied manager status filter (legacy): {status}");
-                }
-
-                // Filter by date range
-                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out var start))
-                {
-                    query = query.Where(k => k.DateSubmitted >= start);
-                    Console.WriteLine($"Applied start date filter: {startDate}");
-                }
-
-                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out var end))
-                {
-                    query = query.Where(k => k.DateSubmitted <= end);
-                    Console.WriteLine($"Applied end date filter: {endDate}");
                 }
 
                 var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
@@ -1827,7 +1842,7 @@ namespace KaizenWebApp.Controllers
 
         // GET: /Kaizen/UserKaizenList - For users with "user" in their username
         [HttpGet]
-        public async Task<IActionResult> UserKaizenList(string searchString, string department)
+        public async Task<IActionResult> UserKaizenList(string searchString, string startDate, string endDate, string category, string engineerStatus, string managerStatus)
         {
             // Check for direct URL access and end session if detected
             if (await CheckAndEndSessionIfDirectAccess())
@@ -1846,11 +1861,11 @@ namespace KaizenWebApp.Controllers
                 // Check if user is an engineer
                 else if (IsEngineerRole())
                 {
-                    return RedirectToAction("KaizenListEngineer");
+                    return RedirectToAction("EngineerDashboard");
                 }
                 else
                 {
-                    return RedirectToAction("KaizenListEngineer");
+                    return RedirectToAction("EngineerDashboard");
                 }
             }
 
@@ -1861,7 +1876,7 @@ namespace KaizenWebApp.Controllers
                 
                 Console.WriteLine($"=== USERKAIZENLIST DEBUG ===");
                 Console.WriteLine($"UserKaizenList called by: {username}, UserDepartment: {userDepartment}");
-                Console.WriteLine($"SearchString: {searchString}, Department: {department}");
+                Console.WriteLine($"SearchString: {searchString}, StartDate: {startDate}, EndDate: {endDate}, Category: {category}, EngineerStatus: {engineerStatus}, ManagerStatus: {managerStatus}");
 
                 var query = _context.KaizenForms.AsQueryable();
                 
@@ -1879,6 +1894,58 @@ namespace KaizenWebApp.Controllers
                 {
                     Console.WriteLine("No user department found, showing no results");
                     return View("~/Views/Home/UserKaizenList.cshtml", new List<KaizenForm>());
+                }
+
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out var start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                    Console.WriteLine($"Applied start date filter: {startDate}");
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out var end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                    Console.WriteLine($"Applied end date filter: {endDate}");
+                }
+
+                // Apply category filter
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                    Console.WriteLine($"Applied category filter: {category}");
+                }
+
+                // Apply engineer status filter
+                if (!string.IsNullOrEmpty(engineerStatus))
+                {
+                    if (engineerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.EngineerStatus == null || k.EngineerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.EngineerStatus == engineerStatus);
+                    }
+                    Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
+                }
+
+                // Apply manager status filter
+                if (!string.IsNullOrEmpty(managerStatus))
+                {
+                    if (managerStatus == "Pending")
+                    {
+                        // For pending manager status, exclude kaizens that have been rejected by engineer
+                        query = query.Where(k => (k.ManagerStatus == null || k.ManagerStatus == "Pending") && 
+                                                (k.EngineerStatus != "Rejected"));
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.ManagerStatus == managerStatus);
+                    }
+                    Console.WriteLine($"Applied manager status filter: {managerStatus}");
                 }
 
                 // Apply search filter if search string is provided
@@ -1900,14 +1967,6 @@ namespace KaizenWebApp.Controllers
                 var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
                 Console.WriteLine($"UserKaizenList returned {kaizens.Count} results");
                 Console.WriteLine($"=== END USERKAIZENLIST DEBUG ===");
-
-                // Get all unique departments for filter
-                ViewBag.Departments = await _context.KaizenForms
-                    .Where(k => !string.IsNullOrEmpty(k.Department))
-                    .Select(k => k.Department)
-                    .OrderBy(d => d)
-                    .Distinct()
-                    .ToListAsync();
 
                 return View("~/Views/Home/UserKaizenList.cshtml", kaizens);
             }
@@ -2755,11 +2814,11 @@ namespace KaizenWebApp.Controllers
                 }
                 else if (IsEngineerRole())
                 {
-                    return RedirectToAction("KaizenListEngineer");
+                    return RedirectToAction("EngineerDashboard");
                 }
                 else
                 {
-                    return RedirectToAction("KaizenListEngineer"); // Default fallback
+                    return RedirectToAction("EngineerDashboard"); // Default fallback
                 }
             }
 
@@ -3181,11 +3240,11 @@ namespace KaizenWebApp.Controllers
                 }
                 else if (IsEngineerRole())
                 {
-                    return RedirectToAction("KaizenListEngineer");
+                    return RedirectToAction("EngineerDashboard");
                 }
                 else
                 {
-                    return RedirectToAction("KaizenListEngineer"); // Default fallback
+                    return RedirectToAction("EngineerDashboard"); // Default fallback
                 }
             }
 
@@ -3464,7 +3523,7 @@ namespace KaizenWebApp.Controllers
                 var currentYear = DateTime.Now.Year;
                 var currentMonth = DateTime.Now.Month;
 
-                // Get department kaizens for current month
+                // Get department kaizens for current month (all kaizens without any restrictions)
                 var currentMonthKaizens = await _context.KaizenForms
                     .Where(k => k.Department == currentUserDepartment && 
                                k.DateSubmitted.Year == currentYear && 
@@ -3511,13 +3570,30 @@ namespace KaizenWebApp.Controllers
                     .Where(k => k.ManagerStatus == "Approved" && k.EngineerStatus == "Approved")
                     .Sum(k => k.CostSaving ?? 0);
 
-                // Calculate pending approvals
-                var pendingApprovals = currentMonthKaizens.Count(k => 
-                    k.ManagerStatus == "Pending" || k.ManagerStatus == null);
+                // Calculate pending approvals - kaizens with engineer approval but manager approval is null
+                var pendingApprovals = await _context.KaizenForms
+                    .Where(k => k.Department == currentUserDepartment && 
+                               k.EngineerStatus == "Approved" && 
+                               k.ManagerStatus == null)
+                    .CountAsync();
 
                 // Calculate completed kaizens
                 var completedKaizens = currentMonthKaizens.Count(k => 
                     k.ManagerStatus == "Approved" && k.EngineerStatus == "Approved");
+
+                // Calculate manager-specific statistics for Review Completion
+                // Count kaizens where engineer status is "Approved" and manager status is either "Approved" or "Rejected"
+                var engineerApprovedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Approved");
+                var approvedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
+                var rejectedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Approved" && k.ManagerStatus == "Rejected");
+                var totalReviewed = approvedKaizens + rejectedKaizens;
+                
+                // Calculate kaizens with both manager and engineer status as "Approved"
+                var bothApprovedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
 
                 // Create dashboard view model
                 var dashboardViewModel = new ManagerDashboardViewModel
@@ -3532,12 +3608,141 @@ namespace KaizenWebApp.Controllers
                     PreviousMonthCostSavings = previousMonthCostSavings,
                     PendingApprovals = pendingApprovals,
                     CompletedKaizens = completedKaizens,
+                    EngineerApprovedKaizens = engineerApprovedKaizens,
+                    ApprovedKaizens = approvedKaizens,
+                    RejectedKaizens = rejectedKaizens,
+                    TotalReviewed = totalReviewed,
+                    BothApprovedKaizens = bothApprovedKaizens,
                     Department = currentUserDepartment,
                     CurrentMonth = currentMonth,
                     CurrentYear = currentYear
                 };
 
                 return View("~/Views/Kaizen/ManagerDashboard.cshtml", dashboardViewModel);
+            }
+            catch (Exception)
+            {
+                // Log the exception
+                return RedirectToAction("Kaizenform");
+            }
+        }
+
+        // GET: /Kaizen/EngineerDashboard - Engineer dashboard with summary boxes
+        [HttpGet]
+        public async Task<IActionResult> EngineerDashboard()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow engineers
+            if (!IsEngineerRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                // Get current user's department
+                var currentUserDepartment = await GetCurrentUserDepartment();
+                if (string.IsNullOrEmpty(currentUserDepartment))
+                {
+                    return RedirectToAction("Kaizenform");
+                }
+
+                // Get current month and year
+                var currentYear = DateTime.Now.Year;
+                var currentMonth = DateTime.Now.Month;
+
+                // Get department kaizens for current month
+                var currentMonthKaizens = await _context.KaizenForms
+                    .Where(k => k.Department == currentUserDepartment && 
+                               k.DateSubmitted.Year == currentYear && 
+                               k.DateSubmitted.Month == currentMonth)
+                    .ToListAsync();
+
+                // Get department kaizens for previous month
+                var previousMonth = currentMonth == 1 ? 12 : currentMonth - 1;
+                var previousYear = currentMonth == 1 ? currentYear - 1 : currentYear;
+                var previousMonthKaizens = await _context.KaizenForms
+                    .Where(k => k.Department == currentUserDepartment && 
+                               k.DateSubmitted.Year == previousYear && 
+                               k.DateSubmitted.Month == previousMonth)
+                    .ToListAsync();
+
+                // Get department target for current month
+                var currentMonthTarget = await _context.DepartmentTargets
+                    .Where(dt => dt.Department == currentUserDepartment && 
+                                dt.Year == currentYear && 
+                                dt.Month == currentMonth)
+                    .FirstOrDefaultAsync();
+
+                // Calculate summary statistics
+                var currentMonthSubmissions = currentMonthKaizens.Count;
+                var currentMonthTargetCount = currentMonthTarget?.TargetCount ?? 0;
+                var currentMonthAchievement = currentMonthTargetCount > 0 ? 
+                    (double)currentMonthSubmissions / currentMonthTargetCount * 100 : 0;
+
+                var previousMonthSubmissions = previousMonthKaizens.Count;
+                var previousMonthTarget = await _context.DepartmentTargets
+                    .Where(dt => dt.Department == currentUserDepartment && 
+                                dt.Year == previousYear && 
+                                dt.Month == previousMonth)
+                    .FirstOrDefaultAsync();
+                var previousMonthTargetCount = previousMonthTarget?.TargetCount ?? 0;
+                var previousMonthAchievement = previousMonthTargetCount > 0 ? 
+                    (double)previousMonthSubmissions / previousMonthTargetCount * 100 : 0;
+
+                // Calculate cost savings (only from engineer approved kaizens with cost savings)
+                var currentMonthCostSavings = currentMonthKaizens
+                    .Where(k => k.EngineerStatus == "Approved" && k.CostSaving.HasValue && k.CostSaving > 0)
+                    .Sum(k => k.CostSaving.Value);
+                var previousMonthCostSavings = previousMonthKaizens
+                    .Where(k => k.EngineerStatus == "Approved" && k.CostSaving.HasValue && k.CostSaving > 0)
+                    .Sum(k => k.CostSaving.Value);
+
+                // Calculate engineer-specific statistics
+                var pendingReviews = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Pending" || k.EngineerStatus == null);
+                var approvedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Approved");
+                var rejectedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Rejected");
+                var totalReviewed = approvedKaizens + rejectedKaizens;
+                
+                // Calculate fully implemented kaizens (those with DateImplemented not null)
+                var fullyImplementedKaizens = currentMonthKaizens.Count(k => 
+                    k.DateImplemented.HasValue);
+                
+                // Calculate kaizens with both manager and engineer status as "Approved"
+                var bothApprovedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
+
+                // Create dashboard view model
+                var dashboardViewModel = new EngineerDashboardViewModel
+                {
+                    CurrentMonthSubmissions = currentMonthSubmissions,
+                    CurrentMonthTarget = currentMonthTargetCount,
+                    CurrentMonthAchievement = currentMonthAchievement,
+                    PreviousMonthSubmissions = previousMonthSubmissions,
+                    PreviousMonthTarget = previousMonthTargetCount,
+                    PreviousMonthAchievement = previousMonthAchievement,
+                    CurrentMonthCostSavings = currentMonthCostSavings,
+                    PreviousMonthCostSavings = previousMonthCostSavings,
+                    PendingReviews = pendingReviews,
+                    ApprovedKaizens = approvedKaizens,
+                    RejectedKaizens = rejectedKaizens,
+                    TotalReviewed = totalReviewed,
+                    FullyImplementedKaizens = fullyImplementedKaizens,
+                    BothApprovedKaizens = bothApprovedKaizens,
+                    Department = currentUserDepartment,
+                    CurrentMonth = currentMonth,
+                    CurrentYear = currentYear
+                };
+
+                return View("~/Views/Kaizen/EngineerDashboard.cshtml", dashboardViewModel);
             }
             catch (Exception)
             {
@@ -3570,7 +3775,7 @@ namespace KaizenWebApp.Controllers
                 }
                 else if (IsEngineerRole())
                 {
-                    return RedirectToAction("KaizenListEngineer");
+                    return RedirectToAction("EngineerDashboard");
                 }
                 else
                 {
@@ -3987,6 +4192,35 @@ namespace KaizenWebApp.Controllers
             }
 
             return View(kaizen);
+        }
+
+        // GET: /Kaizen/UserKaizenDetails
+        [HttpGet]
+        public async Task<IActionResult> UserKaizenDetails(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var kaizen = await _context.KaizenForms
+                    .FirstOrDefaultAsync(k => k.Id == id);
+
+                if (kaizen == null)
+                {
+                    return NotFound();
+                }
+
+                return View("~/Views/Kaizen/UserKaizenDetails.cshtml", kaizen);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UserKaizenDetails: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
         }
     }
 

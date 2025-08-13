@@ -644,13 +644,29 @@ namespace KaizenWebApp.Controllers
             // Apply engineer status filter
             if (!string.IsNullOrEmpty(engineerStatus))
             {
-                query = query.Where(k => (k.EngineerStatus ?? "Pending") == engineerStatus);
+                if (engineerStatus == "Pending")
+                {
+                    query = query.Where(k => k.EngineerStatus == null || k.EngineerStatus == "Pending");
+                }
+                else
+                {
+                    query = query.Where(k => k.EngineerStatus == engineerStatus);
+                }
             }
 
             // Apply manager status filter
             if (!string.IsNullOrEmpty(managerStatus))
             {
-                query = query.Where(k => (k.ManagerStatus ?? "Pending") == managerStatus);
+                if (managerStatus == "Pending")
+                {
+                    // For pending manager status, exclude kaizens that have been rejected by engineer
+                    query = query.Where(k => (k.ManagerStatus == null || k.ManagerStatus == "Pending") && 
+                                            (k.EngineerStatus != "Rejected"));
+                }
+                else
+                {
+                    query = query.Where(k => k.ManagerStatus == managerStatus);
+                }
             }
 
             // Apply overall status filter
@@ -822,12 +838,26 @@ namespace KaizenWebApp.Controllers
 
                 if (!string.IsNullOrEmpty(engineerStatus))
                 {
-                    query = query.Where(k => (k.EngineerStatus ?? "Pending") == engineerStatus);
+                    if (engineerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.EngineerStatus == null || k.EngineerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.EngineerStatus == engineerStatus);
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(managerStatus))
                 {
-                    query = query.Where(k => (k.ManagerStatus ?? "Pending") == managerStatus);
+                    if (managerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.ManagerStatus == null || k.ManagerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.ManagerStatus == managerStatus);
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(status))

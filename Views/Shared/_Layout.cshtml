@@ -727,7 +727,7 @@
                     <div class="user-nav-item">
                         <a class="user-nav-link" asp-controller="Home" asp-action="Analytics">
                             <i class="fas fa-chart-bar"></i>
-                            Analytics
+                            About System
                         </a>
                     </div>
 
@@ -783,6 +783,13 @@
 
                 <div class="user-nav">
                     <div class="user-nav-item">
+                        <a class="user-nav-link" asp-controller="Kaizen" asp-action="EngineerDashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Dashboard
+                        </a>
+                    </div>
+
+                    <div class="user-nav-item">
                         <a class="user-nav-link" asp-controller="Kaizen" asp-action="KaizenListEngineer">
                             <i class="fas fa-list"></i>
                             View Kaizens
@@ -790,9 +797,9 @@
                     </div>
 
                     <div class="user-nav-item">
-                        <a class="user-nav-link" asp-controller="Home" asp-action="Analytics">
+                        <a class="user-nav-link" asp-controller="Home" asp-action="DepartmentTargetEngineer">
                             <i class="fas fa-chart-bar"></i>
-                            Analytics
+                            Department Target
                         </a>
                     </div>
 
@@ -804,7 +811,7 @@
                     </div>
 
                     <div class="user-nav-item">
-                        <a class="user-nav-link" asp-controller="Account" asp-action="ChangeMyPassword">
+                        <a class="user-nav-link" asp-controller="Account" asp-action="ChangeEngineerPassword">
                             <i class="fas fa-key"></i>
                             Change Password
                         </a>
@@ -930,8 +937,8 @@
                             @if (!isUser)
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Home" asp-action="Analytics">
-                                        <i class="fas fa-chart-bar me-2"></i>Analytics
+                                    <a class="nav-link" asp-controller="Home" asp-action="DepartmentTargetEngineer">
+                                        <i class="fas fa-chart-bar me-2"></i>Department Target
                                     </a>
                                 </li>
                             }
@@ -953,9 +960,24 @@
                                         @if (!isUser)
                                         {
                                             <li>
-                                                <a class="dropdown-item" asp-controller="Account" asp-action="ChangeMyPassword">
-                                                    <i class="fas fa-key me-2"></i>Change Password
-                                                </a>
+                                                @if (isManager)
+                                                {
+                                                    <a class="dropdown-item" asp-controller="Account" asp-action="ChangeManagerPassword">
+                                                        <i class="fas fa-key me-2"></i>Change Password
+                                                    </a>
+                                                }
+                                                else if (isEngineer)
+                                                {
+                                                    <a class="dropdown-item" asp-controller="Account" asp-action="ChangeEngineerPassword">
+                                                        <i class="fas fa-key me-2"></i>Change Password
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <a class="dropdown-item" asp-controller="Account" asp-action="ChangeMyPassword">
+                                                        <i class="fas fa-key me-2"></i>Change Password
+                                                    </a>
+                                                }
                                             </li>
                                             <li><hr class="dropdown-divider"></li>
                                         }

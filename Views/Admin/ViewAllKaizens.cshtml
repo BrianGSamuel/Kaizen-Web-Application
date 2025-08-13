@@ -266,9 +266,16 @@
                                                 </span>
                                             </td>
                                             <td class="text-center">
-                                                <span class="badge @(managerStatus == "Approved" ? "bg-success" : managerStatus == "Rejected" ? "bg-danger" : "bg-warning")">
-                                                    @managerStatus
-                                                </span>
+                                                @if (engineerStatus == "Rejected")
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge @(managerStatus == "Approved" ? "bg-success" : managerStatus == "Rejected" ? "bg-danger" : "bg-warning")">
+                                                        @managerStatus
+                                                    </span>
+                                                }
                                             </td>
                                             <td class="text-center">
                                                 <span class="@overallStatusClass">@overallStatus</span>

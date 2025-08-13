@@ -2,7 +2,7 @@ using System;
 
 namespace KaizenWebApp.ViewModels
 {
-    public class ManagerDashboardViewModel
+    public class EngineerDashboardViewModel
     {
         // Current Month Statistics
         public int CurrentMonthSubmissions { get; set; }
@@ -16,15 +16,14 @@ namespace KaizenWebApp.ViewModels
         public double PreviousMonthAchievement { get; set; }
         public decimal PreviousMonthCostSavings { get; set; }
 
-        // Approval Statistics
-        public int PendingApprovals { get; set; }
-        public int CompletedKaizens { get; set; }
-        
-        // Additional Manager-specific Statistics
-        public int EngineerApprovedKaizens { get; set; }
+        // Engineer-specific Statistics
+        public int PendingReviews { get; set; }
         public int ApprovedKaizens { get; set; }
         public int RejectedKaizens { get; set; }
         public int TotalReviewed { get; set; }
+        
+        // New properties for fully implemented and both approved kaizens
+        public int FullyImplementedKaizens { get; set; }
         public int BothApprovedKaizens { get; set; }
 
         // Department Information
@@ -93,10 +92,9 @@ namespace KaizenWebApp.ViewModels
         {
             get
             {
-                // Count kaizens where engineer status is "Approved" and manager status is either "Approved" or "Rejected"
-                // This represents kaizens that have been reviewed by the manager
-                if (EngineerApprovedKaizens == 0) return 0;
-                return ((double)TotalReviewed / EngineerApprovedKaizens) * 100;
+                var totalKaizens = CurrentMonthSubmissions;
+                if (totalKaizens == 0) return 0;
+                return ((double)TotalReviewed / totalKaizens) * 100;
             }
         }
     }
