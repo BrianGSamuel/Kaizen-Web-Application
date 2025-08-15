@@ -39,7 +39,8 @@ namespace KaizenWebApp.Services
             var user = new Users
             {
                 UserName = model.Username,
-                DepartmentName = model.Name,
+                DepartmentName = model.Department,
+                Plant = model.Plant,
                 Password = model.Password // TODO: Hash password in production
             };
 
@@ -57,7 +58,8 @@ namespace KaizenWebApp.Services
             if (user == null) return false;
 
             user.UserName = model.Username;
-            user.DepartmentName = model.Name;
+            user.DepartmentName = model.Department;
+            user.Plant = model.Plant;
             user.Password = model.Password; // TODO: Hash password in production
 
             await _context.SaveChangesAsync();

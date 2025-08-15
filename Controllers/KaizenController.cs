@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Text;
 
 namespace KaizenWebApp.Controllers
 {
@@ -92,7 +93,97 @@ namespace KaizenWebApp.Controllers
         private bool IsKaizenTeamRole()
         {
             var username = User?.Identity?.Name;
-            return username?.ToLower().Contains("kaizenteam") == true;
+            if (string.IsNullOrEmpty(username))
+                return false;
+                
+            var usernameLower = username.ToLower();
+            // Check for various Kaizen Team username patterns
+            return usernameLower.Contains("kaizenteam") || 
+                   usernameLower.Contains("kaizen team") || 
+                   usernameLower.Contains("kaizenteam") ||
+                   usernameLower.Contains("kaizen-team");
+        }
+
+        // Custom authorization method for supervisor role
+        private bool IsSupervisorRole()
+        {
+            var username = User?.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.UserName == username);
+            return user?.Role?.ToLower() == "supervisor";
+        }
+
+        // Get current user's information
+        private async Task<Users?> GetCurrentUserAsync()
+        {
+            var username = User?.Identity?.Name;
+            if (string.IsNullOrEmpty(username))
+                return null;
+
+            return await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
+        }
+
+        // Get user information by employee number extracted from username
+        private async Task<Users?> GetUserByEmployeeNumberFromUsernameAsync()
+        {
+            var username = User?.Identity?.Name;
+            if (string.IsNullOrEmpty(username))
+                return null;
+
+            // Extract employee number from username (format: EmployeeNumber-User)
+            var employeeNumber = ExtractEmployeeNumberFromUsername(username);
+            if (string.IsNullOrEmpty(employeeNumber))
+                return null;
+
+            Console.WriteLine($"Extracted employee number from username '{username}': {employeeNumber}");
+
+            // Find user by employee number
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.EmployeeNumber == employeeNumber);
+            
+            if (user != null)
+            {
+                Console.WriteLine($"Found user with employee number {employeeNumber}: {user.EmployeeName}");
+            }
+            else
+            {
+                Console.WriteLine($"No user found with employee number {employeeNumber}");
+            }
+
+            return user;
+        }
+
+        // Extract employee number from username
+        private string? ExtractEmployeeNumberFromUsername(string username)
+        {
+            // Username format: EmployeeNumber-User
+            if (username.EndsWith("-User"))
+            {
+                var employeeNumber = username.Replace("-User", "");
+                return employeeNumber;
+            }
+            
+            // Also check for other patterns like EmployeeNumber-Engineer, EmployeeNumber-Manager, etc.
+            var parts = username.Split('-');
+            if (parts.Length >= 2)
+            {
+                return parts[0];
+            }
+
+            return null;
+        }
+
+        // Helper method to escape CSV values
+        private string EscapeCsvValue(string? value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return "";
+            
+            // If the value contains comma, quote, or newline, wrap it in quotes and escape internal quotes
+            if (value.Contains(",") || value.Contains("\"") || value.Contains("\n") || value.Contains("\r"))
+            {
+                return "\"" + value.Replace("\"", "\"\"") + "\"";
+            }
+            
+            return value;
         }
 
         // GET: /Kaizen/Kaizenform
@@ -132,40 +223,56 @@ namespace KaizenWebApp.Controllers
             Console.WriteLine("=== KaizenController.Kaizenform() called ===");
             try
             {
+                // Get user information by employee number extracted from username
+                var userByEmployeeNumber = await GetUserByEmployeeNumberFromUsernameAsync();
+                
                 var viewModel = new KaizenFormViewModel
                 {
-                    KaizenNo = GenerateKaizenNo(),
+                    KaizenNo = await GenerateKaizenNo(),
                     DateSubmitted = DateTime.Today,
-                    CostSavingType = "NoCostSaving" // Set default value
+                    CostSavingType = "NoCostSaving", // Set default value
+                    Plant = await GetCurrentUserPlant() // Set plant from user
                 };
+
+                // Auto-populate employee information from user found by employee number
+                if (userByEmployeeNumber != null)
+                {
+                    viewModel.EmployeeName = userByEmployeeNumber.EmployeeName ?? "";
+                    viewModel.EmployeeNo = userByEmployeeNumber.EmployeeNumber ?? "";
+                    viewModel.EmployeePhotoPath = userByEmployeeNumber.EmployeePhotoPath;
+                    viewModel.Department = userByEmployeeNumber.DepartmentName;
+                    viewModel.Plant = userByEmployeeNumber.Plant;
+                    
+                    Console.WriteLine($"Auto-populated Employee Name: {viewModel.EmployeeName}");
+                    Console.WriteLine($"Auto-populated Employee Number: {viewModel.EmployeeNo}");
+                    Console.WriteLine($"Auto-populated Employee Photo Path: '{viewModel.EmployeePhotoPath}'");
+                    Console.WriteLine($"Auto-populated Department: {viewModel.Department}");
+                    Console.WriteLine($"Auto-populated Plant: {viewModel.Plant}");
+                }
+                else
+                {
+                    Console.WriteLine("No user found by employee number - using fallback method");
+                    // Fallback to current user method if employee number lookup fails
+                    var currentUser = await GetCurrentUserAsync();
+                    if (currentUser != null)
+                    {
+                        viewModel.EmployeeName = currentUser.EmployeeName ?? "";
+                        viewModel.EmployeeNo = currentUser.EmployeeNumber ?? "";
+                        viewModel.EmployeePhotoPath = currentUser.EmployeePhotoPath;
+                        viewModel.Department = currentUser.DepartmentName;
+                        viewModel.Plant = currentUser.Plant;
+                        Console.WriteLine($"Fallback - Auto-populated Employee Name: {viewModel.EmployeeName}");
+                        Console.WriteLine($"Fallback - Auto-populated Employee Number: {viewModel.EmployeeNo}");
+                        Console.WriteLine($"Fallback - Auto-populated Employee Photo Path: '{viewModel.EmployeePhotoPath}'");
+                        Console.WriteLine($"Fallback - Auto-populated Department: {viewModel.Department}");
+                        Console.WriteLine($"Fallback - Auto-populated Plant: {viewModel.Plant}");
+                    }
+                }
 
                 // Debug information
                 Console.WriteLine($"User authenticated: {User.Identity?.IsAuthenticated}");
                 Console.WriteLine($"User name: {User.Identity?.Name}");
                 Console.WriteLine($"User claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}"))}");
-
-                // Auto-populate department based on logged-in user
-                try
-                {
-                    var department = await GetCurrentUserDepartment();
-                    viewModel.Department = department;
-                    Console.WriteLine($"Setting department in viewModel: {department}");
-                    
-                    // Additional debug info
-                    if (department != null)
-                    {
-                        Console.WriteLine($"Department successfully set to: '{department}'");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Department is null - user not found or no department");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error getting user department: {ex.Message}");
-                    viewModel.Department = null; // Set to null if there's an error
-                }
 
                 return View("~/Views/Home/Kaizenform.cshtml", viewModel);
             }
@@ -177,9 +284,10 @@ namespace KaizenWebApp.Controllers
                 // Return a basic view model if there's an error
                 var fallbackViewModel = new KaizenFormViewModel
                 {
-                    KaizenNo = GenerateKaizenNo(),
+                    KaizenNo = await GenerateKaizenNo(),
                     DateSubmitted = DateTime.Today,
-                    Department = null
+                    Department = null,
+                    Plant = await GetCurrentUserPlant()
                 };
                 
                 return View("~/Views/Home/Kaizenform.cshtml", fallbackViewModel);
@@ -335,10 +443,11 @@ namespace KaizenWebApp.Controllers
 
                 var model = new KaizenForm
                 {
-                    KaizenNo = viewModel.KaizenNo ?? GenerateKaizenNo(),
+                    KaizenNo = viewModel.KaizenNo ?? await GenerateKaizenNo(),
                     DateSubmitted = viewModel.DateSubmitted,
                     DateImplemented = viewModel.DateImplemented,
                     Department = finalDepartment,
+                    Plant = viewModel.Plant ?? await GetCurrentUserPlant() ?? "KTY", // Default to KTY if not found
                     EmployeeName = viewModel.EmployeeName?.Trim(),
                     EmployeeNo = viewModel.EmployeeNo?.Trim(),
                     SuggestionDescription = viewModel.SuggestionDescription?.Trim(),
@@ -379,9 +488,16 @@ namespace KaizenWebApp.Controllers
                     model.AfterKaizenImagePath = "/" + afterPath.Replace("\\", "/");
                 }
 
-                // Handle file uploads for EmployeePhoto
+                // Handle EmployeePhoto - either from uploaded file or from user's profile
+                Console.WriteLine($"=== EMPLOYEE PHOTO DEBUG ===");
+                Console.WriteLine($"viewModel.EmployeePhoto: {(viewModel.EmployeePhoto != null ? "NOT NULL" : "NULL")}");
+                Console.WriteLine($"viewModel.EmployeePhoto.Length: {(viewModel.EmployeePhoto?.Length ?? 0)}");
+                Console.WriteLine($"viewModel.EmployeePhotoPath: '{viewModel.EmployeePhotoPath}'");
+                
                 if (viewModel.EmployeePhoto != null && viewModel.EmployeePhoto.Length > 0)
                 {
+                    // New file uploaded - save it
+                    Console.WriteLine("Processing new uploaded employee photo file");
                     string employeePhotoFileName = $"{Guid.NewGuid()}{Path.GetExtension(viewModel.EmployeePhoto.FileName)}";
                     string employeePhotoPath = Path.Combine("uploads", employeePhotoFileName);
                     string fullEmployeePhotoPath = Path.Combine(_env.WebRootPath, employeePhotoPath);
@@ -392,15 +508,32 @@ namespace KaizenWebApp.Controllers
                         await viewModel.EmployeePhoto.CopyToAsync(stream);
                     }
                     model.EmployeePhotoPath = "/" + employeePhotoPath.Replace("\\", "/");
+                    Console.WriteLine($"Saved new employee photo to: {model.EmployeePhotoPath}");
                 }
+                else if (!string.IsNullOrEmpty(viewModel.EmployeePhotoPath))
+                {
+                    // No new file uploaded, but we have the fetched profile photo path
+                    model.EmployeePhotoPath = viewModel.EmployeePhotoPath;
+                    Console.WriteLine($"Using fetched employee photo path: {viewModel.EmployeePhotoPath}");
+                }
+                else
+                {
+                    Console.WriteLine("WARNING: No employee photo file uploaded AND no EmployeePhotoPath provided!");
+                    model.EmployeePhotoPath = null;
+                }
+                
+                Console.WriteLine($"Final model.EmployeePhotoPath: '{model.EmployeePhotoPath}'");
+                Console.WriteLine($"=== END EMPLOYEE PHOTO DEBUG ===");
 
                 Console.WriteLine("About to save to database...");
+                Console.WriteLine($"Final model.EmployeePhotoPath before save: '{model.EmployeePhotoPath}'");
                 _context.KaizenForms.Add(model);
                 await _context.SaveChangesAsync();
 
                 Console.WriteLine($"Kaizen saved successfully with ID: {model.Id}");
                 Console.WriteLine($"KaizenNo: {model.KaizenNo}");
                 Console.WriteLine($"EmployeeName: {model.EmployeeName}");
+                Console.WriteLine($"EmployeePhotoPath saved: '{model.EmployeePhotoPath}'");
 
                 TempData["Success"] = "Kaizen suggestion submitted successfully!";
                 return RedirectToAction("SuccessMessage", "Home");
@@ -1391,11 +1524,31 @@ namespace KaizenWebApp.Controllers
             }
         }
 
-        private string GenerateKaizenNo()
+        private async Task<string> GenerateKaizenNo()
         {
-            string datePart = DateTime.Now.ToString("yyyyMMdd");
-            int count = _context.KaizenForms.Count(k => k.DateSubmitted.Date == DateTime.Today) + 1;
-            return $"KZN-{datePart}-{count:D3}";
+            // Get current user's plant
+            var plant = await GetCurrentUserPlant();
+            if (string.IsNullOrEmpty(plant))
+            {
+                plant = "KTY"; // Default plant if not found
+            }
+
+            // Get current year (last 2 digits)
+            var year = DateTime.Now.Year.ToString().Substring(2); // e.g., "25" for 2025
+
+            // Get current quarter (3 months per quarter)
+            var month = DateTime.Now.Month;
+            var quarter = ((month - 1) / 3) + 1; // 1-3 = Q1, 4-6 = Q2, 7-9 = Q3, 10-12 = Q4
+
+            // Get suggestion number for this quarter
+            var quarterStart = new DateTime(DateTime.Now.Year, ((quarter - 1) * 3) + 1, 1);
+            var quarterEnd = quarterStart.AddMonths(3).AddDays(-1);
+            
+            var suggestionCount = _context.KaizenForms.Count(k => 
+                k.DateSubmitted >= quarterStart && 
+                k.DateSubmitted <= quarterEnd) + 1;
+
+            return $"{plant}-{year}-{quarter:D2}-{suggestionCount:D2}";
         }
 
         private bool IsValidImage(IFormFile file)
@@ -1405,6 +1558,47 @@ namespace KaizenWebApp.Controllers
             var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".webp" };
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             return allowedExtensions.Contains(extension);
+        }
+
+        private async Task<string> GetCurrentUserPlant()
+        {
+            try
+            {
+                if (User?.Identity?.IsAuthenticated == true)
+                {
+                    var username = User.Identity.Name;
+                    Console.WriteLine($"Getting plant for user: {username}");
+                    
+                    if (string.IsNullOrEmpty(username))
+                    {
+                        Console.WriteLine("Username is null or empty");
+                        return null;
+                    }
+                    
+                    var user = await _context.Users
+                        .Where(u => u.UserName == username)
+                        .FirstOrDefaultAsync();
+                    
+                    if (user != null)
+                    {
+                        Console.WriteLine($"Found user: {user.UserName}, Plant: {user.Plant}");
+                        return user.Plant;
+                    }
+                    
+                    Console.WriteLine($"No user found for username: {username}");
+                    return null;
+                }
+                else
+                {
+                    Console.WriteLine("User is not authenticated");
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetCurrentUserPlant: {ex.Message}");
+                return null;
+            }
         }
 
         private async Task<string> GetCurrentUserDepartment()
@@ -1977,6 +2171,444 @@ namespace KaizenWebApp.Controllers
             }
         }
 
+        // GET: /Kaizen/SupervisorKaizenList - For supervisors to view all kaizens from their department
+        [HttpGet]
+        public async Task<IActionResult> SupervisorKaizenList(string searchString, string startDate, string endDate, string category, string engineerStatus, string managerStatus)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow supervisors
+            if (!IsSupervisorRole())
+            {
+                TempData["AlertMessage"] = "Access Denied: Only supervisors can access this page.";
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                var username = User?.Identity?.Name;
+                var userDepartment = await GetCurrentUserDepartment();
+                
+                Console.WriteLine($"=== SUPERVISORKAIZENLIST DEBUG ===");
+                Console.WriteLine($"SupervisorKaizenList called by: {username}, UserDepartment: {userDepartment}");
+                Console.WriteLine($"SearchString: {searchString}, StartDate: {startDate}, EndDate: {endDate}, Category: {category}, EngineerStatus: {engineerStatus}, ManagerStatus: {managerStatus}");
+
+                var query = _context.KaizenForms.AsQueryable();
+                
+                // Debug: Check initial query count
+                var initialCount = await query.CountAsync();
+                Console.WriteLine($"SupervisorKaizenList initial query count: {initialCount}");
+
+                // Always filter by user's department for supervisors
+                if (!string.IsNullOrEmpty(userDepartment))
+                {
+                    query = query.Where(k => k.Department == userDepartment);
+                    Console.WriteLine($"Filtered by supervisor department: {userDepartment}");
+                }
+                else
+                {
+                    Console.WriteLine("No supervisor department found, showing no results");
+                    return View("~/Views/Kaizen/SupervisorKaizenList.cshtml", new List<KaizenForm>());
+                }
+
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out var start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                    Console.WriteLine($"Applied start date filter: {startDate}");
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out var end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                    Console.WriteLine($"Applied end date filter: {endDate}");
+                }
+
+                // Apply category filter
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                    Console.WriteLine($"Applied category filter: {category}");
+                }
+
+                // Apply engineer status filter
+                if (!string.IsNullOrEmpty(engineerStatus))
+                {
+                    if (engineerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.EngineerStatus == null || k.EngineerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.EngineerStatus == engineerStatus);
+                    }
+                    Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
+                }
+
+                // Apply manager status filter
+                if (!string.IsNullOrEmpty(managerStatus))
+                {
+                    if (managerStatus == "Pending")
+                    {
+                        // For pending manager status, exclude kaizens that have been rejected by engineer
+                        query = query.Where(k => (k.ManagerStatus == null || k.ManagerStatus == "Pending") && 
+                                                (k.EngineerStatus != "Rejected"));
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.ManagerStatus == managerStatus);
+                    }
+                    Console.WriteLine($"Applied manager status filter: {managerStatus}");
+                }
+
+                // Apply search filter if search string is provided
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    var searchLower = searchString.ToLower();
+                    query = query.Where(k => 
+                        k.KaizenNo.ToLower().Contains(searchLower) ||
+                        k.EmployeeName.ToLower().Contains(searchLower) ||
+                        k.EmployeeNo.ToLower().Contains(searchLower)
+                    );
+                    Console.WriteLine($"Applied search filter for: {searchString}");
+                }
+
+                // Debug: Check query before final execution
+                var queryCount = await query.CountAsync();
+                Console.WriteLine($"SupervisorKaizenList query count before final execution: {queryCount}");
+                
+                var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
+                Console.WriteLine($"SupervisorKaizenList returned {kaizens.Count} results");
+                Console.WriteLine($"=== END SUPERVISORKAIZENLIST DEBUG ===");
+
+                return View("~/Views/Kaizen/SupervisorKaizenList.cshtml", kaizens);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in SupervisorKaizenList: {ex.Message}");
+                return View("~/Views/Kaizen/SupervisorKaizenList.cshtml", new List<KaizenForm>());
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MyKaizens(string searchString, string startDate, string endDate, string category, string engineerStatus, string managerStatus)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow users with "user" in their username
+            if (!IsUserRole())
+            {
+                // Check if user is a manager
+                if (IsManagerRole())
+                {
+                    return RedirectToAction("KaizenListManager");
+                }
+                // Check if user is an engineer
+                else if (IsEngineerRole())
+                {
+                    return RedirectToAction("EngineerDashboard");
+                }
+                else
+                {
+                    return RedirectToAction("EngineerDashboard");
+                }
+            }
+
+            try
+            {
+                var username = User?.Identity?.Name;
+                var currentUser = await GetUserByEmployeeNumberFromUsernameAsync();
+                
+                Console.WriteLine($"=== MYKAIZENS DEBUG ===");
+                Console.WriteLine($"MyKaizens called by: {username}");
+                Console.WriteLine($"Current user employee number: {currentUser?.EmployeeNumber}");
+                Console.WriteLine($"SearchString: {searchString}, StartDate: {startDate}, EndDate: {endDate}, Category: {category}, EngineerStatus: {engineerStatus}, ManagerStatus: {managerStatus}");
+
+                var query = _context.KaizenForms.AsQueryable();
+                
+                // Debug: Check initial query count
+                var initialCount = await query.CountAsync();
+                Console.WriteLine($"MyKaizens initial query count: {initialCount}");
+
+                // Filter by current user's employee number instead of department
+                if (currentUser != null && !string.IsNullOrEmpty(currentUser.EmployeeNumber))
+                {
+                    query = query.Where(k => k.EmployeeNo == currentUser.EmployeeNumber);
+                    Console.WriteLine($"Filtered by user employee number: {currentUser.EmployeeNumber}");
+                }
+                else
+                {
+                    Console.WriteLine("No user employee number found, showing no results");
+                    return View("~/Views/Home/MyKaizens.cshtml", new List<KaizenForm>());
+                }
+
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out var start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                    Console.WriteLine($"Applied start date filter: {startDate}");
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out var end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                    Console.WriteLine($"Applied end date filter: {endDate}");
+                }
+
+                // Apply category filter
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                    Console.WriteLine($"Applied category filter: {category}");
+                }
+
+                // Apply engineer status filter
+                if (!string.IsNullOrEmpty(engineerStatus))
+                {
+                    if (engineerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.EngineerStatus == null || k.EngineerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.EngineerStatus == engineerStatus);
+                    }
+                    Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
+                }
+
+                // Apply manager status filter
+                if (!string.IsNullOrEmpty(managerStatus))
+                {
+                    if (managerStatus == "Pending")
+                    {
+                        // For pending manager status, exclude kaizens that have been rejected by engineer
+                        query = query.Where(k => (k.ManagerStatus == null || k.ManagerStatus == "Pending") && 
+                                                (k.EngineerStatus != "Rejected"));
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.ManagerStatus == managerStatus);
+                    }
+                    Console.WriteLine($"Applied manager status filter: {managerStatus}");
+                }
+
+                // Apply search filter if search string is provided
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    var searchLower = searchString.ToLower();
+                    query = query.Where(k => 
+                        k.KaizenNo.ToLower().Contains(searchLower) ||
+                        k.EmployeeName.ToLower().Contains(searchLower) ||
+                        k.EmployeeNo.ToLower().Contains(searchLower)
+                    );
+                    Console.WriteLine($"Applied search filter for: {searchString}");
+                }
+
+                // Debug: Check query before final execution
+                var queryCount = await query.CountAsync();
+                Console.WriteLine($"MyKaizens query count before final execution: {queryCount}");
+                
+                var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
+                Console.WriteLine($"MyKaizens returned {kaizens.Count} results");
+                Console.WriteLine($"=== END MYKAIZENS DEBUG ===");
+
+                return View("~/Views/Home/MyKaizens.cshtml", kaizens);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in MyKaizens: {ex.Message}");
+                return View("~/Views/Home/MyKaizens.cshtml", new List<KaizenForm>());
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Leaderboard(string department, string quarter, string searchString)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                Console.WriteLine($"=== LEADERBOARD DEBUG ===");
+                Console.WriteLine($"Leaderboard called by: {User?.Identity?.Name}");
+                Console.WriteLine($"Department: {department}, Quarter: {quarter}, SearchString: {searchString}");
+
+                var query = _context.KaizenForms.AsQueryable();
+
+                // Apply department filter
+                if (!string.IsNullOrEmpty(department))
+                {
+                    query = query.Where(k => k.Department == department);
+                    Console.WriteLine($"Filtered by department: {department}");
+                }
+
+                // Apply quarter filter (current year only)
+                if (!string.IsNullOrEmpty(quarter))
+                {
+                    var quarterNumber = int.Parse(quarter);
+                    var quarterStart = new DateTime(DateTime.Now.Year, (quarterNumber - 1) * 3 + 1, 1);
+                    var quarterEnd = quarterStart.AddMonths(3).AddDays(-1);
+                    query = query.Where(k => k.DateSubmitted >= quarterStart && k.DateSubmitted <= quarterEnd);
+                    Console.WriteLine($"Filtered by quarter: Q{quarter} {DateTime.Now.Year}");
+                }
+
+                // Apply search filter if search string is provided
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    var searchLower = searchString.ToLower();
+                    query = query.Where(k => 
+                        k.KaizenNo.ToLower().Contains(searchLower) ||
+                        k.EmployeeName.ToLower().Contains(searchLower) ||
+                        k.EmployeeNo.ToLower().Contains(searchLower)
+                    );
+                    Console.WriteLine($"Applied search filter for: {searchString}");
+                }
+
+                // Get leaderboard data grouped by employee
+                var leaderboardData = await query
+                    .Where(k => !string.IsNullOrEmpty(k.EmployeeNo) && !string.IsNullOrEmpty(k.EmployeeName))
+                    .GroupBy(k => new { k.EmployeeNo, k.EmployeeName, k.EmployeePhotoPath, k.Department })
+                    .Select(g => new
+                    {
+                        EmployeeNo = g.Key.EmployeeNo,
+                        EmployeeName = g.Key.EmployeeName,
+                        EmployeePhotoPath = g.Key.EmployeePhotoPath,
+                        Department = g.Key.Department,
+                        TotalKaizens = g.Count(),
+                        ApprovedKaizens = g.Count(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved"),
+                        PendingKaizens = g.Count(k => (k.EngineerStatus == null || k.EngineerStatus == "Pending") || 
+                                                     (k.EngineerStatus == "Approved" && (k.ManagerStatus == null || k.ManagerStatus == "Pending"))),
+                        RejectedKaizens = g.Count(k => k.EngineerStatus == "Rejected" || k.ManagerStatus == "Rejected"),
+                        TotalCostSaving = g.Where(k => k.CostSaving.HasValue).Sum(k => k.CostSaving.Value),
+                        LastSubmission = g.Max(k => k.DateSubmitted)
+                    })
+                    .OrderByDescending(x => x.TotalKaizens)
+                    .ThenByDescending(x => x.ApprovedKaizens)
+                    .ThenByDescending(x => x.TotalCostSaving)
+                    .ToListAsync();
+
+                // If searching for a specific employee, get their actual rank from the full leaderboard
+                List<LeaderboardViewModel> rankedLeaderboard;
+                
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    // Get the full leaderboard without search filter to determine actual ranks
+                    var fullLeaderboardQuery = _context.KaizenForms.AsQueryable();
+                    
+                    // Apply department and quarter filters to full leaderboard
+                    if (!string.IsNullOrEmpty(department))
+                    {
+                        fullLeaderboardQuery = fullLeaderboardQuery.Where(k => k.Department == department);
+                    }
+                    
+                    if (!string.IsNullOrEmpty(quarter))
+                    {
+                        var quarterNumber = int.Parse(quarter);
+                        var quarterStart = new DateTime(DateTime.Now.Year, (quarterNumber - 1) * 3 + 1, 1);
+                        var quarterEnd = quarterStart.AddMonths(3).AddDays(-1);
+                        fullLeaderboardQuery = fullLeaderboardQuery.Where(k => k.DateSubmitted >= quarterStart && k.DateSubmitted <= quarterEnd);
+                    }
+
+                    var fullLeaderboardData = await fullLeaderboardQuery
+                        .Where(k => !string.IsNullOrEmpty(k.EmployeeNo) && !string.IsNullOrEmpty(k.EmployeeName))
+                        .GroupBy(k => new { k.EmployeeNo, k.EmployeeName, k.EmployeePhotoPath, k.Department })
+                        .Select(g => new
+                        {
+                            EmployeeNo = g.Key.EmployeeNo,
+                            EmployeeName = g.Key.EmployeeName,
+                            EmployeePhotoPath = g.Key.EmployeePhotoPath,
+                            Department = g.Key.Department,
+                            TotalKaizens = g.Count(),
+                            ApprovedKaizens = g.Count(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved"),
+                            PendingKaizens = g.Count(k => (k.EngineerStatus == null || k.EngineerStatus == "Pending") || 
+                                                         (k.EngineerStatus == "Approved" && (k.ManagerStatus == null || k.ManagerStatus == "Pending"))),
+                            RejectedKaizens = g.Count(k => k.EngineerStatus == "Rejected" || k.ManagerStatus == "Rejected"),
+                            TotalCostSaving = g.Where(k => k.CostSaving.HasValue).Sum(k => k.CostSaving.Value),
+                            LastSubmission = g.Max(k => k.DateSubmitted)
+                        })
+                        .OrderByDescending(x => x.TotalKaizens)
+                        .ThenByDescending(x => x.ApprovedKaizens)
+                        .ThenByDescending(x => x.TotalCostSaving)
+                        .ToListAsync();
+
+                    // Create a dictionary to map employee numbers to their actual ranks
+                    var rankDictionary = fullLeaderboardData.Select((entry, index) => new { entry.EmployeeNo, Rank = index + 1 })
+                        .ToDictionary(x => x.EmployeeNo, x => x.Rank);
+
+                    // Add actual ranks to the filtered results
+                    rankedLeaderboard = leaderboardData.Select(entry => new LeaderboardViewModel
+                    {
+                        Rank = rankDictionary.ContainsKey(entry.EmployeeNo) ? rankDictionary[entry.EmployeeNo] : 999,
+                        EmployeeNo = entry.EmployeeNo,
+                        EmployeeName = entry.EmployeeName,
+                        EmployeePhotoPath = entry.EmployeePhotoPath,
+                        Department = entry.Department,
+                        TotalKaizens = entry.TotalKaizens,
+                        ApprovedKaizens = entry.ApprovedKaizens,
+                        PendingKaizens = entry.PendingKaizens,
+                        RejectedKaizens = entry.RejectedKaizens,
+                        TotalCostSaving = entry.TotalCostSaving,
+                        LastSubmission = entry.LastSubmission
+                    }).OrderBy(x => x.Rank).ToList();
+                }
+                else
+                {
+                    // Add rank to each entry (normal case without search)
+                    rankedLeaderboard = leaderboardData.Select((entry, index) => new LeaderboardViewModel
+                    {
+                        Rank = index + 1,
+                        EmployeeNo = entry.EmployeeNo,
+                        EmployeeName = entry.EmployeeName,
+                        EmployeePhotoPath = entry.EmployeePhotoPath,
+                        Department = entry.Department,
+                        TotalKaizens = entry.TotalKaizens,
+                        ApprovedKaizens = entry.ApprovedKaizens,
+                        PendingKaizens = entry.PendingKaizens,
+                        RejectedKaizens = entry.RejectedKaizens,
+                        TotalCostSaving = entry.TotalCostSaving,
+                        LastSubmission = entry.LastSubmission
+                    }).ToList();
+                }
+
+                Console.WriteLine($"Leaderboard returned {rankedLeaderboard.Count} entries");
+                Console.WriteLine($"=== END LEADERBOARD DEBUG ===");
+
+                // Get unique departments for filter dropdown
+                var departments = await _context.KaizenForms
+                    .Where(k => !string.IsNullOrEmpty(k.Department))
+                    .Select(k => k.Department)
+                    .Distinct()
+                    .OrderBy(d => d)
+                    .ToListAsync();
+
+                ViewBag.Departments = departments;
+                ViewBag.SelectedDepartment = department;
+                ViewBag.SelectedQuarter = quarter;
+                ViewBag.SearchString = searchString;
+                return View("~/Views/Home/Leaderboard.cshtml", rankedLeaderboard);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in Leaderboard: {ex.Message}");
+                return View("~/Views/Home/Leaderboard.cshtml", new List<LeaderboardViewModel>());
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusRequest request)
         {
@@ -2282,6 +2914,69 @@ namespace KaizenWebApp.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // GET: /Kaizen/GetCurrentEmployeeData - AJAX endpoint to get current employee data
+        [HttpGet]
+        public async Task<IActionResult> GetCurrentEmployeeData()
+        {
+            try
+            {
+                Console.WriteLine("=== GET CURRENT EMPLOYEE DATA ===");
+                
+                // Get user information by employee number extracted from username
+                var userByEmployeeNumber = await GetUserByEmployeeNumberFromUsernameAsync();
+                
+                if (userByEmployeeNumber != null)
+                {
+                    Console.WriteLine($"Found employee: {userByEmployeeNumber.EmployeeName} ({userByEmployeeNumber.EmployeeNumber})");
+                    
+                    return Json(new { 
+                        success = true,
+                        employeeName = userByEmployeeNumber.EmployeeName,
+                        employeeNo = userByEmployeeNumber.EmployeeNumber,
+                        department = userByEmployeeNumber.DepartmentName,
+                        plant = userByEmployeeNumber.Plant,
+                        employeePhotoPath = userByEmployeeNumber.EmployeePhotoPath
+                    });
+                }
+                else
+                {
+                    Console.WriteLine("No employee found by employee number - trying fallback method");
+                    
+                    // Fallback to current user method
+                    var currentUser = await GetCurrentUserAsync();
+                    if (currentUser != null)
+                    {
+                        Console.WriteLine($"Found employee via fallback: {currentUser.EmployeeName} ({currentUser.EmployeeNumber})");
+                        
+                        return Json(new { 
+                            success = true,
+                            employeeName = currentUser.EmployeeName,
+                            employeeNo = currentUser.EmployeeNumber,
+                            department = currentUser.DepartmentName,
+                            plant = currentUser.Plant,
+                            employeePhotoPath = currentUser.EmployeePhotoPath
+                        });
+                    }
+                    else
+                    {
+                        Console.WriteLine("No employee found via any method");
+                        return Json(new { 
+                            success = false, 
+                            message = "No employee data found for current user" 
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting employee data: {ex.Message}");
+                return Json(new { 
+                    success = false, 
+                    message = "Error retrieving employee data: " + ex.Message 
+                });
             }
         }
 
@@ -2720,8 +3415,7 @@ namespace KaizenWebApp.Controllers
         public async Task<IActionResult> KaizenTeamDashboard()
         {
             // Check if user is kaizen team
-            var username = User.Identity?.Name;
-            if (username?.ToLower().Contains("kaizenteam") != true)
+            if (!IsKaizenTeamRole())
             {
                 return RedirectToAction("AccessDenied", "Home");
             }
@@ -2792,7 +3486,7 @@ namespace KaizenWebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> KaizenTeam(string searchString, string department, string status, 
             string startDate, string endDate, string category, string engineerStatus, string managerStatus, 
-            string costSavingRange, string employeeName, string employeeNo, string kaizenNo)
+            string costSavingRange, string employeeName, string employeeNo, string kaizenNo, string quarter)
         {
             // Check for direct URL access and end session if detected
             if (await CheckAndEndSessionIfDirectAccess())
@@ -2944,6 +3638,18 @@ namespace KaizenWebApp.Controllers
                     }
                 }
 
+                // Apply quarter filter
+                if (!string.IsNullOrEmpty(quarter) && int.TryParse(quarter, out int quarterValue))
+                {
+                    var currentYear = DateTime.Now.Year;
+                    var quarterStartMonth = ((quarterValue - 1) * 3) + 1;
+                    var quarterStartDate = new DateTime(currentYear, quarterStartMonth, 1);
+                    var quarterEndDate = quarterStartDate.AddMonths(3).AddDays(-1);
+                    
+                    query = query.Where(k => k.DateSubmitted >= quarterStartDate && k.DateSubmitted <= quarterEndDate);
+                    Console.WriteLine($"Applied quarter filter: Q{quarterValue} ({quarterStartDate:yyyy-MM-dd} to {quarterEndDate:yyyy-MM-dd})");
+                }
+
                 var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
                 Console.WriteLine($"KaizenTeam returned {kaizens.Count} results");
                 
@@ -2997,7 +3703,8 @@ namespace KaizenWebApp.Controllers
                     CostSavingRange = costSavingRange,
                     EmployeeName = employeeName,
                     EmployeeNo = employeeNo,
-                    KaizenNo = kaizenNo
+                    KaizenNo = kaizenNo,
+                    Quarter = quarter
                 };
 
                 return View("KaizenTeamView", kaizens);
@@ -3013,7 +3720,7 @@ namespace KaizenWebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> SearchTeam(string searchString, string department, string status, 
             string startDate, string endDate, string category, string engineerStatus, string managerStatus, 
-            string costSavingRange, string employeeName, string employeeNo, string kaizenNo)
+            string costSavingRange, string employeeName, string employeeNo, string kaizenNo, string quarter)
         {
             // Check for direct URL access and end session if detected
             if (await CheckAndEndSessionIfDirectAccess())
@@ -3170,6 +3877,18 @@ namespace KaizenWebApp.Controllers
                             query = query.Where(k => k.CostSaving == null || k.CostSaving == 0);
                             break;
                     }
+                }
+
+                // Apply quarter filter
+                if (!string.IsNullOrEmpty(quarter) && int.TryParse(quarter, out int quarterValue))
+                {
+                    var currentYear = DateTime.Now.Year;
+                    var quarterStartMonth = ((quarterValue - 1) * 3) + 1;
+                    var quarterStartDate = new DateTime(currentYear, quarterStartMonth, 1);
+                    var quarterEndDate = quarterStartDate.AddMonths(3).AddDays(-1);
+                    
+                    query = query.Where(k => k.DateSubmitted >= quarterStartDate && k.DateSubmitted <= quarterEndDate);
+                    Console.WriteLine($"Applied quarter filter: Q{quarterValue} ({quarterStartDate:yyyy-MM-dd} to {quarterEndDate:yyyy-MM-dd})");
                 }
 
                 var kaizens = await query
@@ -3494,6 +4213,42 @@ namespace KaizenWebApp.Controllers
             }
         }
 
+        // GET: /Kaizen/KaizenTeamDetails - Kaizen Team details page
+        [HttpGet]
+        public async Task<IActionResult> KaizenTeamDetails(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow kaizen team
+            if (!IsKaizenTeamRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                var kaizen = await _context.KaizenForms
+                    .FirstOrDefaultAsync(k => k.Id == id);
+
+                if (kaizen == null)
+                {
+                    TempData["ErrorMessage"] = "Kaizen suggestion not found.";
+                    return RedirectToAction("KaizenTeamView");
+                }
+
+                return View("~/Views/Kaizen/KaizenTeamDetails.cshtml", kaizen);
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "An error occurred while loading the kaizen details.";
+                return RedirectToAction("KaizenTeamView");
+            }
+        }
+
         // GET: /Kaizen/ManagerDashboard - Manager dashboard with summary boxes
         [HttpGet]
         public async Task<IActionResult> ManagerDashboard()
@@ -3743,6 +4498,258 @@ namespace KaizenWebApp.Controllers
                 };
 
                 return View("~/Views/Kaizen/EngineerDashboard.cshtml", dashboardViewModel);
+            }
+            catch (Exception)
+            {
+                // Log the exception
+                return RedirectToAction("Kaizenform");
+            }
+        }
+
+        // GET: /Kaizen/UserDashboard - User dashboard with summary boxes
+        [HttpGet]
+        public async Task<IActionResult> UserDashboard()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow users (users with "user" in their username)
+            if (!IsUserRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                // Get current user information
+                var username = User?.Identity?.Name;
+                var currentUser = await GetUserByEmployeeNumberFromUsernameAsync();
+                var currentUserDepartment = await GetCurrentUserDepartment();
+
+                if (currentUser == null || string.IsNullOrEmpty(currentUserDepartment))
+                {
+                    return RedirectToAction("Kaizenform");
+                }
+
+                // Get current month and year
+                var currentYear = DateTime.Now.Year;
+                var currentMonth = DateTime.Now.Month;
+
+                // Get user's kaizens for current month
+                var currentMonthKaizens = await _context.KaizenForms
+                    .Where(k => k.EmployeeNo == currentUser.EmployeeNumber && 
+                               k.DateSubmitted.Year == currentYear && 
+                               k.DateSubmitted.Month == currentMonth)
+                    .ToListAsync();
+
+                // Get user's kaizens for previous month
+                var previousMonth = currentMonth == 1 ? 12 : currentMonth - 1;
+                var previousYear = currentMonth == 1 ? currentYear - 1 : currentYear;
+                var previousMonthKaizens = await _context.KaizenForms
+                    .Where(k => k.EmployeeNo == currentUser.EmployeeNumber && 
+                               k.DateSubmitted.Year == previousYear && 
+                               k.DateSubmitted.Month == previousMonth)
+                    .ToListAsync();
+
+                // Get user's total kaizens (all time)
+                var totalKaizensSubmitted = await _context.KaizenForms
+                    .Where(k => k.EmployeeNo == currentUser.EmployeeNumber)
+                    .CountAsync();
+
+                // Get department target for current month
+                var currentMonthTarget = await _context.DepartmentTargets
+                    .Where(dt => dt.Department == currentUserDepartment && 
+                                dt.Year == currentYear && 
+                                dt.Month == currentMonth)
+                    .FirstOrDefaultAsync();
+
+                // Get department total submissions for current month
+                var departmentCurrentMonthSubmissions = await _context.KaizenForms
+                    .Where(k => k.Department == currentUserDepartment && 
+                               k.DateSubmitted.Year == currentYear && 
+                               k.DateSubmitted.Month == currentMonth)
+                    .CountAsync();
+
+                // Calculate department target achievement
+                var departmentTargetCount = currentMonthTarget?.TargetCount ?? 0;
+                var departmentTargetAchievement = departmentTargetCount > 0 ? 
+                    (double)departmentCurrentMonthSubmissions / departmentTargetCount * 100 : 0;
+
+                // Calculate user's kaizen status statistics
+                var pendingKaizens = currentMonthKaizens.Count(k => 
+                    (k.EngineerStatus == null || k.EngineerStatus == "Pending") || 
+                    (k.EngineerStatus == "Approved" && (k.ManagerStatus == null || k.ManagerStatus == "Pending")));
+                var approvedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
+                var rejectedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Rejected" || k.ManagerStatus == "Rejected");
+                var totalReviewed = approvedKaizens + rejectedKaizens;
+
+                // Calculate cost savings
+                var totalCostSavings = await _context.KaizenForms
+                    .Where(k => k.EmployeeNo == currentUser.EmployeeNumber && 
+                               k.CostSaving.HasValue && k.CostSaving > 0)
+                    .SumAsync(k => k.CostSaving.Value);
+                var currentMonthCostSavings = currentMonthKaizens
+                    .Where(k => k.CostSaving.HasValue && k.CostSaving > 0)
+                    .Sum(k => k.CostSaving.Value);
+
+                // Create dashboard view model
+                var dashboardViewModel = new UserDashboardViewModel
+                {
+                    TotalKaizensSubmitted = totalKaizensSubmitted,
+                    CurrentMonthSubmissions = currentMonthKaizens.Count,
+                    PreviousMonthSubmissions = previousMonthKaizens.Count,
+                    DepartmentTarget = departmentTargetCount,
+                    DepartmentCurrentMonthSubmissions = departmentCurrentMonthSubmissions,
+                    DepartmentTargetAchievement = departmentTargetAchievement,
+                    PendingKaizens = pendingKaizens,
+                    ApprovedKaizens = approvedKaizens,
+                    RejectedKaizens = rejectedKaizens,
+                    TotalReviewed = totalReviewed,
+                    TotalCostSavings = totalCostSavings,
+                    CurrentMonthCostSavings = currentMonthCostSavings,
+                    EmployeeName = currentUser.EmployeeName ?? username,
+                    EmployeeNumber = currentUser.EmployeeNumber,
+                    Department = currentUserDepartment,
+                    CurrentMonth = currentMonth,
+                    CurrentYear = currentYear
+                };
+
+                return View("~/Views/Kaizen/UserDashboard.cshtml", dashboardViewModel);
+            }
+            catch (Exception)
+            {
+                // Log the exception
+                return RedirectToAction("Kaizenform");
+            }
+        }
+
+        // GET: /Kaizen/SupervisorDashboard - Supervisor dashboard
+        [HttpGet]
+        public async Task<IActionResult> SupervisorDashboard()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow supervisors
+            if (!IsSupervisorRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                // Get current user's department
+                var currentUserDepartment = await GetCurrentUserDepartment();
+                if (string.IsNullOrEmpty(currentUserDepartment))
+                {
+                    return RedirectToAction("Kaizenform");
+                }
+
+                // Get current month and year
+                var currentYear = DateTime.Now.Year;
+                var currentMonth = DateTime.Now.Month;
+
+                // Get department kaizens for current month
+                var currentMonthKaizens = await _context.KaizenForms
+                    .Where(k => k.Department == currentUserDepartment && 
+                               k.DateSubmitted.Year == currentYear && 
+                               k.DateSubmitted.Month == currentMonth)
+                    .ToListAsync();
+
+                // Get department kaizens for previous month
+                var previousMonth = currentMonth == 1 ? 12 : currentMonth - 1;
+                var previousYear = currentMonth == 1 ? currentYear - 1 : currentYear;
+                var previousMonthKaizens = await _context.KaizenForms
+                    .Where(k => k.Department == currentUserDepartment && 
+                               k.DateSubmitted.Year == previousYear && 
+                               k.DateSubmitted.Month == previousMonth)
+                    .ToListAsync();
+
+                // Get department target for current month
+                var currentMonthTarget = await _context.DepartmentTargets
+                    .Where(dt => dt.Department == currentUserDepartment && 
+                                dt.Year == currentYear && 
+                                dt.Month == currentMonth)
+                    .FirstOrDefaultAsync();
+
+                // Calculate summary statistics
+                var currentMonthSubmissions = currentMonthKaizens.Count;
+                var currentMonthTargetCount = currentMonthTarget?.TargetCount ?? 0;
+                var currentMonthAchievement = currentMonthTargetCount > 0 ? 
+                    (double)currentMonthSubmissions / currentMonthTargetCount * 100 : 0;
+
+                var previousMonthSubmissions = previousMonthKaizens.Count;
+                var previousMonthTarget = await _context.DepartmentTargets
+                    .Where(dt => dt.Department == currentUserDepartment && 
+                                dt.Year == previousYear && 
+                                dt.Month == previousMonth)
+                    .FirstOrDefaultAsync();
+                var previousMonthTargetCount = previousMonthTarget?.TargetCount ?? 0;
+                var previousMonthAchievement = previousMonthTargetCount > 0 ? 
+                    (double)previousMonthSubmissions / previousMonthTargetCount * 100 : 0;
+
+                // Calculate cost savings (only from supervisor approved kaizens with cost savings)
+                var currentMonthCostSavings = currentMonthKaizens
+                    .Where(k => k.ManagerStatus == "Approved" && k.CostSaving.HasValue && k.CostSaving > 0)
+                    .Sum(k => k.CostSaving.Value);
+                var previousMonthCostSavings = previousMonthKaizens
+                    .Where(k => k.ManagerStatus == "Approved" && k.CostSaving.HasValue && k.CostSaving > 0)
+                    .Sum(k => k.CostSaving.Value);
+
+                // Calculate supervisor-specific statistics
+                var pendingReviews = currentMonthKaizens.Count(k => 
+                    k.ManagerStatus == "Pending" || k.ManagerStatus == null);
+                var approvedKaizens = currentMonthKaizens.Count(k => 
+                    k.ManagerStatus == "Approved");
+                var rejectedKaizens = currentMonthKaizens.Count(k => 
+                    k.ManagerStatus == "Rejected");
+                var totalReviewed = approvedKaizens + rejectedKaizens;
+                
+                // Calculate fully implemented kaizens (those with DateImplemented not null)
+                var fullyImplementedKaizens = currentMonthKaizens.Count(k => 
+                    k.DateImplemented.HasValue);
+                
+                // Calculate kaizens with both manager and engineer status as "Approved"
+                var bothApprovedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
+
+                // Get team members count (users in the same department)
+                var teamMembersCount = await _context.Users
+                    .Where(u => u.DepartmentName == currentUserDepartment)
+                    .CountAsync();
+
+                // Create dashboard view model
+                var dashboardViewModel = new SupervisorDashboardViewModel
+                {
+                    CurrentMonthSubmissions = currentMonthSubmissions,
+                    CurrentMonthTarget = currentMonthTargetCount,
+                    CurrentMonthAchievement = currentMonthAchievement,
+                    PreviousMonthSubmissions = previousMonthSubmissions,
+                    PreviousMonthTarget = previousMonthTargetCount,
+                    PreviousMonthAchievement = previousMonthAchievement,
+                    CurrentMonthCostSavings = currentMonthCostSavings,
+                    PreviousMonthCostSavings = previousMonthCostSavings,
+                    PendingReviews = pendingReviews,
+                    ApprovedKaizens = approvedKaizens,
+                    RejectedKaizens = rejectedKaizens,
+                    TotalReviewed = totalReviewed,
+                    FullyImplementedKaizens = fullyImplementedKaizens,
+                    BothApprovedKaizens = bothApprovedKaizens,
+                    TeamMembersCount = teamMembersCount,
+                    Department = currentUserDepartment,
+                    CurrentMonth = currentMonth,
+                    CurrentYear = currentYear
+                };
+
+                return View("~/Views/Kaizen/SupervisorDashboard.cshtml", dashboardViewModel);
             }
             catch (Exception)
             {
@@ -4220,6 +5227,445 @@ namespace KaizenWebApp.Controllers
             {
                 Console.WriteLine($"Error in UserKaizenDetails: {ex.Message}");
                 return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // GET: /Kaizen/ExportToExcel
+        [HttpGet]
+        public async Task<IActionResult> ExportToExcel(string searchString, string department, string status,
+            string startDate, string endDate, string category, string engineerStatus, string managerStatus,
+            string costSavingRange, string employeeName, string employeeNo, string kaizenNo, string quarter)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow users with "kaizenteam" in their username
+            if (!IsKaizenTeamRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                var query = _context.KaizenForms.AsQueryable();
+
+                // Apply the same filters as KaizenTeam action
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    var searchLower = searchString.ToLower();
+                    query = query.Where(k => 
+                        k.KaizenNo.ToLower().Contains(searchLower) ||
+                        k.EmployeeName.ToLower().Contains(searchLower) ||
+                        k.EmployeeNo.ToLower().Contains(searchLower) ||
+                        k.Department.ToLower().Contains(searchLower) ||
+                        (k.SuggestionDescription != null && k.SuggestionDescription.ToLower().Contains(searchLower))
+                    );
+                }
+
+                if (!string.IsNullOrEmpty(kaizenNo))
+                {
+                    query = query.Where(k => k.KaizenNo.Contains(kaizenNo));
+                }
+
+                if (!string.IsNullOrEmpty(employeeName))
+                {
+                    query = query.Where(k => k.EmployeeName.ToLower().Contains(employeeName.ToLower()));
+                }
+
+                if (!string.IsNullOrEmpty(employeeNo))
+                {
+                    query = query.Where(k => k.EmployeeNo.ToLower().Contains(employeeNo.ToLower()));
+                }
+
+                if (!string.IsNullOrEmpty(department))
+                {
+                    query = query.Where(k => k.Department == department);
+                }
+
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                }
+
+                if (!string.IsNullOrEmpty(status))
+                {
+                    if (status == "Approved")
+                    {
+                        query = query.Where(k => 
+                            (k.EngineerStatus ?? "Pending") == "Approved" && 
+                            (k.ManagerStatus ?? "Pending") == "Approved"
+                        );
+                    }
+                    else if (status == "Rejected")
+                    {
+                        query = query.Where(k => 
+                            (k.EngineerStatus ?? "Pending") == "Rejected" || 
+                            (k.ManagerStatus ?? "Pending") == "Rejected"
+                        );
+                    }
+                    else if (status == "Pending")
+                    {
+                        query = query.Where(k => 
+                            (k.EngineerStatus ?? "Pending") != "Rejected" && 
+                            (k.ManagerStatus ?? "Pending") != "Rejected" &&
+                            !((k.EngineerStatus ?? "Pending") == "Approved" && (k.ManagerStatus ?? "Pending") == "Approved")
+                        );
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                }
+
+                // Apply quarter filter if specified
+                if (!string.IsNullOrEmpty(quarter) && int.TryParse(quarter, out int quarterNum))
+                {
+                    var quarterStart = new DateTime(DateTime.Now.Year, ((quarterNum - 1) * 3) + 1, 1);
+                    var quarterEnd = quarterStart.AddMonths(3).AddDays(-1);
+                    
+                    query = query.Where(k => k.DateSubmitted >= quarterStart && k.DateSubmitted <= quarterEnd);
+                }
+                // If no date filters and no quarter filter are applied, default to current quarter
+                else if (string.IsNullOrEmpty(startDate) && string.IsNullOrEmpty(endDate))
+                {
+                    var currentQuarter = ((DateTime.Now.Month - 1) / 3) + 1;
+                    var quarterStart = new DateTime(DateTime.Now.Year, ((currentQuarter - 1) * 3) + 1, 1);
+                    var quarterEnd = quarterStart.AddMonths(3).AddDays(-1);
+                    
+                    query = query.Where(k => k.DateSubmitted >= quarterStart && k.DateSubmitted <= quarterEnd);
+                }
+
+                if (!string.IsNullOrEmpty(costSavingRange))
+                {
+                    switch (costSavingRange)
+                    {
+                        case "0-1000":
+                            query = query.Where(k => k.CostSaving >= 0 && k.CostSaving <= 1000);
+                            break;
+                        case "1001-5000":
+                            query = query.Where(k => k.CostSaving > 1000 && k.CostSaving <= 5000);
+                            break;
+                        case "5001-10000":
+                            query = query.Where(k => k.CostSaving > 5000 && k.CostSaving <= 10000);
+                            break;
+                        case "10001+":
+                            query = query.Where(k => k.CostSaving > 10000);
+                            break;
+                        case "No Cost Saving":
+                            query = query.Where(k => k.CostSaving == null || k.CostSaving == 0);
+                            break;
+                    }
+                }
+
+                var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
+
+                // Create comprehensive CSV content with detailed information
+                var csv = new StringBuilder();
+                
+                // Add comprehensive headers (without image columns)
+                csv.AppendLine("KAIZEN NO,EMPLOYEE NO,EMPLOYEE NAME,DEPARTMENT,PLANT,DATE SUBMITTED,CATEGORY,SUGGESTION DESCRIPTION,COST SAVING PER YEAR ($),DOLLAR RATE,OTHER BENEFITS,ENGINEER STATUS,ENGINEER APPROVED BY,MANAGER STATUS,MANAGER APPROVED BY,OVERALL STATUS,EXECUTIVE COMMENTS,IMPLEMENTATION AREA,CAN IMPLEMENT IN OTHER FIELDS,MANAGER COMMENTS,MANAGER SIGNATURE,AWARD PRICE,AWARD CATEGORY 1ST,AWARD CATEGORY 2ND,AWARD CATEGORY 3RD,REJECTION REASON ENGINEER,REJECTION REASON MANAGER,QUARTER CHANGE");
+
+                // Add data rows
+                foreach (var kaizen in kaizens)
+                {
+                    var engStatus = kaizen.EngineerStatus ?? "Pending";
+                    var mgrStatus = kaizen.ManagerStatus ?? "Pending";
+                    
+                    // Calculate overall status
+                    var overallStatus = "Pending";
+                    if (engStatus == "Rejected" || mgrStatus == "Rejected")
+                    {
+                        overallStatus = "Rejected";
+                    }
+                    else if (engStatus == "Approved" && mgrStatus == "Approved")
+                    {
+                        overallStatus = "Approved";
+                    }
+
+                    // Determine award categories
+                    var award1st = "";
+                    var award2nd = "";
+                    var award3rd = "";
+                    
+                    if (!string.IsNullOrEmpty(kaizen.AwardPrice))
+                    {
+                        switch (kaizen.AwardPrice.ToUpper())
+                        {
+                            case "1ST PRICE":
+                            case "1ST":
+                                award1st = "X";
+                                break;
+                            case "2ND PRICE":
+                            case "2ND":
+                                award2nd = "X";
+                                break;
+                            case "3RD PRICE":
+                            case "3RD":
+                                award3rd = "X";
+                                break;
+                        }
+                    }
+
+                    // Get quarter information
+                    var kaizenQuarter = ((kaizen.DateSubmitted.Month - 1) / 3) + 1;
+                    var quarterText = kaizenQuarter switch
+                    {
+                        1 => "Q1",
+                        2 => "Q2",
+                        3 => "Q3",
+                        4 => "Q4",
+                        _ => "Q1"
+                    };
+
+                    // Escape CSV values and create comprehensive row
+                    var row = new List<string>
+                    {
+                        EscapeCsvValue(kaizen.KaizenNo),
+                        EscapeCsvValue(kaizen.EmployeeNo),
+                        EscapeCsvValue(kaizen.EmployeeName),
+                        EscapeCsvValue(kaizen.Department),
+                        EscapeCsvValue(kaizen.Plant ?? "KTY"),
+                        EscapeCsvValue(kaizen.DateSubmitted.ToString("yyyy-MM-dd")),
+                        EscapeCsvValue(kaizen.Category ?? ""),
+                        EscapeCsvValue(kaizen.SuggestionDescription ?? ""),
+                        EscapeCsvValue(kaizen.CostSaving.HasValue ? kaizen.CostSaving.Value.ToString("N0") : ""),
+                        EscapeCsvValue(kaizen.DollarRate.HasValue ? kaizen.DollarRate.Value.ToString("N2") : ""),
+                        EscapeCsvValue(kaizen.OtherBenefits ?? ""),
+                        EscapeCsvValue(engStatus),
+                        EscapeCsvValue(kaizen.EngineerApprovedBy ?? ""),
+                        EscapeCsvValue(mgrStatus),
+                        EscapeCsvValue(kaizen.ManagerApprovedBy ?? ""),
+                        EscapeCsvValue(overallStatus),
+                        EscapeCsvValue(kaizen.Comments ?? ""),
+                        EscapeCsvValue(kaizen.ImplementationArea ?? ""),
+                        EscapeCsvValue(kaizen.CanImplementInOtherFields ?? ""),
+                        EscapeCsvValue(kaizen.ManagerComments ?? ""),
+                        EscapeCsvValue(kaizen.ManagerSignature ?? ""),
+                        EscapeCsvValue(kaizen.AwardPrice ?? ""),
+                        EscapeCsvValue(award1st),
+                        EscapeCsvValue(award2nd),
+                        EscapeCsvValue(award3rd),
+                        EscapeCsvValue(""), // Rejection Reason Engineer (not available in current model)
+                        EscapeCsvValue(""), // Rejection Reason Manager (not available in current model)
+                        EscapeCsvValue(quarterText)
+                    };
+
+                    csv.AppendLine(string.Join(",", row));
+                }
+
+                // Use only the data table without summary
+                var finalCsv = csv.ToString();
+
+                // Generate descriptive filename
+                var fileNameQuarter = ((DateTime.Now.Month - 1) / 3) + 1;
+                if (!string.IsNullOrEmpty(quarter) && int.TryParse(quarter, out int fileQuarter))
+                {
+                    fileNameQuarter = fileQuarter;
+                }
+                
+                var fileNameQuarterText = fileNameQuarter switch
+                {
+                    1 => "Q1",
+                    2 => "Q2", 
+                    3 => "Q3",
+                    4 => "Q4",
+                    _ => "Q1"
+                };
+
+                var filterDescription = new List<string>();
+                if (!string.IsNullOrEmpty(department)) filterDescription.Add(department);
+                if (!string.IsNullOrEmpty(status)) filterDescription.Add(status);
+                if (!string.IsNullOrEmpty(quarter)) filterDescription.Add($"Q{quarter}");
+                
+                var filterSuffix = filterDescription.Any() ? $"_{string.Join("_", filterDescription)}" : "";
+                var fileName = $"KAIZEN_Detailed_Export_{fileNameQuarterText}_{DateTime.Now.Year}{filterSuffix}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+
+                // Return the CSV file
+                var content = Encoding.UTF8.GetBytes(finalCsv);
+                return File(content, "text/csv", fileName);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ExportToExcel: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // Supervisor User Management Methods
+        [HttpGet]
+        public IActionResult SupervisorUserManagement()
+        {
+            // Check if user is supervisor
+            var username = User.Identity?.Name;
+            if (!IsSupervisorRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            // Get only users with "User" role
+            var users = _context.Users.Where(u => u.Role == "User").ToList();
+            return View("~/Views/Kaizen/SupervisorUserManagement.cshtml", users);
+        }
+
+        [HttpGet]
+        public IActionResult GetSupervisorUserDetails(int id)
+        {
+            // Check if user is supervisor
+            var username = User.Identity?.Name;
+            if (!IsSupervisorRole())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.Id == id);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found." });
+            }
+
+            var role = user.Role ?? "User";
+            var roleDisplay = role switch
+            {
+                "Admin" => "Administrator",
+                "KaizenTeam" => "Kaizen Team",
+                _ => role
+            };
+
+            var userDetails = new
+            {
+                success = true,
+                user = new
+                {
+                    id = user.Id,
+                    username = user.UserName,
+                    departmentName = user.DepartmentName,
+                    employeeName = user.EmployeeName ?? "",
+                    employeeNumber = user.EmployeeNumber ?? "",
+                    role = roleDisplay,
+                    plant = user.Plant ?? ""
+                }
+            };
+
+            return Json(userDetails);
+        }
+
+        [HttpGet]
+        public IActionResult EditSupervisorUser(int id)
+        {
+            // Check if user is supervisor
+            var username = User.Identity?.Name;
+            if (!IsSupervisorRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.Id == id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return View("~/Views/Kaizen/EditSupervisorUser.cshtml", user);
+        }
+
+        [HttpPost]
+        public IActionResult EditSupervisorUser(Users model)
+        {
+            // Check if user is supervisor
+            var username = User.Identity?.Name;
+            if (!IsSupervisorRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            // Remove ConfirmPassword validation for editing
+            ModelState.Remove("ConfirmPassword");
+
+            if (!ModelState.IsValid)
+            {
+                return View("~/Views/Kaizen/EditSupervisorUser.cshtml", model);
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.Id == model.Id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Check if username already exists for another user
+            var existingUser = _context.Users.FirstOrDefault(u => u.UserName == model.UserName && u.Id != model.Id);
+            if (existingUser != null)
+            {
+                ModelState.AddModelError("UserName", "Username already exists.");
+                return View("~/Views/Kaizen/EditSupervisorUser.cshtml", model);
+            }
+
+            // Validate password confirmation if password is provided
+            if (!string.IsNullOrEmpty(model.Password) && model.Password != model.ConfirmPassword)
+            {
+                ModelState.AddModelError("ConfirmPassword", "Passwords do not match.");
+                return View("~/Views/Kaizen/EditSupervisorUser.cshtml", model);
+            }
+
+            user.UserName = model.UserName;
+            user.DepartmentName = model.DepartmentName;
+            user.EmployeeName = model.EmployeeName;
+            user.EmployeeNumber = model.EmployeeNumber;
+            user.Plant = model.Plant;
+            
+            // Only update password if a new one is provided
+            if (!string.IsNullOrEmpty(model.Password))
+            {
+                user.Password = model.Password;
+            }
+
+            _context.SaveChanges();
+
+            TempData["SuccessMessage"] = "User updated successfully!";
+            return RedirectToAction("SupervisorUserManagement");
+        }
+
+        [HttpPost]
+        public IActionResult DeleteSupervisorUser(int id)
+        {
+            // Check if user is supervisor
+            var username = User.Identity?.Name;
+            if (!IsSupervisorRole())
+            {
+                return Json(new { success = false, message = "Access denied." });
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.Id == id);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found." });
+            }
+
+            // Prevent deletion of admin user
+            if (user.UserName?.ToLower() == "admin")
+            {
+                return Json(new { success = false, message = "Cannot delete the admin user." });
+            }
+
+            try
+            {
+                _context.Users.Remove(user);
+                _context.SaveChanges();
+                return Json(new { success = true, message = "User deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error deleting user: " + ex.Message });
             }
         }
     }

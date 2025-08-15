@@ -58,6 +58,21 @@ namespace KaizenWebApp.Controllers
             return false; // Session was not ended
         }
 
+        // Custom authorization method for kaizen team role
+        private bool IsKaizenTeamRole()
+        {
+            var username = User?.Identity?.Name;
+            if (string.IsNullOrEmpty(username))
+                return false;
+                
+            var usernameLower = username.ToLower();
+            // Check for various Kaizen Team username patterns
+            return usernameLower.Contains("kaizenteam") || 
+                   usernameLower.Contains("kaizen team") || 
+                   usernameLower.Contains("kaizenteam") ||
+                   usernameLower.Contains("kaizen-team");
+        }
+
         // Removed Kaizenform action - it's handled by KaizenController
 
         public async Task<IActionResult> KaizenList()
@@ -69,9 +84,9 @@ namespace KaizenWebApp.Controllers
             }
 
             var username = User?.Identity?.Name;
-            
+
             // Check for kaizen team users first
-            if (username?.ToLower().Contains("kaizenteam") == true)
+            if (IsKaizenTeamRole())
             {
                 return RedirectToAction("KaizenTeamDashboard", "Kaizen");
             }
@@ -159,7 +174,7 @@ namespace KaizenWebApp.Controllers
             if (username?.ToLower().Contains("user") == true || 
                 username?.ToLower().Contains("manager") == true || 
                 username?.ToLower().Contains("admin") == true || 
-                username?.ToLower().Contains("kaizenteam") == true)
+                IsKaizenTeamRole())
             {
                 return RedirectToAction("AccessDenied", "Home");
             }
@@ -282,7 +297,7 @@ namespace KaizenWebApp.Controllers
             {
                 return RedirectToAction("Dashboard", "Admin");
             }
-            else if (username?.ToLower().Contains("kaizenteam") == true)
+            else if (IsKaizenTeamRole())
             {
                 return RedirectToAction("KaizenTeamDashboard", "Kaizen");
             }

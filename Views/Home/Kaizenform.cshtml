@@ -360,6 +360,65 @@
         text-align: center;
     }
 
+    /* Employee details styling */
+    .employee-summary-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        transition: all 0.3s ease;
+    }
+
+    .employee-summary-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .employee-detail-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .employee-detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .employee-detail-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.875rem;
+    }
+
+    .employee-detail-value {
+        color: #007bff;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .photo-preview {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+
+    .photo-preview:hover {
+        border-color: #007bff;
+        background-color: #e3f2fd;
+    }
+
+    .photo-preview img {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .photo-preview img:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
     /* Responsive adjustments for step indicator */
     @@media (max-width: 1200px) {
         .step-indicator {
@@ -447,6 +506,24 @@
                 </div>
 
                 <form asp-action="Kaizenform" asp-controller="Kaizen" method="post" enctype="multipart/form-data" id="kaizenForm">
+                    <!-- Debug information -->
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            <h6>Validation Errors:</h6>
+                            <ul>
+                                @foreach (var modelState in ViewData.ModelState.Values)
+                                {
+                                    foreach (var error in modelState.Errors)
+                                    {
+                                        <li>@error.ErrorMessage</li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    }
+                    
+
                     
                     <!-- Step 1: Basic Information -->
                     <div class="step-content active" id="step1">
@@ -464,26 +541,33 @@
                                 <span asp-validation-for="DateSubmitted" class="text-danger"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="DateImplemented" class="form-label">@Localizer["DateImplemented"]</label>
-                                <input asp-for="DateImplemented" type="date" class="form-control" />
+                                <label asp-for="DateImplemented" class="form-label">@Localizer["DateImplemented"] *</label>
+                                <input asp-for="DateImplemented" type="date" class="form-control" required />
                                 <span asp-validation-for="DateImplemented" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Required to proceed to the next step
+                                </small>
                             </div>
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label asp-for="KaizenNo" class="form-label">@Localizer["KaizenNo"]</label>
                                 <input asp-for="KaizenNo" id="KaizenNo" class="form-control" readonly />
                                 <span asp-validation-for="KaizenNo" class="text-danger"></span>
+                                <small class="form-text text-muted">Format: [Plant]-[Year]-[Quarter]-[Suggestion No]</small>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label asp-for="Plant" class="form-label">@Localizer["Plant"]</label>
+                                <input asp-for="Plant" class="form-control" readonly />
+                                <span asp-validation-for="Plant" class="text-danger"></span>
+                                <small class="form-text text-muted">@Localizer["PlantAutoSet"]</small>
+                            </div>
+                            <div class="col-md-4">
                                 <label asp-for="Department" class="form-label">@Localizer["DepartmentName"]</label>
                                 <input asp-for="Department" class="form-control" readonly />
                                 <span asp-validation-for="Department" class="text-danger"></span>
                                 <small class="form-text text-muted">@Localizer["DepartmentAutoSet"]</small>
-                                
-                                <!-- Hidden field to ensure Department is always sent -->
-                                <input type="hidden" name="Department" value="@Model?.Department" />
 
                                 @if (Model?.Department == null || string.IsNullOrEmpty(Model.Department))
                                 {
@@ -509,27 +593,52 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label asp-for="EmployeeName" class="form-label">@Localizer["EmployeeName"]</label>
-                                <input asp-for="EmployeeName" class="form-control" />
+                                <input asp-for="EmployeeName" class="form-control" readonly />
                                 <span asp-validation-for="EmployeeName" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Auto-populated from your profile
+                                </small>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="EmployeeNo" class="form-label">@Localizer["EmployeeNo"]</label>
-                                <input asp-for="EmployeeNo" class="form-control" />
+                                <input asp-for="EmployeeNo" class="form-control" readonly />
                                 <span asp-validation-for="EmployeeNo" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Auto-populated from your profile
+                                </small>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label asp-for="EmployeePhoto" class="form-label">@Localizer["EmployeePhoto"]</label>
-                                <input asp-for="EmployeePhoto" type="file" class="form-control" accept="image/*" />
-                                <span asp-validation-for="EmployeePhoto" class="text-danger"></span>
-                                <small class="form-text text-muted">@Localizer["UploadImageHelp"]</small>
-                            </div>
-                            <div class="col-md-6">
-                                <!-- Empty column for layout balance -->
+                                <label class="form-label">@Localizer["EmployeePhoto"]</label>
+                                
+                                @if (!string.IsNullOrEmpty(Model.EmployeePhotoPath))
+                                {
+                                    <div class="mt-2">
+                                        <img src="@(Model.EmployeePhotoPath.StartsWith("/") ? Model.EmployeePhotoPath : "/" + Model.EmployeePhotoPath)" alt="Current Profile Photo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" />
+                                        <small class="text-success d-block mt-1">
+                                            <i class="fas fa-check-circle me-1"></i>Auto-populated from your profile
+                                        </small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted">
+                                        <i class="fas fa-user-circle fa-3x"></i>
+                                        <p class="mt-2">No profile photo available</p>
+                                        <small class="text-info">
+                                            <i class="fas fa-info-circle me-1"></i>Auto-populated from your profile
+                                        </small>
+                                    </div>
+                                }
+                                
+                                <!-- Hidden field to submit EmployeePhotoPath with the form -->
+                                <input type="hidden" asp-for="EmployeePhotoPath" />
                             </div>
                         </div>
+
+
                     </div>
 
                     <!-- Step 3: Kaizen Images -->
@@ -689,6 +798,7 @@
             dateSubmitted: "Date Submitted",
             dateImplemented: "Date Implemented *",
             kaizenNo: "Kaizen No",
+            plant: "Plant",
             department: "Department / Cell",
             employeeName: "Employee Name",
             employeeNo: "Employee No",
@@ -716,7 +826,8 @@
             dateSubmitted: "ඉදිරිපත් කළ දිනය",
             dateImplemented: "ක්‍රියාත්මක කළ දිනය *",
             kaizenNo: "කයිසන් අංකය",
-            department: "දෙපාර්තමේන්තුව / කොටුව",
+            plant: "ශාඛාව",
+            department: "දෙපාර්තමේන්තුව ",
             employeeName: "සේවක නම",
             employeeNo: "සේවක අංකය",
             employeePhoto: "සේවක ඡායාරූපය *",
@@ -743,6 +854,7 @@
             dateSubmitted: "சமர்ப்பித்த தேதி",
             dateImplemented: "செயல்படுத்தப்பட்ட தேதி *",
             kaizenNo: "கைசென் எண்",
+            plant: "தொழிற்சாலை",
             department: "துறை / செல்",
             employeeName: "பணியாளர் பெயர்",
             employeeNo: "பணியாளர் எண்",
@@ -779,10 +891,21 @@
     }
 
     function generateKaizenNo() {
-        const date = new Date();
-        const datePart = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-        const randomNum = Math.floor(100 + Math.random() * 900); // 3 digit
-        return `KZN-${datePart}-${randomNum}`;
+        // Get plant from the form or use default
+        const plantInput = document.getElementById('Plant');
+        const plant = plantInput ? plantInput.value : 'KTY';
+        
+        // Get current year (last 2 digits)
+        const year = new Date().getFullYear().toString().substring(2); // e.g., "25" for 2025
+        
+        // Get current quarter (3 months per quarter)
+        const month = new Date().getMonth() + 1; // getMonth() returns 0-11
+        const quarter = Math.ceil(month / 3); // 1-3 = Q1, 4-6 = Q2, 7-9 = Q3, 10-12 = Q4
+        
+        // For now, use a random suggestion number (in real implementation, this would be from server)
+        const suggestionNum = Math.floor(1 + Math.random() * 99); // 1-99
+        
+        return `${plant}-${year}-${quarter.toString().padStart(2, '0')}-${suggestionNum.toString().padStart(2, '0')}`;
     }
 
     // Handle cost saving radio button changes
@@ -803,7 +926,14 @@
     // Step validation functions - Enhanced with better error messages
     function validateStep1() {
         console.log('Validating step 1...');
-        // Step 1 is mostly auto-filled, so we'll be lenient
+        
+        // Check if Date Implemented is filled
+        const dateImplemented = document.getElementById('DateImplemented').value.trim();
+        if (!dateImplemented) {
+            showStepError(1, 'Date Implemented is required to proceed to the next step.');
+            return false;
+        }
+        
         hideStepError(1);
         console.log('Step 1 validation passed');
         return true;
@@ -981,6 +1111,7 @@
         updateLabel('DateSubmitted', currentTranslations.dateSubmitted);
         updateLabel('DateImplemented', currentTranslations.dateImplemented);
         updateLabel('KaizenNo', currentTranslations.kaizenNo);
+        updateLabel('Plant', currentTranslations.plant);
         updateLabel('Department', currentTranslations.department);
         updateLabel('EmployeeName', currentTranslations.employeeName);
         updateLabel('EmployeeNo', currentTranslations.employeeNo);
@@ -1100,6 +1231,13 @@
             // Show loading overlay
             showLoading();
             
+            // Log form data for debugging before validation
+            const formData = new FormData(this);
+            console.log('Form data being submitted:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
             // Use enhanced validation
             if (!validateAndSubmitForm()) {
                 hideLoading();
@@ -1108,13 +1246,6 @@
             }
             
             console.log('Form validation passed, submitting to server...');
-            
-            // Log form data for debugging
-            const formData = new FormData(this);
-            console.log('Form data being submitted:');
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}: ${value}`);
-            }
             
             // Allow form submission - server will handle the rest
             return true;
@@ -1161,6 +1292,138 @@
         document.getElementById('kaizenForm').submit();
     }
 
+    // Function to refresh employee data
+    async function refreshEmployeeData() {
+        console.log('Refreshing employee data...');
+        
+        try {
+            // Show loading state
+            const refreshBtn = document.querySelector('button[onclick="refreshEmployeeData()"]');
+            const originalText = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+            refreshBtn.disabled = true;
+            
+            // Make AJAX call to get fresh employee data
+            const response = await fetch('/Kaizen/GetCurrentEmployeeData', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Employee data received:', data);
+                
+                if (data.success) {
+                    // Update form fields
+                    document.getElementById('EmployeeName').value = data.employeeName || '';
+                    document.getElementById('EmployeeNo').value = data.employeeNo || '';
+                    
+                    // Update display fields
+                    document.getElementById('displayEmployeeName').textContent = data.employeeName || 'Not available';
+                    document.getElementById('displayEmployeeNo').textContent = data.employeeNo || 'Not available';
+                    document.getElementById('displayDepartment').textContent = data.department || 'Not available';
+                    document.getElementById('displayPlant').textContent = data.plant || 'Not available';
+                    
+                    // Update employee photo display
+                    const photoContainer = document.querySelector('.col-md-6 .text-center');
+                    const photoStatus = document.getElementById('employeePhotoStatus');
+                    
+                    if (data.employeePhotoPath) {
+                        // Update the photo display
+                        photoContainer.innerHTML = `
+                            <img src="/${data.employeePhotoPath}" alt="Current Profile Photo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" />
+                            <div class="mt-2">
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i>Profile photo loaded successfully
+                                </small>
+                            </div>
+                        `;
+                        
+                        // Update status
+                        photoStatus.innerHTML = `
+                            <small class="text-success">
+                                <i class="fas fa-check-circle me-1"></i>Employee photo available in system
+                            </small>
+                        `;
+                    } else {
+                        // Update the photo display
+                        photoContainer.innerHTML = `
+                            <div class="text-muted">
+                                <i class="fas fa-user-circle fa-3x"></i>
+                                <p class="mt-2">No profile photo available</p>
+                                <small class="text-info">
+                                    <i class="fas fa-info-circle me-1"></i>Upload a new photo above
+                                </small>
+                            </div>
+                        `;
+                        
+                        // Update status
+                        photoStatus.innerHTML = `
+                            <small class="text-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>No employee photo found in system
+                            </small>
+                        `;
+                    }
+                    
+                    // Show success message
+                    showToast('Employee data refreshed successfully!', 'success');
+                } else {
+                    showToast('Failed to refresh employee data: ' + (data.message || 'Unknown error'), 'error');
+                }
+            } else {
+                showToast('Failed to refresh employee data. Please try again.', 'error');
+            }
+        } catch (error) {
+            console.error('Error refreshing employee data:', error);
+            showToast('Error refreshing employee data: ' + error.message, 'error');
+        } finally {
+            // Restore button state
+            const refreshBtn = document.querySelector('button[onclick="refreshEmployeeData()"]');
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Refresh Data';
+            refreshBtn.disabled = false;
+        }
+    }
+
+    // Function to show toast notifications
+    function showToast(message, type = 'info') {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toastContainer';
+            toastContainer.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                max-width: 350px;
+            `;
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show`;
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Add to container
+        toastContainer.appendChild(toast);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 5000);
+    }
+
+
+
     // Enhanced form validation and submission
     function validateAndSubmitForm() {
         console.log('Validating and submitting form...');
@@ -1173,6 +1436,7 @@
             dateSubmitted: document.getElementById('DateSubmitted')?.value,
             dateImplemented: document.getElementById('DateImplemented')?.value,
             kaizenNo: document.getElementById('KaizenNo')?.value,
+            plant: document.getElementById('Plant')?.value,
             department: document.getElementById('Department')?.value,
             costSavingType: document.querySelector('input[name="CostSavingType"]:checked')?.value,
             costSaving: document.getElementById('CostSaving')?.value,
@@ -1195,6 +1459,11 @@
         
         if (!formData.suggestionDescription) {
             alert('@Localizer["SuggestionDescriptionRequired"]');
+            return false;
+        }
+        
+        if (!formData.plant) {
+            alert('Plant is required. Please ensure you are logged in with a valid plant.');
             return false;
         }
         

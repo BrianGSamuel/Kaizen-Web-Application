@@ -1,0 +1,458 @@
+@*
+    File: Views/Shared/_SupervisorLayout.cshtml
+*@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Kaizen Web Application</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/UsersApp.styles.css" asp-append-version="true" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --supervisor-dark-blue: #1e40af;
+            --supervisor-light-blue: #3b82f6;
+            --supervisor-hover-blue: #1d4ed8;
+            --supervisor-text-light: #ffffff;
+            --supervisor-text-muted: #bfdbfe;
+            --supervisor-bg-light: #ffffff;
+            --supervisor-sidebar-bg: #1e3a8a;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--supervisor-bg-light);
+            color: #1f2937;
+        }
+
+        /* Supervisor Layout Structure */
+        .supervisor-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .supervisor-sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--supervisor-sidebar-bg) 0%, #1e40af 100%);
+            color: var(--supervisor-text-light);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .supervisor-sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .supervisor-sidebar-header img {
+            height: 40px;
+            width: auto;
+            filter: brightness(0) invert(1);
+            margin-bottom: 10px;
+        }
+
+        .supervisor-sidebar-header h4 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .supervisor-sidebar-header p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--supervisor-text-muted);
+        }
+
+        .supervisor-nav {
+            padding: 20px 0;
+        }
+
+        .supervisor-nav-item {
+            margin-bottom: 5px;
+        }
+
+        .supervisor-nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--supervisor-text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .supervisor-nav-link:hover {
+            background-color: #1e40af;
+            color: var(--supervisor-text-light);
+            text-decoration: none;
+            border-left-color: #ffffff;
+        }
+
+        .supervisor-nav-link.active {
+            background-color: #1e40af;
+            border-left-color: #ffffff;
+        }
+
+        .supervisor-nav-link i {
+            width: 20px;
+            margin-right: 12px;
+            text-align: center;
+        }
+
+        /* Main Content Area */
+        .supervisor-main {
+            flex: 1;
+            margin-left: 280px;
+            padding: 20px;
+            background-color: var(--supervisor-bg-light);
+            color: #1f2937;
+        }
+
+        .supervisor-header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .supervisor-header h1 {
+            margin: 0;
+            color: var(--supervisor-dark-blue);
+            font-weight: 600;
+        }
+
+        .supervisor-content {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        /* Supervisor Info in Sidebar */
+        .supervisor-user-info {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: auto;
+        }
+
+        .supervisor-user-info .supervisor-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .supervisor-user-info .supervisor-role {
+            font-size: 0.8rem;
+            color: var(--supervisor-text-muted);
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .supervisor-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .supervisor-sidebar.show {
+                transform: translateX(0);
+            }
+
+            .supervisor-main {
+                margin-left: 0;
+            }
+
+            .supervisor-toggle {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1001;
+                background: var(--supervisor-dark-blue);
+                color: white;
+                border: none;
+                padding: 10px;
+                border-radius: 5px;
+            }
+        }
+
+        /* Supervisor specific buttons */
+        .btn-supervisor {
+            background: linear-gradient(135deg, var(--supervisor-dark-blue) 0%, var(--supervisor-light-blue) 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 10px 25px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-supervisor:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 64, 175, 0.4);
+            color: white;
+        }
+
+        .btn-supervisor-outline {
+            border: 2px solid var(--supervisor-dark-blue);
+            color: var(--supervisor-dark-blue);
+            background: transparent;
+            font-weight: 600;
+            padding: 8px 23px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-supervisor-outline:hover {
+            background: var(--supervisor-dark-blue);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Supervisor cards */
+        .supervisor-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .supervisor-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .supervisor-card-header {
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .supervisor-card-title {
+            color: var(--supervisor-dark-blue);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Form styles */
+        .form-label {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            padding: 0.875rem 1rem;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            height: 48px;
+            line-height: 1.2;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--supervisor-dark-blue);
+            box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.25);
+            transform: translateY(-2px);
+        }
+
+        /* Alert styles */
+        .alert {
+            border-radius: 15px;
+            border: none;
+            padding: 2rem;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            color: #17a2b8;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            color: #16a34a;
+            border-left: 4px solid #16a34a;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            color: #dc3545;
+            border-left: 4px solid #dc3545;
+        }
+
+        /* Modal styles */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--supervisor-dark-blue) 0%, var(--supervisor-light-blue) 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            border: none;
+            padding: 1.5rem 2rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        /* Animation styles */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    @Html.AntiForgeryToken()
+    
+    <!-- Supervisor Panel Layout with Sidebar -->
+    <div class="supervisor-container">
+        <!-- Sidebar Navigation -->
+        <nav class="supervisor-sidebar">
+            <div class="supervisor-sidebar-header">
+                <img src="~/images/flintec-logo.png" alt="Flintec Logo" />
+                <h4>Supervisor Panel</h4>
+                <p>Kaizen Management System</p>
+            </div>
+
+            <div class="supervisor-nav">
+                <div class="supervisor-nav-item">
+                    <a class="supervisor-nav-link" asp-controller="Kaizen" asp-action="SupervisorDashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </div>
+
+                <div class="supervisor-nav-item">
+                    <a class="supervisor-nav-link" asp-controller="Kaizen" asp-action="SupervisorKaizenList">
+                        <i class="fas fa-eye"></i>
+                        All Kaizens
+                    </a>
+                </div>
+
+                <div class="supervisor-nav-item">
+                    <a class="supervisor-nav-link" asp-controller="Home" asp-action="Analytics">
+                        <i class="fas fa-chart-bar"></i>
+                        About System
+                    </a>
+                </div>
+
+                <div class="supervisor-nav-item">
+                    <a class="supervisor-nav-link" asp-controller="Kaizen" asp-action="SupervisorUserManagement">
+                        <i class="fas fa-users"></i>
+                        User Management
+                    </a>
+                </div>
+
+                <div class="supervisor-nav-item">
+                    <a class="supervisor-nav-link" asp-controller="Account" asp-action="ChangeSupervisorPassword">
+                        <i class="fas fa-key"></i>
+                        Change Password
+                    </a>
+                </div>
+            </div>
+
+            <div class="supervisor-user-info">
+                <div class="supervisor-name">@Context.User.Identity?.Name</div>
+                <div class="supervisor-role">Supervisor</div>
+                <div class="mt-3">
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="btn btn-sm btn-outline-light w-100">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="supervisor-main">
+            <div class="supervisor-header">
+                <h1>@ViewData["Title"]</h1>
+            </div>
+
+            <div class="supervisor-content">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Toggle Button -->
+    <button class="supervisor-toggle d-md-none" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        function confirmLogout() {
+            return confirm('Are you sure you want to logout?');
+        }
+
+        function toggleSidebar() {
+            document.querySelector('.supervisor-sidebar').classList.toggle('show');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.supervisor-sidebar');
+            const toggle = document.querySelector('.supervisor-toggle');
+            
+            if (window.innerWidth <= 768 && sidebar && toggle) {
+                if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
+                    sidebar.classList.remove('show');
+                }
+            }
+        });
+
+        // Set active nav link based on current page
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.supervisor-nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') && currentPath.includes(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

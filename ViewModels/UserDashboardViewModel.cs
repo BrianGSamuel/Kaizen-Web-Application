@@ -2,33 +2,34 @@ using System;
 
 namespace KaizenWebApp.ViewModels
 {
-    public class EngineerDashboardViewModel
+    public class UserDashboardViewModel
     {
-        // Current Month Statistics
+        // User's Personal Statistics
+        public int TotalKaizensSubmitted { get; set; }
         public int CurrentMonthSubmissions { get; set; }
-        public int CurrentMonthTarget { get; set; }
-        public double CurrentMonthAchievement { get; set; }
-        public decimal CurrentMonthCostSavings { get; set; }
-
-        // Previous Month Statistics
         public int PreviousMonthSubmissions { get; set; }
-        public int PreviousMonthTarget { get; set; }
-        public double PreviousMonthAchievement { get; set; }
-        public decimal PreviousMonthCostSavings { get; set; }
 
-        // Engineer-specific Statistics
-        public int PendingReviews { get; set; }
+        // Department Target Information
+        public int DepartmentTarget { get; set; }
+        public int DepartmentCurrentMonthSubmissions { get; set; }
+        public double DepartmentTargetAchievement { get; set; }
+
+        // User's Kaizen Status Statistics
+        public int PendingKaizens { get; set; }
         public int ApprovedKaizens { get; set; }
         public int RejectedKaizens { get; set; }
         public int TotalReviewed { get; set; }
-        
-        // New properties for fully implemented and both approved kaizens
-        public int FullyImplementedKaizens { get; set; }
-        public int BothApprovedKaizens { get; set; }
-        public int TeamMembersCount { get; set; }
 
-        // Department Information
+        // Cost Savings
+        public decimal TotalCostSavings { get; set; }
+        public decimal CurrentMonthCostSavings { get; set; }
+
+        // User Information
+        public string EmployeeName { get; set; }
+        public string EmployeeNumber { get; set; }
         public string Department { get; set; }
+
+        // Current Period Information
         public int CurrentMonth { get; set; }
         public int CurrentYear { get; set; }
 
@@ -47,9 +48,9 @@ namespace KaizenWebApp.ViewModels
         {
             get
             {
-                if (CurrentMonthAchievement >= 100) return "Completed";
-                if (CurrentMonthAchievement >= 80) return "On Track";
-                if (CurrentMonthAchievement >= 50) return "Behind";
+                if (DepartmentTargetAchievement >= 100) return "Completed";
+                if (DepartmentTargetAchievement >= 80) return "On Track";
+                if (DepartmentTargetAchievement >= 50) return "Behind";
                 return "At Risk";
             }
         }
@@ -71,15 +72,6 @@ namespace KaizenWebApp.ViewModels
             }
         }
 
-        public double CostSavingsChange
-        {
-            get
-            {
-                if (PreviousMonthCostSavings == 0) return 0;
-                return ((double)(CurrentMonthCostSavings - PreviousMonthCostSavings) / (double)PreviousMonthCostSavings) * 100;
-            }
-        }
-
         public double ApprovalRate
         {
             get
@@ -89,14 +81,29 @@ namespace KaizenWebApp.ViewModels
             }
         }
 
-        public double ReviewCompletionRate
+        public double RejectionRate
         {
             get
             {
-                var totalKaizens = CurrentMonthSubmissions;
-                if (totalKaizens == 0) return 0;
-                return ((double)TotalReviewed / totalKaizens) * 100;
+                if (TotalReviewed == 0) return 0;
+                return ((double)RejectedKaizens / TotalReviewed) * 100;
+            }
+        }
+
+        public double UserContributionToDepartment
+        {
+            get
+            {
+                if (DepartmentCurrentMonthSubmissions == 0) return 0;
+                return ((double)CurrentMonthSubmissions / DepartmentCurrentMonthSubmissions) * 100;
             }
         }
     }
 }
+
+
+
+
+
+
+

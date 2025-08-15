@@ -376,23 +376,13 @@ namespace KaizenWebApp.Controllers
                 return Json(new { success = false, message = "User not found." });
             }
 
-            var role = "User";
-            if (user.UserName?.ToLower().Contains("admin") == true)
+            var role = user.Role ?? "User";
+            var roleDisplay = role switch
             {
-                role = "Administrator";
-            }
-            else if (user.UserName?.ToLower().Contains("engineer") == true)
-            {
-                role = "Engineer";
-            }
-            else if (user.UserName?.ToLower().Contains("manager") == true)
-            {
-                role = "Manager";
-            }
-            else if (user.UserName?.ToLower().Contains("kaizenteam") == true)
-            {
-                role = "Kaizen Team";
-            }
+                "Admin" => "Administrator",
+                "KaizenTeam" => "Kaizen Team",
+                _ => role
+            };
 
             var userDetails = new
             {
@@ -402,7 +392,7 @@ namespace KaizenWebApp.Controllers
                     id = user.Id,
                     username = user.UserName,
                     departmentName = user.DepartmentName,
-                    role = role
+                    role = roleDisplay
                 }
             };
 
@@ -779,6 +769,37 @@ namespace KaizenWebApp.Controllers
             };
 
             return View(kaizens);
+        }
+
+        // GET: /Admin/AdminKaizenDetails - Admin kaizen details page
+        [HttpGet]
+        public async Task<IActionResult> AdminKaizenDetails(int id)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                var kaizen = await _context.KaizenForms
+                    .FirstOrDefaultAsync(k => k.Id == id);
+
+                if (kaizen == null)
+                {
+                    TempData["ErrorMessage"] = "Kaizen suggestion not found.";
+                    return RedirectToAction("ViewAllKaizens");
+                }
+
+                return View("~/Views/Admin/AdminKaizenDetails.cshtml", kaizen);
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "An error occurred while loading the kaizen details.";
+                return RedirectToAction("ViewAllKaizens");
+            }
         }
 
         // AJAX endpoint for real-time search

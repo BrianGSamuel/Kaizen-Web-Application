@@ -2,7 +2,7 @@ using System;
 
 namespace KaizenWebApp.ViewModels
 {
-    public class EngineerDashboardViewModel
+    public class SupervisorDashboardViewModel
     {
         // Current Month Statistics
         public int CurrentMonthSubmissions { get; set; }
@@ -16,7 +16,7 @@ namespace KaizenWebApp.ViewModels
         public double PreviousMonthAchievement { get; set; }
         public decimal PreviousMonthCostSavings { get; set; }
 
-        // Engineer-specific Statistics
+        // Supervisor-specific Statistics
         public int PendingReviews { get; set; }
         public int ApprovedKaizens { get; set; }
         public int RejectedKaizens { get; set; }
@@ -100,3 +100,12 @@ namespace KaizenWebApp.ViewModels
         }
     }
 }
+
+
+
+
+
+
+
+
+

@@ -1,7 +1,7 @@
-@model KaizenWebApp.ViewModels.EngineerDashboardViewModel
+@model KaizenWebApp.ViewModels.UserDashboardViewModel
 @{
-    ViewData["Title"] = "Engineer Dashboard";
-    Layout = "~/Views/Shared/_EngineerLayout.cshtml";
+    ViewData["Title"] = "User Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <style>
@@ -38,7 +38,7 @@
         border-left: 5px solid #ffc107;
     }
 
-    .summary-card.pending-reviews {
+    .summary-card.pending {
         border-left: 5px solid #dc3545;
     }
 
@@ -46,7 +46,7 @@
         border-left: 5px solid #17a2b8;
     }
 
-    .summary-card.approval-rate {
+    .summary-card.rejected {
         border-left: 5px solid #6f42c1;
     }
 
@@ -137,8 +137,8 @@
         color: #6f42c1 !important;
     }
 
-    .btn-engineer {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    .btn-user {
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
         color: white;
         border: none;
         padding: 0.75rem 1.5rem;
@@ -149,11 +149,11 @@
         display: inline-block;
     }
 
-    .btn-engineer:hover {
-        background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    .btn-user:hover {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 100%);
         color: white;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
         text-decoration: none;
     }
 </style>
@@ -163,21 +163,22 @@
     <div class="welcome-section">
         <div class="row align-items-center">
             <div class="col-12">
-                <h4 class="mb-2">Welcome to your Engineer Dashboard</h4>
-                <p class="text-muted mb-0">You're reviewing kaizens for the <strong>@Model.Department</strong> department. Here's how your department is performing this month.</p>
+                <h4 class="mb-2">Welcome to your User Dashboard</h4>
+                <p class="text-muted mb-0">Hello <strong>@Model.EmployeeName</strong> (@Model.EmployeeNumber), here's your kaizen activity summary for <strong>@Model.CurrentMonthName @Model.CurrentYear</strong>.</p>
             </div>
         </div>
     </div>
 
     <!-- Summary Cards Row 1 -->
     <div class="row">
-        <!-- Current Month Submissions -->
+        <!-- Total Kaizens Submitted -->
         <div class="col-lg-4 col-md-6">
             <div class="summary-card submissions">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="metric-value text-primary">@Model.CurrentMonthSubmissions</div>
-                        <div class="metric-label">Current Month Submissions</div>
+                        <div class="metric-value text-primary">@Model.TotalKaizensSubmitted</div>
+                        <div class="metric-label">Total Kaizens Submitted</div>
+                        <div class="text-muted">All time submissions</div>
                     </div>
                     <div class="text-primary">
                         <i class="fas fa-file-alt fa-2x"></i>
@@ -186,33 +187,33 @@
             </div>
         </div>
 
-        <!-- Target Achievement -->
+        <!-- Current Month Submissions -->
         <div class="col-lg-4 col-md-6">
             <div class="summary-card target">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="metric-value text-success">@Model.CurrentMonthAchievement.ToString("F1")%</div>
-                        <div class="metric-label">Target Achievement</div>
-                        <div class="text-muted">@Model.CurrentMonthSubmissions of @Model.CurrentMonthTarget target</div>
+                        <div class="metric-value text-success">@Model.CurrentMonthSubmissions</div>
+                        <div class="metric-label">This Month Submissions</div>
+                        <div class="text-muted">@Model.CurrentMonthName @Model.CurrentYear</div>
                     </div>
                     <div class="text-success">
-                        <i class="fas fa-bullseye fa-2x"></i>
+                        <i class="fas fa-calendar-check fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Cost Savings -->
+        <!-- Department Target Achievement -->
         <div class="col-lg-4 col-md-6">
             <div class="summary-card cost-savings">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="metric-value text-warning">$@Model.CurrentMonthCostSavings.ToString("N0")</div>
-                        <div class="metric-label">Cost Savings</div>
-                        <div class="text-muted">Engineer approved with savings</div>
+                        <div class="metric-value text-warning">@Model.DepartmentTargetAchievement.ToString("F1")%</div>
+                        <div class="metric-label">Department Target</div>
+                        <div class="text-muted">@Model.DepartmentCurrentMonthSubmissions of @Model.DepartmentTarget target</div>
                     </div>
                     <div class="text-warning">
-                        <i class="fas fa-dollar-sign fa-2x"></i>
+                        <i class="fas fa-bullseye fa-2x"></i>
                     </div>
                 </div>
             </div>
@@ -221,14 +222,14 @@
 
     <!-- Summary Cards Row 2 -->
     <div class="row">
-        <!-- Pending Reviews -->
+        <!-- Pending Kaizens -->
         <div class="col-lg-4 col-md-6">
-            <div class="summary-card pending-reviews">
+            <div class="summary-card pending">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="metric-value text-danger">@Model.PendingReviews</div>
-                        <div class="metric-label">Pending Reviews</div>
-                        <div class="text-muted">Requires your attention</div>
+                        <div class="metric-value text-danger">@Model.PendingKaizens</div>
+                        <div class="metric-label">Pending Kaizens</div>
+                        <div class="text-muted">Awaiting review</div>
                     </div>
                     <div class="text-danger">
                         <i class="fas fa-clock fa-2x"></i>
@@ -237,14 +238,14 @@
             </div>
         </div>
 
-        <!-- Fully Implemented Kaizens -->
+        <!-- Approved Kaizens -->
         <div class="col-lg-4 col-md-6">
             <div class="summary-card approved">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="metric-value text-info">@Model.BothApprovedKaizens</div>
-                        <div class="metric-label">Fully Implemented Kaizens</div>
-                        <div class="text-muted">Manager & Engineer Approved</div>
+                        <div class="metric-value text-info">@Model.ApprovedKaizens</div>
+                        <div class="metric-label">Approved Kaizens</div>
+                        <div class="text-muted">Successfully approved</div>
                     </div>
                     <div class="text-info">
                         <i class="fas fa-check-circle fa-2x"></i>
@@ -253,17 +254,17 @@
             </div>
         </div>
 
-        <!-- Approval Rate -->
+        <!-- Rejected Kaizens -->
         <div class="col-lg-4 col-md-6">
-            <div class="summary-card approval-rate">
+            <div class="summary-card rejected">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="metric-value text-purple">@Model.ApprovalRate.ToString("F1")%</div>
-                        <div class="metric-label">Approval Rate</div>
-                        <div class="text-muted">@Model.ApprovedKaizens of @Model.TotalReviewed reviewed</div>
+                        <div class="metric-value text-purple">@Model.RejectedKaizens</div>
+                        <div class="metric-label">Rejected Kaizens</div>
+                        <div class="text-muted">Not approved</div>
                     </div>
                     <div class="text-purple">
-                        <i class="fas fa-chart-pie fa-2x"></i>
+                        <i class="fas fa-times-circle fa-2x"></i>
                     </div>
                 </div>
             </div>
@@ -271,30 +272,4 @@
     </div>
 
 
-
-    <!-- Additional Statistics Row -->
-    <div class="row mt-4">
-        <div class="col-lg-12">
-            <div class="summary-card">
-                <h6 class="mb-3">
-                    <i class="fas fa-chart-line me-2"></i>
-                    Review Performance
-                </h6>
-                <div class="row">
-                    <div class="col-6">
-                        <div class="text-center">
-                            <div class="metric-value text-success">@Model.ReviewCompletionRate.ToString("F1")%</div>
-                            <div class="metric-label">Review Completion</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="text-center">
-                            <div class="metric-value text-danger">@Model.RejectedKaizens</div>
-                            <div class="metric-label">Rejected</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>

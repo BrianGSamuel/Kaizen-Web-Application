@@ -24,6 +24,12 @@
   <data name="DepartmentName" xml:space="preserve">
     <value>අංශයේ නම</value>
   </data>
+  <data name="Plant" xml:space="preserve">
+    <value>වැව</value>
+  </data>
+  <data name="PlantAutoSet" xml:space="preserve">
+    <value>වැව ඔබගේ පරිශීලක පැතිකඩ මත පදනම්ව ස්වයංක්‍රීයව සකස් කර ඇත</value>
+  </data>
   <data name="EmployeeName" xml:space="preserve">
     <value>සේවකයාගේ නම</value>
   </data>

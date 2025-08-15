@@ -690,10 +690,12 @@
     
     @{
         var username = Context.User.Identity?.Name;
-        var isUser = username?.ToLower().Contains("user") == true;
-        var isEngineer = username?.ToLower().Contains("engineer") == true;
-        var isManager = username?.ToLower().Contains("manager") == true;
-        var isKaizenTeam = username?.ToLower().Contains("kaizenteam") == true;
+        var userRole = Context.User.Claims.FirstOrDefault(c => c.Type == "Role")?.Value;
+        var isUser = userRole?.ToLower() == "user" || username?.ToLower().Contains("user") == true;
+        var isEngineer = userRole?.ToLower() == "engineer" || username?.ToLower().Contains("engineer") == true;
+        var isManager = userRole?.ToLower() == "manager" || username?.ToLower().Contains("manager") == true;
+        var isSupervisor = userRole?.ToLower() == "supervisor";
+        var isKaizenTeam = userRole?.ToLower() == "kaizenteam" || username?.ToLower().Contains("kaizenteam") == true;
         var isAdmin = username?.ToLower() == "admin";
     }
 
@@ -711,6 +713,13 @@
 
                 <div class="user-nav">
                     <div class="user-nav-item">
+                        <a class="user-nav-link" asp-controller="Kaizen" asp-action="UserDashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Dashboard
+                        </a>
+                    </div>
+
+                    <div class="user-nav-item">
                         <a class="user-nav-link" asp-controller="Kaizen" asp-action="Kaizenform">
                             <i class="fas fa-edit"></i>
                             Fill Form
@@ -720,7 +729,21 @@
                     <div class="user-nav-item">
                         <a class="user-nav-link" asp-controller="Kaizen" asp-action="UserKaizenList">
                             <i class="fas fa-eye"></i>
-                            View Kaizens
+                            All Kaizens
+                        </a>
+                    </div>
+
+                    <div class="user-nav-item">
+                        <a class="user-nav-link" asp-controller="Kaizen" asp-action="MyKaizens">
+                            <i class="fas fa-user-check"></i>
+                            My Kaizens
+                        </a>
+                    </div>
+
+                    <div class="user-nav-item">
+                        <a class="user-nav-link" asp-controller="Kaizen" asp-action="Leaderboard">
+                            <i class="fas fa-trophy"></i>
+                            Leaderboard
                         </a>
                     </div>
 
@@ -732,9 +755,9 @@
                     </div>
 
                     <div class="user-nav-item">
-                        <a class="user-nav-link" href="#">
-                            <i class="fas fa-users"></i>
-                            Team
+                        <a class="user-nav-link" asp-controller="Account" asp-action="ChangeUserPassword">
+                            <i class="fas fa-key"></i>
+                            Change Password
                         </a>
                     </div>
                 </div>
@@ -769,114 +792,35 @@
             <i class="fas fa-bars"></i>
         </button>
     }
-    else if (isEngineer)
-    {
-        <!-- Engineer Panel Layout with Sidebar -->
-        <div class="user-container">
-            <!-- Sidebar Navigation -->
-            <nav class="user-sidebar">
-                <div class="user-sidebar-header">
-                    <img src="~/images/flintec-logo.png" alt="Flintec Logo" />
-                    <h4>Engineer Panel</h4>
-                    <p>Kaizen Management System</p>
-                </div>
-
-                <div class="user-nav">
-                    <div class="user-nav-item">
-                        <a class="user-nav-link" asp-controller="Kaizen" asp-action="EngineerDashboard">
-                            <i class="fas fa-tachometer-alt"></i>
-                            Dashboard
-                        </a>
-                    </div>
-
-                    <div class="user-nav-item">
-                        <a class="user-nav-link" asp-controller="Kaizen" asp-action="KaizenListEngineer">
-                            <i class="fas fa-list"></i>
-                            View Kaizens
-                        </a>
-                    </div>
-
-                    <div class="user-nav-item">
-                        <a class="user-nav-link" asp-controller="Home" asp-action="DepartmentTargetEngineer">
-                            <i class="fas fa-chart-bar"></i>
-                            Department Target
-                        </a>
-                    </div>
-
-                    <div class="user-nav-item">
-                        <a class="user-nav-link" href="#">
-                            <i class="fas fa-users"></i>
-                            Team
-                        </a>
-                    </div>
-
-                    <div class="user-nav-item">
-                        <a class="user-nav-link" asp-controller="Account" asp-action="ChangeEngineerPassword">
-                            <i class="fas fa-key"></i>
-                            Change Password
-                        </a>
-                    </div>
-                </div>
-
-                <div class="user-user-info">
-                    <div class="user-name">@Context.User.Identity?.Name</div>
-                    <div class="user-role">Engineer</div>
-                    <div class="mt-3">
-                        <form asp-controller="Account" asp-action="Logout" method="post">
-                            <button type="submit" class="btn btn-sm btn-outline-light w-100">
-                                <i class="fas fa-sign-out-alt me-2"></i>Logout
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </nav>
-
-            <!-- Main Content -->
-            <main class="user-main">
-                <div class="user-header">
-                    <h1>@ViewData["Title"]</h1>
-                </div>
-
-                <div class="user-content">
-                    @RenderBody()
-                </div>
-            </main>
-        </div>
-
-        <!-- Mobile Toggle Button -->
-        <button class="user-toggle d-md-none" onclick="toggleSidebar()">
-            <i class="fas fa-bars"></i>
-        </button>
-    }
     else
     {
         <!-- Legacy Layout for non-user roles -->
         <header>
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm">
                 <div class="container-fluid">
-                    @{
-                        string dashboardAction;
-                        if (isKaizenTeam)
-                        {
-                            dashboardAction = "KaizenTeamDashboard";
+                                            @{
+                            string dashboardAction;
+                            if (isKaizenTeam)
+                            {
+                                dashboardAction = "KaizenTeamDashboard";
+                            }
+                            else if (isSupervisor)
+                            {
+                                dashboardAction = "SupervisorDashboard";
+                            }
+                            else if (isManager)
+                            {
+                                dashboardAction = "KaizenListManager";
+                            }
+                            else if (isUser)
+                            {
+                                dashboardAction = "Kaizenform";
+                            }
+                            else
+                            {
+                                dashboardAction = "Kaizenform"; // Default fallback
+                            }
                         }
-                        else if (isEngineer)
-                        {
-                            dashboardAction = "KaizenListEngineer";
-                        }
-                        else if (isManager)
-                        {
-                            dashboardAction = "KaizenListManager";
-                        }
-                        else if (isUser)
-                        {
-                            dashboardAction = "Kaizenform";
-                        }
-                        else
-                        {
-                            dashboardAction = "KaizenListEngineer"; // Default fallback
-                        }
-                    }
                     <a class="navbar-brand" asp-controller="Home" asp-action="KaizenList">
                         <img src="~/images/flintec-logo.png" alt="Flintec Logo" class="company-logo" />
                         <span>Kaizen Platform</span>
@@ -906,12 +850,17 @@
                                     </a>
                                 </li>
                             }
-                            else if (isEngineer)
+                            else if (isSupervisor)
                             {
-                                <!-- Navigation for engineers -->
+                                <!-- Navigation for supervisor users -->
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Kaizen" asp-action="KaizenListEngineer">
-                                        <i class="fas fa-list me-2"></i>View Kaizens
+                                    <a class="nav-link" asp-controller="Kaizen" asp-action="SupervisorDashboard">
+                                        <i class="fas fa-user-tie me-2"></i>Supervisor Panel
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Account" asp-action="RegisterUser">
+                                        <i class="fas fa-user-plus me-2"></i>User Logins
                                     </a>
                                 </li>
                             }
@@ -920,7 +869,7 @@
                                 <!-- Navigation for managers -->
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Kaizen" asp-action="KaizenListManager">
-                                        <i class="fas fa-list me-2"></i>View Kaizens
+                                        <i class="fas fa-list me-2"></i>All Kaizens
                                     </a>
                                 </li>
                             }
@@ -928,13 +877,13 @@
                             {
                                 <!-- Default navigation for other users -->
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Kaizen" asp-action="KaizenListEngineer">
-                                        <i class="fas fa-list me-2"></i>View Kaizens
+                                    <a class="nav-link" asp-controller="Kaizen" asp-action="Kaizenform">
+                                        <i class="fas fa-edit me-2"></i>Fill Form
                                     </a>
                                 </li>
                             }
                             
-                            @if (!isUser)
+                            @if (!isUser && !isEngineer)
                             {
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="Home" asp-action="DepartmentTargetEngineer">
@@ -966,12 +915,7 @@
                                                         <i class="fas fa-key me-2"></i>Change Password
                                                     </a>
                                                 }
-                                                else if (isEngineer)
-                                                {
-                                                    <a class="dropdown-item" asp-controller="Account" asp-action="ChangeEngineerPassword">
-                                                        <i class="fas fa-key me-2"></i>Change Password
-                                                    </a>
-                                                }
+
                                                 else
                                                 {
                                                     <a class="dropdown-item" asp-controller="Account" asp-action="ChangeMyPassword">

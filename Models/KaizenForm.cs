@@ -22,6 +22,9 @@ namespace KaizenWebApp.Models
         [StringLength(100)]
         public string? Department { get; set; }
 
+        [StringLength(10)]
+        public string? Plant { get; set; } // Added Plant field for new Kaizen number format
+
         [Required]
         [StringLength(100)]
         public string EmployeeName { get; set; }

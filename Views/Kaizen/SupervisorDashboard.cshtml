@@ -1,7 +1,7 @@
-@model KaizenWebApp.ViewModels.EngineerDashboardViewModel
+@model KaizenWebApp.ViewModels.SupervisorDashboardViewModel
 @{
-    ViewData["Title"] = "Engineer Dashboard";
-    Layout = "~/Views/Shared/_EngineerLayout.cshtml";
+    ViewData["Title"] = "Supervisor Dashboard";
+    Layout = "~/Views/Shared/_SupervisorLayout.cshtml";
 }
 
 <style>
@@ -137,7 +137,7 @@
         color: #6f42c1 !important;
     }
 
-    .btn-engineer {
+    .btn-supervisor {
         background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
         color: white;
         border: none;
@@ -149,7 +149,7 @@
         display: inline-block;
     }
 
-    .btn-engineer:hover {
+    .btn-supervisor:hover {
         background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
         color: white;
         transform: translateY(-2px);
@@ -163,7 +163,7 @@
     <div class="welcome-section">
         <div class="row align-items-center">
             <div class="col-12">
-                <h4 class="mb-2">Welcome to your Engineer Dashboard</h4>
+                <h4 class="mb-2">Welcome to your Supervisor Dashboard</h4>
                 <p class="text-muted mb-0">You're reviewing kaizens for the <strong>@Model.Department</strong> department. Here's how your department is performing this month.</p>
             </div>
         </div>
@@ -209,7 +209,7 @@
                     <div>
                         <div class="metric-value text-warning">$@Model.CurrentMonthCostSavings.ToString("N0")</div>
                         <div class="metric-label">Cost Savings</div>
-                        <div class="text-muted">Engineer approved with savings</div>
+                        <div class="text-muted">Supervisor approved with savings</div>
                     </div>
                     <div class="text-warning">
                         <i class="fas fa-dollar-sign fa-2x"></i>
@@ -244,7 +244,7 @@
                     <div>
                         <div class="metric-value text-info">@Model.BothApprovedKaizens</div>
                         <div class="metric-label">Fully Implemented Kaizens</div>
-                        <div class="text-muted">Manager & Engineer Approved</div>
+                        <div class="text-muted">Manager & Supervisor Approved</div>
                     </div>
                     <div class="text-info">
                         <i class="fas fa-check-circle fa-2x"></i>
@@ -298,3 +298,37 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+
+        // Add hover effects to cards
+        document.addEventListener('DOMContentLoaded', function() {
+            var cards = document.querySelectorAll('.supervisor-card');
+            cards.forEach(function(card) {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+}
+
+
+
+
+
+
+
+

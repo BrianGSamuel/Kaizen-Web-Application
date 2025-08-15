@@ -43,25 +43,15 @@
                         <td>@user.UserName</td>
                         <td>
                             @{
-                                var role = "User";
-                                if (user.UserName?.ToLower().Contains("admin") == true)
+                                var role = user.Role ?? "User";
+                                var roleDisplay = role switch
                                 {
-                                    role = "Administrator";
-                                }
-                                else if (user.UserName?.ToLower().Contains("engineer") == true)
-                                {
-                                    role = "Engineer";
-                                }
-                                else if (user.UserName?.ToLower().Contains("manager") == true)
-                                {
-                                    role = "Manager";
-                                }
-                                else if (user.UserName?.ToLower().Contains("kaizenteam") == true)
-                                {
-                                    role = "Kaizen Team";
-                                }
+                                    "Admin" => "Administrator",
+                                    "KaizenTeam" => "Kaizen Team",
+                                    _ => role
+                                };
                             }
-                            <span class="badge bg-primary">@role</span>
+                            <span class="badge bg-primary">@roleDisplay</span>
                         </td>
                         <td>
                             <div class="btn-group" role="group">

@@ -1,12 +1,12 @@
 @model IEnumerable<KaizenWebApp.Models.Users>
 @{
     ViewData["Title"] = "User Management";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    Layout = "~/Views/Shared/_SupervisorLayout.cshtml";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">User Management</h2>
-    <a asp-controller="Account" asp-action="RegisterAdmin" class="btn btn-admin">
+    <a asp-controller="Account" asp-action="RegisterUser" class="btn btn-supervisor">
         <i class="fas fa-user-plus me-2"></i>Add New User
     </a>
 </div>
@@ -19,9 +19,9 @@
     </div>
 }
 
-<div class="admin-card">
-    <div class="admin-card-header">
-        <h5 class="admin-card-title">
+<div class="supervisor-card">
+    <div class="supervisor-card-header">
+        <h5 class="supervisor-card-title">
             <i class="fas fa-users me-2"></i>All Users
         </h5>
     </div>
@@ -31,8 +31,9 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Department/Name</th>
                     <th>Username</th>
+                    <th>Department</th>
+                    <th>Plant</th>
                     <th>Role</th>
                     <th>Actions</th>
                 </tr>
@@ -42,8 +43,9 @@
                 {
                     <tr>
                         <td>@user.Id</td>
-                        <td>@user.DepartmentName</td>
                         <td>@user.UserName</td>
+                        <td>@user.DepartmentName</td>
+                        <td>@user.Plant</td>
                         <td>
                             @{
                                 var role = user.Role ?? "User";
@@ -117,7 +119,7 @@
 <script>
     function viewUser(userId) {
         // Fetch user details directly without loading modal
-        fetch(`/Admin/GetUserDetails/${userId}`)
+        fetch(`/Kaizen/GetSupervisorUserDetails/${userId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -139,8 +141,20 @@
                                         <td>${user.username}</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Department/Name:</strong></td>
+                                        <td><strong>Employee Number:</strong></td>
+                                        <td>${user.employeeNumber || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Employee Name:</strong></td>
+                                        <td>${user.employeeName || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Department:</strong></td>
                                         <td>${user.departmentName}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Plant:</strong></td>
+                                        <td>${user.plant}</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Role:</strong></td>
@@ -163,7 +177,7 @@
 
     function editUser(userId) {
         // Redirect to edit page
-        window.location.href = `/Admin/EditUser/${userId}`;
+        window.location.href = `/Kaizen/EditSupervisorUser/${userId}`;
     }
 
     function deleteUser(userId, username) {
@@ -173,7 +187,7 @@
             loadingModal.show();
             
             // Delete user via AJAX
-            fetch(`/Admin/DeleteUser/${userId}`, {
+            fetch(`/Kaizen/DeleteSupervisorUser/${userId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -197,4 +211,4 @@
             });
         }
     }
-</script> 
+</script>

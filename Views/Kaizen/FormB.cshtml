@@ -32,12 +32,6 @@
             max-width: none !important;
             min-height: auto !important;
         }
-        .header-section {
-            background: #f8f9fa !important;
-            border: 1px solid #000 !important;
-            padding: 10px !important;
-            margin-bottom: 8px !important;
-        }
         .comparison-section {
             gap: 8px !important;
             margin: 8px 0 !important;
@@ -106,10 +100,6 @@
         .signature-box {
             padding: 15px !important;
         }
-        .kaizen-number {
-            padding: 4px 10px !important;
-            font-size: 10px !important;
-        }
         .form-value.large {
             min-height: 30px !important;
         }
@@ -177,14 +167,6 @@
         padding-bottom: 10px;
         text-transform: uppercase;
         letter-spacing: 1px;
-    }
-
-    .header-section {
-        background: #f8f9fa;
-        border: 2px solid #3498db;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
     }
 
     .form-section {
@@ -362,59 +344,6 @@
         font-style: italic;
     }
 
-    .employee-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-
-    .employee-details {
-        flex: 1;
-    }
-
-    .employee-name {
-        font-size: 14px;
-        font-weight: bold;
-        color: #2c3e50;
-        margin-bottom: 3px;
-    }
-
-    .employee-meta {
-        color: #7f8c8d;
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .kaizen-number {
-        background: #3498db;
-        color: white;
-        padding: 8px 15px !important;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 14px !important;
-        text-align: center;
-    }
-
-    .description-section {
-        background: #f8f9fa;
-        border-radius: 6px;
-        padding: 15px;
-        margin: 15px 0;
-        border-left: 3px solid #3498db;
-    }
-
-    .description-label {
-        font-weight: bold;
-        color: #2c3e50;
-        margin-bottom: 8px;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
     .proposer-photo {
         width: 120px;
         height: 120px;
@@ -458,57 +387,6 @@
         <button class="btn btn-info" onclick="window.open('/Kaizen/PrintFormB/@Model.Id', '_blank')">
             <i class="fas fa-print me-2"></i>Print Form
         </button>
-    </div>
-
-    <div class="form-title">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-            <img src="/images/flintec-logo.png" alt="Flintec Logo" style="height: 40px; width: auto;">
-            <span>Section B (Kaizen Display Form)</span>
-            <div style="width: 40px;"></div> <!-- Spacer to balance the layout -->
-        </div>
-    </div>
-
-    <!-- Header Section -->
-    <div class="header-section">
-        <div class="form-row">
-            <div class="form-label">Kaizen Suggestion #:</div>
-            <div class="kaizen-number">@Model.KaizenNo</div>
-            <div class="form-label" style="margin-left: 20px; margin-right: 0px;">කාර්තුව:</div>
-            <div class="checkbox-group" style="margin-left: 0; padding-left: 0px; padding: 0px;">
-                <div class="checkbox-item">
-                    <input type="checkbox" id="task1" />
-                    <label for="task1">1</label>
-                </div>
-                <div class="checkbox-item">
-                    <input type="checkbox" id="task2" />
-                    <label for="task2">2</label>
-                </div>
-                <div class="checkbox-item">
-                    <input type="checkbox" id="task3" />
-                    <label for="task3">3</label>
-                </div>
-                <div class="checkbox-item">
-                    <input type="checkbox" id="task4" />
-                    <label for="task4">4</label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Employee Information -->
-        <div class="employee-info">
-            <div class="employee-details">
-                <div class="employee-name">@Model.EmployeeName</div>
-                <div class="employee-meta">
-                    <span><i class="fas fa-building me-1"></i>@Model.Department</span>
-                    <span><i class="fas fa-id-badge me-1"></i>@Model.EmployeeNo</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="description-section">
-            <div class="description-label">Description/යෝජනාව:</div>
-            <div class="form-value large">@Model.SuggestionDescription</div>
-        </div>
     </div>
 
     <!-- Method/Arrangement Comparison Section -->

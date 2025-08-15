@@ -1,0 +1,919 @@
+@model IEnumerable<KaizenWebApp.ViewModels.LeaderboardViewModel>
+@{
+    ViewData["Title"] = "Kaizen Leaderboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* Professional Color Palette */
+    :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #34495e;
+        --accent-color: #3498db;
+        --success-color: #27ae60;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --light-bg: #f8f9fa;
+        --white: #ffffff;
+        --text-primary: #2c3e50;
+        --text-secondary: #7f8c8d;
+        --border-light: #e9ecef;
+        --shadow-light: 0 2px 10px rgba(44, 62, 80, 0.1);
+        --shadow-medium: 0 4px 20px rgba(44, 62, 80, 0.15);
+        --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-gold: linear-gradient(135deg, #f7dc6f 0%, #f4d03f 100%);
+        --gradient-silver: linear-gradient(135deg, #d5dbdb 0%, #b2babb 100%);
+        --gradient-bronze: linear-gradient(135deg, #dc7633 0%, #ca6f1e 100%);
+    }
+
+    /* Base animations */
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @@keyframes shimmer {
+        0% {
+            background-position: -200px 0;
+        }
+        100% {
+            background-position: calc(200px + 100%) 0;
+        }
+    }
+
+    /* Main container styling */
+    .leaderboard-container {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid var(--border-light);
+        animation: fadeInUp 0.6s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .leaderboard-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 2px;
+        background: var(--gradient-primary);
+        animation: shimmer 2s infinite;
+    }
+
+    /* Header styling */
+    .leaderboard-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid var(--light-bg);
+        animation: slideInLeft 0.8s ease-out;
+    }
+
+    .leaderboard-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.75rem;
+        position: relative;
+        display: inline-block;
+    }
+
+    .leaderboard-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: var(--gradient-primary);
+        border-radius: 2px;
+    }
+
+    .leaderboard-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-top: 1rem;
+    }
+
+    /* Card styling to match MyKaizens */
+    .card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header {
+        background: #f8f9fa !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 15px 15px 0 0 !important;
+    }
+
+    .form-label {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .form-select, .form-control {
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+        background: var(--white);
+    }
+
+    .form-select:focus, .form-control:focus {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        transform: translateY(-1px);
+    }
+
+    /* Button group improvements */
+    .btn-group .btn {
+        margin-right: 0.25rem;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-group .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Leaderboard table styling */
+    .leaderboard-table {
+        background: var(--white);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid var(--border-light);
+        animation: fadeInUp 0.6s ease-out 0.4s both;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: var(--light-bg);
+        border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: var(--accent-color);
+        border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #2980b9;
+    }
+
+    .leaderboard-table thead {
+        background: var(--gradient-primary);
+        color: var(--white);
+    }
+
+    .leaderboard-table th {
+        border: none;
+        padding: 1.5rem 1.25rem;
+        font-weight: 600;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .leaderboard-table td {
+        border: none;
+        border-bottom: 1px solid var(--light-bg);
+        padding: 1.5rem 1.25rem;
+        vertical-align: middle;
+    }
+
+    .leaderboard-table tbody tr {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeInUp 0.6s ease-out both;
+    }
+
+    .leaderboard-table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+    .leaderboard-table tbody tr:nth-child(2) { animation-delay: 0.2s; }
+    .leaderboard-table tbody tr:nth-child(3) { animation-delay: 0.3s; }
+    .leaderboard-table tbody tr:nth-child(n+4) { animation-delay: 0.4s; }
+
+    .leaderboard-table tbody tr:hover {
+        background: linear-gradient(135deg, var(--light-bg) 0%, #ffffff 100%);
+        transform: translateY(-2px) scale(1.01);
+        box-shadow: 0 8px 25px rgba(44, 62, 80, 0.15);
+        border-radius: 8px;
+    }
+
+    /* Rank styling */
+    .rank-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: var(--white);
+        margin: 0 auto;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .rank-badge:hover {
+        animation: pulse 1s infinite;
+    }
+
+    .rank-1 {
+        background: var(--gradient-gold);
+        box-shadow: 0 6px 20px rgba(244, 208, 63, 0.4);
+    }
+
+    .rank-2 {
+        background: var(--gradient-silver);
+        box-shadow: 0 6px 20px rgba(178, 186, 187, 0.4);
+    }
+
+    .rank-3 {
+        background: var(--gradient-bronze);
+        box-shadow: 0 6px 20px rgba(220, 118, 51, 0.4);
+    }
+
+    .rank-other {
+        background: linear-gradient(135deg, var(--text-secondary) 0%, #95a5a6 100%);
+        box-shadow: 0 6px 20px rgba(127, 140, 141, 0.4);
+    }
+
+    /* Employee info styling */
+    .employee-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        min-width: 200px;
+    }
+
+    .employee-photo {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--border-light);
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .employee-photo:hover {
+        border-color: var(--accent-color);
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+
+    .employee-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .employee-details h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: color 0.3s ease;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
+    }
+
+    .employee-details small {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+    }
+
+    /* Stats grid styling */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+        text-align: center;
+        min-width: 400px;
+    }
+
+    .stat-item {
+        padding: 1rem 1rem;
+        border-radius: 8px;
+        background: var(--light-bg);
+        border: 1px solid var(--border-light);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        min-width: 90px;
+    }
+
+    .stat-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--accent-color);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-item:hover::before {
+        transform: scaleX(1);
+    }
+
+    .stat-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(44, 62, 80, 0.1);
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+    }
+
+    .stat-value {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-top: 0.25rem;
+        line-height: 1.2;
+    }
+
+    .stat-total {
+        background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, rgba(39, 174, 96, 0.05) 100%);
+        border-color: rgba(39, 174, 96, 0.2);
+    }
+
+    .stat-total .stat-value {
+        color: var(--success-color);
+    }
+
+    .stat-approved {
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(52, 152, 219, 0.05) 100%);
+        border-color: rgba(52, 152, 219, 0.2);
+    }
+
+    .stat-approved .stat-value {
+        color: var(--accent-color);
+    }
+
+    .stat-pending {
+        background: linear-gradient(135deg, rgba(243, 156, 18, 0.1) 0%, rgba(243, 156, 18, 0.05) 100%);
+        border-color: rgba(243, 156, 18, 0.2);
+    }
+
+    .stat-pending .stat-value {
+        color: var(--warning-color);
+    }
+
+    .stat-rejected {
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.1) 0%, rgba(231, 76, 60, 0.05) 100%);
+        border-color: rgba(231, 76, 60, 0.2);
+    }
+
+    .stat-rejected .stat-value {
+        color: var(--danger-color);
+    }
+
+
+
+    .last-submission {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        max-width: 140px;
+    }
+
+    /* Department badge */
+    .badge {
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        border-radius: 20px;
+        background: linear-gradient(135deg, var(--light-bg) 0%, #ffffff 100%);
+        color: var(--text-primary);
+        border: 1px solid var(--border-light);
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
+        display: inline-block;
+    }
+
+    .badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(44, 62, 80, 0.1);
+    }
+
+    /* Trophy icons */
+    .trophy-icon {
+        font-size: 1.3rem;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+
+
+    /* Loading animation */
+    .loading-shimmer {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .leaderboard-container {
+            padding: 1.5rem;
+        }
+
+        .leaderboard-title {
+            font-size: 2rem;
+        }
+
+        .card {
+            padding: 1rem;
+        }
+
+        .card .row {
+            flex-direction: column;
+        }
+
+        .card .col-md-5,
+        .card .col-md-2 {
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            min-width: 80px;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-search,
+        .btn-clear {
+            min-width: 120px;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .employee-info {
+            flex-direction: column;
+            text-align: center;
+            gap: 0.75rem;
+        }
+
+        .employee-photo {
+            width: 45px;
+            height: 45px;
+        }
+
+        .rank-badge {
+            width: 45px;
+            height: 45px;
+            font-size: 1rem;
+        }
+
+        .leaderboard-table {
+            font-size: 0.9rem;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 1rem 0.75rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .leaderboard-container {
+            padding: 1rem;
+        }
+
+        .leaderboard-title {
+            font-size: 1.75rem;
+        }
+
+
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            min-width: 280px;
+        }
+
+        .stat-item {
+            padding: 0.75rem 0.75rem;
+            min-width: 80px;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+        }
+
+        .employee-info {
+            gap: 0.5rem;
+            min-width: 150px;
+        }
+
+        .employee-photo {
+            width: 40px;
+            height: 40px;
+        }
+
+        .employee-details h6 {
+            font-size: 0.9rem;
+        }
+
+        .employee-details small {
+            font-size: 0.75rem;
+        }
+
+        .rank-badge {
+            width: 40px;
+            height: 40px;
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            max-width: 120px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+        }
+
+        .last-submission {
+            max-width: 100px;
+            font-size: 0.85rem;
+        }
+
+        .leaderboard-table {
+            font-size: 0.8rem;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+
+    /* Current user highlight */
+    .current-user {
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.05) 0%, rgba(52, 152, 219, 0.02) 100%);
+        border-left: 4px solid var(--accent-color);
+    }
+
+    .current-user .rank-badge {
+        box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
+        border: 2px solid var(--accent-color);
+    }
+
+
+
+    .badge {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .badge.bg-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+        color: white;
+    }
+
+    .badge.bg-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+        color: #212529;
+    }
+
+    /* Footer styling */
+    .leaderboard-footer {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-light);
+        text-align: center;
+        animation: fadeInUp 0.6s ease-out 0.6s both;
+    }
+
+    .leaderboard-footer p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 0.9rem;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="leaderboard-container">
+                
+                <!-- Header -->
+                <div class="leaderboard-header">
+                    <h1 class="leaderboard-title">
+                        <i class="fas fa-trophy me-3"></i>
+                        Kaizen Leaderboard
+                    </h1>
+                    <p class="leaderboard-subtitle">
+                        Celebrating innovation and continuous improvement across the organization
+                    </p>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form method="get" action="@Url.Action("Leaderboard", "Kaizen")" id="searchForm">
+                            <div class="row align-items-end">
+                                <div class="col-md-5">
+                                    <label for="department" class="form-label fw-bold">Department</label>
+                                    <select class="form-select" id="department" name="department">
+                                        <option value="">All Departments</option>
+                                        @foreach (var dept in ViewBag.Departments ?? new List<string>())
+                                        {
+                                            <option value="@dept" selected="@(ViewBag.SelectedDepartment?.ToString() == dept)">@dept</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="quarter" class="form-label fw-bold">Quarter</label>
+                                    <select class="form-select" id="quarter" name="quarter">
+                                        <option value="">All Quarters</option>
+                                        <option value="1" selected="@(ViewBag.SelectedQuarter?.ToString() == "1")">Q1 (Jan-Mar)</option>
+                                        <option value="2" selected="@(ViewBag.SelectedQuarter?.ToString() == "2")">Q2 (Apr-Jun)</option>
+                                        <option value="3" selected="@(ViewBag.SelectedQuarter?.ToString() == "3")">Q3 (Jul-Sep)</option>
+                                        <option value="4" selected="@(ViewBag.SelectedQuarter?.ToString() == "4")">Q4 (Oct-Dec)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search me-2"></i>
+                                            Search
+                                        </button>
+                                        <a href="@Url.Action("Leaderboard", "Kaizen")" class="btn btn-outline-secondary">
+                                            <i class="fas fa-times me-2"></i>
+                                            Clear
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                @if (!Model?.Any() ?? true)
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-trophy fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Leaderboard Data Found</h5>
+                        <p class="text-muted">No kaizens match your current search criteria.</p>
+                        <a href="@Url.Action("Kaizenform", "Kaizen")" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Submit New Kaizen
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="text-muted">
+                            <i class="fas fa-list me-2"></i>
+                            Showing @Model.Count() top performer(s)
+                        </div>
+                        @if (!string.IsNullOrEmpty(ViewBag.SelectedDepartment) || 
+                              !string.IsNullOrEmpty(ViewBag.SelectedQuarter) ||
+                              !string.IsNullOrEmpty(ViewBag.SearchString))
+                        {
+                            <div class="text-muted small">
+                                <i class="fas fa-filter me-1"></i>
+                                Filters applied
+                            </div>
+                        }
+                    </div>
+                    
+                    <!-- Leaderboard Table -->
+                    <div class="leaderboard-table">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 100px;">Rank</th>
+                                    <th style="width: 250px;">Employee</th>
+                                    <th style="width: 180px;">Department</th>
+                                    <th style="width: 450px;">Statistics</th>
+                                    <th style="width: 150px;">Last Submission</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var entry in Model)
+                                {
+                                    <tr>
+                                        <td class="text-center">
+                                            @{
+                                                var rankClass = entry.Rank switch
+                                                {
+                                                    1 => "rank-1",
+                                                    2 => "rank-2",
+                                                    3 => "rank-3",
+                                                    _ => "rank-other"
+                                                };
+                                                var trophyIcon = entry.Rank switch
+                                                {
+                                                    1 => "fas fa-crown",
+                                                    2 => "fas fa-medal",
+                                                    3 => "fas fa-award",
+                                                    _ => entry.Rank.ToString()
+                                                };
+                                            }
+                                            <div class="rank-badge @rankClass">
+                                                @if (entry.Rank <= 3)
+                                                {
+                                                    <i class="@trophyIcon trophy-icon"></i>
+                                                }
+                                                else
+                                                {
+                                                    @entry.Rank
+                                                }
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="employee-info">
+                                                @if (!string.IsNullOrEmpty(entry.EmployeePhotoPath))
+                                                {
+                                                    <img src="@entry.EmployeePhotoPath" 
+                                                         alt="Employee Photo" 
+                                                         class="employee-photo">
+                                                }
+                                                else
+                                                {
+                                                    <div class="employee-photo bg-light d-flex align-items-center justify-content-center">
+                                                        <i class="fas fa-user text-secondary"></i>
+                                                    </div>
+                                                }
+                                                <div class="employee-details">
+                                                    <h6>@entry.EmployeeName</h6>
+                                                    <small>@entry.EmployeeNo</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge">@entry.Department</span>
+                                        </td>
+                                        <td>
+                                            <div class="stats-grid">
+                                                <div class="stat-item stat-total">
+                                                    <div class="stat-label">Total</div>
+                                                    <div class="stat-value">@entry.TotalKaizens</div>
+                                                </div>
+                                                <div class="stat-item stat-approved">
+                                                    <div class="stat-label">Approved</div>
+                                                    <div class="stat-value">@entry.ApprovedKaizens</div>
+                                                </div>
+                                                <div class="stat-item stat-pending">
+                                                    <div class="stat-label">Pending</div>
+                                                    <div class="stat-value">@entry.PendingKaizens</div>
+                                                </div>
+                                                <div class="stat-item stat-rejected">
+                                                    <div class="stat-label">Rejected</div>
+                                                    <div class="stat-value">@entry.RejectedKaizens</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="last-submission">
+                                                @entry.LastSubmission.ToString("MMM dd, yyyy")
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="leaderboard-footer">
+                        <p>
+                            <i class="fas fa-info-circle me-2"></i>
+                            Rankings are based on total kaizens submitted, approved kaizens, and total cost savings
+                        </p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Enhanced loading state
+            function showLoadingState() {
+                $('.leaderboard-table tbody tr').addClass('loading-shimmer');
+            }
+
+            // Enhanced form interactions
+            $('#searchForm').on('submit', function() {
+                showLoadingState();
+            });
+
+            // Highlight current user with enhanced styling
+            const currentUsername = '@Context.User.Identity?.Name';
+            if (currentUsername) {
+                $('.leaderboard-table tbody tr').each(function() {
+                    const employeeName = $(this).find('.employee-details h6').text().trim();
+                    if (employeeName.toLowerCase().includes(currentUsername.toLowerCase())) {
+                        $(this).addClass('current-user');
+                    }
+                });
+            }
+
+            // Enhanced hover effects for statistics
+            $('.stat-item').hover(
+                function() {
+                    $(this).css('transform', 'translateY(-5px) scale(1.02)');
+                },
+                function() {
+                    $(this).css('transform', 'translateY(0) scale(1)');
+                }
+            );
+
+            // Smooth scroll to table when search is performed
+            $('#searchForm').on('submit', function() {
+                setTimeout(function() {
+                    $('html, body').animate({
+                        scrollTop: $('.leaderboard-table').offset().top - 100
+                    }, 500);
+                }, 100);
+            });
+        });
+    </script>
+}

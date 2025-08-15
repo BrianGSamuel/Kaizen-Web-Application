@@ -1,12 +1,25 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace KaizenWebApp.ViewModels
 {
     public class RegisterViewModel
     {
-        [Required(ErrorMessage = "Department Name is required.")]
-        [Display(Name = "Department Name")]
-        public string Name { get; set; }
+        [Required(ErrorMessage = "Employee Name is required.")]
+        [Display(Name = "Employee Name")]
+        public string EmployeeName { get; set; }
+
+        [Required(ErrorMessage = "Employee Number is required.")]
+        [Display(Name = "Employee Number")]
+        public string EmployeeNumber { get; set; }
+
+        [Required(ErrorMessage = "Department is required.")]
+        [Display(Name = "Department")]
+        public string Department { get; set; }
+
+        [Required(ErrorMessage = "Plant is required.")]
+        [Display(Name = "Plant")]
+        public string Plant { get; set; }
 
         [Required(ErrorMessage = "Username is required.")]
         [Display(Name = "Username")]
@@ -22,5 +35,12 @@ namespace KaizenWebApp.ViewModels
         [Display(Name = "Confirm Password")]
         [Compare("Password", ErrorMessage = "Password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
+
+        [Required(ErrorMessage = "Role is required.")]
+        [Display(Name = "Role")]
+        public string Role { get; set; } = "User";
+
+        [Display(Name = "Employee Image")]
+        public IFormFile? EmployeeImage { get; set; }
     }
 }

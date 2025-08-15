@@ -24,6 +24,12 @@
   <data name="DepartmentName" xml:space="preserve">
     <value>Department Name</value>
   </data>
+  <data name="Plant" xml:space="preserve">
+    <value>Plant</value>
+  </data>
+  <data name="PlantAutoSet" xml:space="preserve">
+    <value>Plant is automatically set based on your user profile</value>
+  </data>
   <data name="EmployeeName" xml:space="preserve">
     <value>Employee Name</value>
   </data>

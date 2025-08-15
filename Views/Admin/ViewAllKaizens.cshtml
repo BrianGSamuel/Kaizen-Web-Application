@@ -281,9 +281,9 @@
                                                 <span class="@overallStatusClass">@overallStatus</span>
                                             </td>
                                             <td class="text-center">
-                                                <button class="btn btn-sm btn-outline-primary" onclick="viewKaizen(@item.Id)" title="View Details">
+                                                <a href="@Url.Action("AdminKaizenDetails", "Admin", new { id = item.Id })" class="btn btn-sm btn-outline-primary" title="View Details">
                                                     <i class="fas fa-eye"></i> View
-                                                </button>
+                                                </a>
                                             </td>
                                         </tr>
                                     }
@@ -297,27 +297,7 @@
     </div>
 </div>
 
-<!-- View Kaizen Modal -->
-<div class="modal fade" id="viewKaizenModal" tabindex="-1" aria-labelledby="viewKaizenModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewKaizenModalLabel">
-                    <i class="fas fa-eye me-2"></i>Kaizen Details
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="viewKaizenModalBody">
-                <!-- Content will be loaded dynamically -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Close
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <script>
     // Clear filters
@@ -330,167 +310,5 @@
         form.submit();
     });
 
-    // View kaizen details
-    function viewKaizen(id) {
-        const modal = new bootstrap.Modal(document.getElementById('viewKaizenModal'));
-        const modalBody = document.getElementById('viewKaizenModalBody');
-        
-        modalBody.innerHTML = `
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary mb-3" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <h6 class="text-muted">Loading Kaizen details...</h6>
-            </div>
-        `;
-        
-        modal.show();
-        
-        fetch(`/Kaizen/Edit/${id}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const kaizen = data.data;
-                    modalBody.innerHTML = `
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6 class="text-primary mb-3">
-                                    <i class="fas fa-info-circle me-2"></i>Basic Information
-                                </h6>
-                                <div class="mb-3">
-                                    <strong>Kaizen No:</strong> ${kaizen.kaizenNo}
-                                </div>
-                                <div class="mb-3">
-                                    <strong>Employee Name:</strong> ${kaizen.employeeName}
-                                </div>
-                                <div class="mb-3">
-                                    <strong>Employee No:</strong> ${kaizen.employeeNo}
-                                </div>
-                                <div class="mb-3">
-                                    <strong>Department:</strong> ${kaizen.department}
-                                </div>
-                                <div class="mb-3">
-                                    <strong>Date Submitted:</strong> ${new Date(kaizen.dateSubmitted).toLocaleDateString()}
-                                </div>
-                                                                 <div class="mb-3">
-                                     <strong>Date Implemented:</strong> ${kaizen.dateImplemented ? new Date(kaizen.dateImplemented).toLocaleDateString() : 'Not implemented yet'}
-                                 </div>
-                                 <div class="mb-3">
-                                     <strong>Employee Image:</strong>
-                                     ${kaizen.employeePhotoPath ? 
-                                         `<img src="${kaizen.employeePhotoPath}" alt="Employee Photo" class="img-fluid rounded" style="max-height: 100px; max-width: 100px;">` : 
-                                         '<span class="text-muted">No photo available</span>'
-                                     }
-                                 </div>
-                             </div>
-                             <div class="col-md-6">
-                                <h6 class="text-primary mb-3">
-                                    <i class="fas fa-coins me-2"></i>Cost Information
-                                </h6>
-                                <div class="mb-3">
-                                    <strong>Cost Saving:</strong> ${kaizen.costSaving ? `$ ${parseFloat(kaizen.costSaving).toLocaleString()}` : 'N/A'}
-                                </div>
-                                <div class="mb-3">
-                                    <strong>Dollar Rate:</strong> ${kaizen.dollarRate ? `$ ${parseFloat(kaizen.dollarRate).toLocaleString()}` : 'N/A'}
-                                </div>
-                                <div class="mb-3">
-                                    <strong>Other Benefits:</strong> ${kaizen.otherBenefits || 'N/A'}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <h6 class="text-primary mb-3">
-                                    <i class="fas fa-lightbulb me-2"></i>Suggestion Description
-                                </h6>
-                                <div class="border rounded p-3 bg-light">
-                                    ${kaizen.suggestionDescription || 'No description provided'}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <h6 class="text-primary mb-3">
-                                    <i class="fas fa-user-cog me-2"></i>Engineer Review
-                                </h6>
-                                <div class="mb-2">
-                                    <strong>Status:</strong> 
-                                    <span class="badge ${kaizen.engineerStatus === 'Approved' ? 'bg-success' : kaizen.engineerStatus === 'Rejected' ? 'bg-danger' : 'bg-warning'}">
-                                        ${kaizen.engineerStatus || 'Pending'}
-                                    </span>
-                                </div>
-                                <div class="mb-2">
-                                    <strong>Approved By:</strong> ${kaizen.engineerApprovedBy || 'N/A'}
-                                </div>
-                                <div class="mb-2">
-                                    <strong>Comments:</strong> ${kaizen.comments || 'No comments'}
-                                </div>
-                                <div class="mb-2">
-                                    <strong>Category:</strong> ${kaizen.category || 'N/A'}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h6 class="text-primary mb-3">
-                                    <i class="fas fa-user-tie me-2"></i>Manager Review
-                                </h6>
-                                <div class="mb-2">
-                                    <strong>Status:</strong> 
-                                    <span class="badge ${kaizen.managerStatus === 'Approved' ? 'bg-success' : kaizen.managerStatus === 'Rejected' ? 'bg-danger' : 'bg-warning'}">
-                                        ${kaizen.managerStatus || 'Pending'}
-                                    </span>
-                                </div>
-                                <div class="mb-2">
-                                    <strong>Approved By:</strong> ${kaizen.managerApprovedBy || 'N/A'}
-                                </div>
-                                <div class="mb-2">
-                                    <strong>Comments:</strong> ${kaizen.managerComments || 'No comments'}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        ${kaizen.beforeKaizenImagePath || kaizen.afterKaizenImagePath ? `
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <h6 class="text-primary mb-3">
-                                    <i class="fas fa-images me-2"></i>Images
-                                </h6>
-                                <div class="row">
-                                    ${kaizen.beforeKaizenImagePath ? `
-                                    <div class="col-md-6">
-                                        <h6 class="text-muted">Before Kaizen</h6>
-                                        <img src="${kaizen.beforeKaizenImagePath}" alt="Before Kaizen" class="img-fluid rounded" style="max-height: 200px;">
-                                    </div>
-                                    ` : ''}
-                                    ${kaizen.afterKaizenImagePath ? `
-                                    <div class="col-md-6">
-                                        <h6 class="text-muted">After Kaizen</h6>
-                                        <img src="${kaizen.afterKaizenImagePath}" alt="After Kaizen" class="img-fluid rounded" style="max-height: 200px;">
-                                    </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        </div>
-                        ` : ''}
-                    `;
-                } else {
-                    modalBody.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Error loading Kaizen details: ${data.message}
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                modalBody.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        An error occurred while loading the Kaizen details.
-                    </div>
-                `;
-            });
-    }
+
 </script> 

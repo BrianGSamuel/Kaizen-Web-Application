@@ -1,6 +1,7 @@
 ﻿using KaizenWebApp.Data;
 using KaizenWebApp.Models;
 using KaizenWebApp.ViewModels;
+using KaizenWebApp.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -14,10 +15,12 @@ namespace KaizenWebApp.Controllers
     public class AccountController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly IFileService _fileService;
 
-        public AccountController(AppDbContext context)
+        public AccountController(AppDbContext context, IFileService fileService)
         {
             _context = context;
+            _fileService = fileService;
         }
 
         // Method to check if request is direct URL access and end session if so
@@ -89,7 +92,8 @@ namespace KaizenWebApp.Controllers
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, user.UserName),
-                new Claim("DepartmentName", user.DepartmentName)
+                new Claim("DepartmentName", user.DepartmentName),
+                new Claim("Role", user.Role)
             };
 
             Console.WriteLine($"Creating claims - Name: {user.UserName}, Department: {user.DepartmentName}");
@@ -99,29 +103,25 @@ namespace KaizenWebApp.Controllers
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-            // Check if username contains "admin", "user", "manager", or "kaizenteam" to determine navigation
-            Console.WriteLine($"User logged in: {user.UserName}, redirecting...");
-            if (user.UserName.ToLower() == "admin")
+            // Check user role to determine navigation
+            Console.WriteLine($"User logged in: {user.UserName} with role: {user.Role}, redirecting...");
+            switch (user.Role.ToLower())
             {
-                Console.WriteLine($"Redirecting admin user to Dashboard");
-                return RedirectToAction("Dashboard", "Admin");
-            }
-            else if (user.UserName.ToLower().Contains("kaizenteam"))
-            {
-                Console.WriteLine($"Redirecting kaizen team user to KaizenTeamDashboard");
-                return RedirectToAction("KaizenTeamDashboard", "Kaizen");
-            }
-            else if (user.UserName.ToLower().Contains("user"))
-            {
-                return RedirectToAction("Kaizenform", "Kaizen");
-            }
-            else if (user.UserName.ToLower().Contains("manager"))
-            {
-                return RedirectToAction("ManagerDashboard", "Kaizen");
-            }
-            else
-            {
-                return RedirectToAction("EngineerDashboard", "Kaizen");
+                case "admin":
+                    Console.WriteLine($"Redirecting admin user to Dashboard");
+                    return RedirectToAction("Dashboard", "Admin");
+                case "kaizenteam":
+                    Console.WriteLine($"Redirecting kaizen team user to KaizenTeamDashboard");
+                    return RedirectToAction("KaizenTeamDashboard", "Kaizen");
+                case "supervisor":
+                    Console.WriteLine($"Redirecting supervisor user to SupervisorDashboard");
+                    return RedirectToAction("SupervisorDashboard", "Kaizen");
+                case "manager":
+                    return RedirectToAction("ManagerDashboard", "Kaizen");
+                case "user":
+                    return RedirectToAction("UserDashboard", "Kaizen");
+                default:
+                    return RedirectToAction("EngineerDashboard", "Kaizen");
             }
         }
 
@@ -140,7 +140,7 @@ namespace KaizenWebApp.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            Console.WriteLine($"Registration attempt - Username: {model.Username}, Department Name: {model.Name}");
+            Console.WriteLine($"Registration attempt - Username: {model.Username}, Employee Name: {model.EmployeeName}, Employee Number: {model.EmployeeNumber}, Department: {model.Department}, Plant: {model.Plant}, Role: {model.Role}");
 
             if (_context.Users.Any(u => u.UserName == model.Username))
             {
@@ -151,11 +151,15 @@ namespace KaizenWebApp.Controllers
             var user = new Users
             {
                 UserName = model.Username,
-                DepartmentName = model.Name,
-                Password = model.Password // ⚠ Store securely using hashing in production
+                EmployeeName = model.EmployeeName,
+                EmployeeNumber = model.EmployeeNumber,
+                DepartmentName = model.Department,
+                Plant = model.Plant,
+                Password = model.Password, // ⚠ Store securely using hashing in production
+                Role = model.Role
             };
 
-            Console.WriteLine($"Creating user - Username: {user.UserName}, Department: {user.DepartmentName}");
+            Console.WriteLine($"Creating user - Username: {user.UserName}, Employee Name: {user.EmployeeName}, Employee Number: {user.EmployeeNumber}, Department: {user.DepartmentName}, Plant: {user.Plant}, Role: {user.Role}");
 
             _context.Users.Add(user);
             _context.SaveChanges();
@@ -194,7 +198,7 @@ namespace KaizenWebApp.Controllers
             if (!ModelState.IsValid)
                 return View("RegisterAdmin", model);
 
-            Console.WriteLine($"Admin registration attempt - Username: {model.Username}, Department Name: {model.Name}");
+            Console.WriteLine($"Admin registration attempt - Username: {model.Username}, Employee Name: {model.EmployeeName}, Employee Number: {model.EmployeeNumber}, Department: {model.Department}, Plant: {model.Plant}, Role: {model.Role}");
 
             if (_context.Users.Any(u => u.UserName == model.Username))
             {
@@ -205,11 +209,15 @@ namespace KaizenWebApp.Controllers
             var user = new Users
             {
                 UserName = model.Username,
-                DepartmentName = model.Name,
-                Password = model.Password // ⚠ Store securely using hashing in production
+                EmployeeName = model.EmployeeName,
+                EmployeeNumber = model.EmployeeNumber,
+                DepartmentName = model.Department,
+                Plant = model.Plant,
+                Password = model.Password, // ⚠ Store securely using hashing in production
+                Role = model.Role
             };
 
-            Console.WriteLine($"Creating user - Username: {user.UserName}, Department: {user.DepartmentName}");
+            Console.WriteLine($"Creating user - Username: {user.UserName}, Employee Name: {user.EmployeeName}, Employee Number: {user.EmployeeNumber}, Department: {user.DepartmentName}, Plant: {user.Plant}, Role: {user.Role}");
 
             _context.Users.Add(user);
             _context.SaveChanges();
@@ -469,6 +477,101 @@ namespace KaizenWebApp.Controllers
             return RedirectToAction("KaizenListManager", "Kaizen");
         }
 
+        // ------------------- SUPERVISOR REGISTRATION -------------------
+
+        [Authorize]
+        public IActionResult RegisterUser()
+        {
+            // Check if user is supervisor
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.UserName == username);
+            if (user?.Role?.ToLower() != "supervisor")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var model = new RegisterViewModel
+            {
+                Role = "User" // Supervisors can only register regular users
+            };
+
+            return View("RegisterUser", model);
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegisterUser(RegisterViewModel model)
+        {
+            // Check if user is supervisor
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.UserName == username);
+            if (user?.Role?.ToLower() != "supervisor")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            if (!ModelState.IsValid)
+                return View("RegisterUser", model);
+
+            // Auto-generate username if not provided
+            if (string.IsNullOrEmpty(model.Username) && !string.IsNullOrEmpty(model.EmployeeNumber))
+            {
+                model.Username = model.EmployeeNumber + "-User";
+            }
+
+            // Force role to be "User" for supervisor registrations
+            model.Role = "User";
+
+            Console.WriteLine($"Supervisor registration attempt - Username: {model.Username}, Employee Number: {model.EmployeeNumber}, Department: {model.Department}, Plant: {model.Plant}, Role: {model.Role}");
+
+            if (_context.Users.Any(u => u.UserName == model.Username))
+            {
+                ModelState.AddModelError("", "Username already exists.");
+                return View("RegisterUser", model);
+            }
+
+            // Handle employee image upload
+            string? employeePhotoPath = null;
+            if (model.EmployeeImage != null)
+            {
+                if (!await _fileService.IsValidImageAsync(model.EmployeeImage))
+                {
+                    ModelState.AddModelError("EmployeeImage", "Please upload a valid image file (JPG, PNG, JPEG, WEBP) with size less than 5MB.");
+                    return View("RegisterUser", model);
+                }
+
+                employeePhotoPath = await _fileService.SaveImageAsync(model.EmployeeImage, "uploads");
+                if (string.IsNullOrEmpty(employeePhotoPath))
+                {
+                    ModelState.AddModelError("EmployeeImage", "Failed to upload employee image. Please try again.");
+                    return View("RegisterUser", model);
+                }
+            }
+
+            var newUser = new Users
+            {
+                UserName = model.Username,
+                EmployeeName = model.EmployeeName,
+                EmployeeNumber = model.EmployeeNumber,
+                DepartmentName = model.Department,
+                Plant = model.Plant,
+                Password = model.Password, // ⚠ Store securely using hashing in production
+                Role = model.Role,
+                EmployeePhotoPath = employeePhotoPath
+            };
+
+            Console.WriteLine($"Creating user - Username: {newUser.UserName}, Department: {newUser.DepartmentName}, Plant: {newUser.Plant}, Role: {newUser.Role}, EmployeePhotoPath: {newUser.EmployeePhotoPath}");
+
+            _context.Users.Add(newUser);
+            _context.SaveChanges();
+
+            Console.WriteLine($"User saved with ID: {newUser.Id}");
+
+            TempData["Success"] = "User registered successfully!";
+            return RedirectToAction("SupervisorDashboard", "Kaizen");
+        }
+
         // ------------------- CHANGE PASSWORD FOR ENGINEERS -------------------
 
         [Authorize]
@@ -549,6 +652,154 @@ namespace KaizenWebApp.Controllers
 
             TempData["Success"] = "Password changed successfully!";
             return RedirectToAction("EngineerDashboard", "Kaizen");
+        }
+
+        // ------------------- CHANGE PASSWORD FOR USERS -------------------
+
+        [Authorize]
+        public async Task<IActionResult> ChangeUserPassword()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login");
+            }
+
+            var username = User.Identity.Name;
+            
+            // Only allow users (users with "user" in their username)
+            if (username == null || !username.ToLower().Contains("user"))
+            {
+                TempData["AlertMessage"] = "Access Denied: Only users can access this page.";
+                return RedirectToAction("AccessDenied", "Home");
+            }
+            
+            return View("ChangeUserPassword", new ChangePasswordViewModel { Username = username });
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeUserPassword(ChangePasswordViewModel model)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login");
+            }
+
+            var username = User.Identity.Name;
+            
+            // Only allow users (users with "user" in their username)
+            if (username == null || !username.ToLower().Contains("user"))
+            {
+                TempData["AlertMessage"] = "Access Denied: Only users can access this page.";
+                return RedirectToAction("AccessDenied", "Home");
+            }
+            
+            if (!ModelState.IsValid)
+                return View("ChangeUserPassword", model);
+
+            if (username != model.Username)
+            {
+                ModelState.AddModelError("", "You can only change your own password.");
+                return View("ChangeUserPassword", model);
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.UserName == model.Username);
+            if (user == null)
+            {
+                ModelState.AddModelError("", "User not found!");
+                return View("ChangeUserPassword", model);
+            }
+
+            // Verify current password
+            if (user.Password != model.CurrentPassword) // ⚠ Use hashing in production
+            {
+                ModelState.AddModelError("CurrentPassword", "Current password is incorrect.");
+                return View("ChangeUserPassword", model);
+            }
+
+            // Update password
+            user.Password = model.NewPassword; // ⚠ Use hashing in production
+            _context.SaveChanges();
+
+            TempData["Success"] = "Password changed successfully!";
+            return RedirectToAction("Kaizenform", "Kaizen");
+        }
+
+        // ------------------- CHANGE PASSWORD FOR SUPERVISORS -------------------
+
+        [Authorize]
+        public async Task<IActionResult> ChangeSupervisorPassword()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login");
+            }
+
+            var username = User.Identity.Name;
+            
+            // Only allow supervisors
+            if (username == null || User.Claims.FirstOrDefault(c => c.Type == "Role")?.Value?.ToLower() != "supervisor")
+            {
+                TempData["AlertMessage"] = "Access Denied: Only supervisors can access this page.";
+                return RedirectToAction("AccessDenied", "Home");
+            }
+            
+            return View("ChangeSupervisorPassword", new ChangePasswordViewModel { Username = username });
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeSupervisorPassword(ChangePasswordViewModel model)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login");
+            }
+
+            var username = User.Identity.Name;
+            
+            // Only allow supervisors
+            if (username == null || User.Claims.FirstOrDefault(c => c.Type == "Role")?.Value?.ToLower() != "supervisor")
+            {
+                TempData["AlertMessage"] = "Access Denied: Only supervisors can access this page.";
+                return RedirectToAction("AccessDenied", "Home");
+            }
+            
+            if (!ModelState.IsValid)
+                return View("ChangeSupervisorPassword", model);
+
+            if (username != model.Username)
+            {
+                ModelState.AddModelError("", "You can only change your own password.");
+                return View("ChangeSupervisorPassword", model);
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.UserName == model.Username);
+            if (user == null)
+            {
+                ModelState.AddModelError("", "User not found!");
+                return View("ChangeSupervisorPassword", model);
+            }
+
+            // Verify current password
+            if (user.Password != model.CurrentPassword) // ⚠ Use hashing in production
+            {
+                ModelState.AddModelError("CurrentPassword", "Current password is incorrect.");
+                return View("ChangeSupervisorPassword", model);
+            }
+
+            // Update password
+            user.Password = model.NewPassword; // ⚠ Use hashing in production
+            _context.SaveChanges();
+
+            TempData["SuccessMessage"] = "Password changed successfully!";
+            return RedirectToAction("SupervisorDashboard", "Kaizen");
         }
     }
 }

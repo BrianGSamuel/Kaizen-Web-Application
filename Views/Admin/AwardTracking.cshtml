@@ -136,20 +136,20 @@
                         <table class="table table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Kaizen No</th>
+                                    <th style="min-width: 120px; max-width: 150px; word-wrap: break-word;">Kaizen No</th>
                                     <th>Employee</th>
                                     <th>Department</th>
                                     <th>Date Submitted</th>
                                     <th>Cost Saving</th>
                                     <th>Award Status</th>
-                                    <th>Actions</th>
+                                    <th style="min-width: 200px; white-space: nowrap;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var kaizen in Model)
                                 {
                                     <tr>
-                                        <td>
+                                        <td style="min-width: 120px; max-width: 150px; word-wrap: break-word;">
                                             <strong>@kaizen.KaizenNo</strong>
                                         </td>
                                         <td>
@@ -208,8 +208,8 @@
                                                 </span>
                                             }
                                         </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
+                                        <td style="min-width: 200px; white-space: nowrap;">
+                                            <div class="btn-group" role="group" style="flex-wrap: nowrap;">
                                                 <a href="@Url.Action("AwardDetails", "Admin", new { id = kaizen.Id })" 
                                                    class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-eye me-1"></i>

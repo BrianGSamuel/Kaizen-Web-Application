@@ -24,6 +24,12 @@
   <data name="DepartmentName" xml:space="preserve">
     <value>துறை பெயர்</value>
   </data>
+  <data name="Plant" xml:space="preserve">
+    <value>தொழிற்சாலை</value>
+  </data>
+  <data name="PlantAutoSet" xml:space="preserve">
+    <value>தொழிற்சாலை உங்கள் பயனர் சுயவிவரத்தின் அடிப்படையில் தானாக அமைக்கப்பட்டுள்ளது</value>
+  </data>
   <data name="EmployeeName" xml:space="preserve">
     <value>ஊழியர் பெயர்</value>
   </data>
