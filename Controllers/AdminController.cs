@@ -318,7 +318,7 @@ namespace KaizenWebApp.Controllers
 
             _context.SaveChanges();
 
-            TempData["SuccessMessage"] = "Award assigned successfully!";
+            TempData["SubmissionSuccessMessage"] = "Award assigned successfully!";
             return RedirectToAction("AwardTracking");
         }
 
@@ -356,6 +356,7 @@ namespace KaizenWebApp.Controllers
 
             _context.SaveChanges();
 
+            TempData["SubmissionSuccessMessage"] = "Department target saved successfully!";
             return RedirectToAction("DepartmentTargets", new { year, month });
         }
 
@@ -392,7 +393,11 @@ namespace KaizenWebApp.Controllers
                     id = user.Id,
                     username = user.UserName,
                     departmentName = user.DepartmentName,
-                    role = roleDisplay
+                    plant = user.Plant,
+                    role = roleDisplay,
+                    employeeName = user.EmployeeName,
+                    employeeNumber = user.EmployeeNumber,
+                    employeePhotoPath = user.EmployeePhotoPath
                 }
             };
 
@@ -447,8 +452,12 @@ namespace KaizenWebApp.Controllers
                 return View(model);
             }
 
-            user.UserName = model.UserName;
+            // Update all user fields (except UserName which is readonly and EmployeePhotoPath which is removed from form)
             user.DepartmentName = model.DepartmentName;
+            user.Plant = model.Plant;
+            user.Role = model.Role;
+            user.EmployeeName = model.EmployeeName;
+            user.EmployeeNumber = model.EmployeeNumber;
             
             // Only update password if a new one is provided
             if (!string.IsNullOrEmpty(model.Password))
@@ -458,7 +467,7 @@ namespace KaizenWebApp.Controllers
 
             _context.SaveChanges();
 
-            TempData["SuccessMessage"] = "User updated successfully!";
+            TempData["SubmissionSuccessMessage"] = "User updated successfully!";
             return RedirectToAction("UserManagement");
         }
 
@@ -543,38 +552,49 @@ namespace KaizenWebApp.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult DeleteUser(int id)
         {
-            // Check if user is admin
-            var username = User.Identity?.Name;
-            if (username?.ToLower() != "admin")
-            {
-                return Json(new { success = false, message = "Access denied." });
-            }
-
-            var user = _context.Users.FirstOrDefault(u => u.Id == id);
-            if (user == null)
-            {
-                return Json(new { success = false, message = "User not found." });
-            }
-
-            // Prevent deletion of admin user
-            if (user.UserName?.ToLower() == "admin")
-            {
-                return Json(new { success = false, message = "Cannot delete the admin user." });
-            }
-
             try
             {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                
+                if (string.IsNullOrEmpty(username) || username.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied. Only administrators can delete users." });
+                }
+
+                // Check if user exists
+                var user = _context.Users.FirstOrDefault(u => u.Id == id);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "User not found." });
+                }
+
+                // Prevent deletion of admin user
+                if (user.UserName?.ToLower() == "admin")
+                {
+                    return Json(new { success = false, message = "Cannot delete the admin user." });
+                }
+
+                // Delete the user
                 _context.Users.Remove(user);
                 _context.SaveChanges();
+                
                 return Json(new { success = true, message = "User deleted successfully." });
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+            {
+                return Json(new { success = false, message = "Cannot delete user. This user may have related data in the system." });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error deleting user: " + ex.Message });
+                return Json(new { success = false, message = "An error occurred while deleting the user. Please try again." });
             }
         }
+
+
 
         // New action for viewing all kaizens with comprehensive filters
         public IActionResult ViewAllKaizens(string searchString, string department, string status, 

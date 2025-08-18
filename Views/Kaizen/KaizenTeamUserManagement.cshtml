@@ -174,12 +174,12 @@
             var confirmPassword = $('#confirmPassword').val();
 
             if (!username || !department || !password || !confirmPassword) {
-                alert('Please fill in all fields.');
+                showToast('Please fill in all fields.', 'error');
                 return;
             }
 
             if (password !== confirmPassword) {
-                alert('Passwords do not match.');
+                showToast('Passwords do not match.', 'error');
                 return;
             }
 
@@ -192,10 +192,10 @@
             $.post('/Admin/AddUser', formData, function(response) {
                 if (response.success) {
                     $('#addUserModal').modal('hide');
-                    alert('User added successfully!');
+                    showSubmissionToast('User added successfully!', 'success');
                     location.reload();
                 } else {
-                    alert('Error adding user: ' + response.message);
+                    showToast('Error adding user: ' + response.message, 'error');
                 }
             });
         }
@@ -206,7 +206,7 @@
                     $('#viewUserModalBody').html(createUserDetailsHtml(response.user));
                     $('#viewUserModal').modal('show');
                 } else {
-                    alert('Error loading user details: ' + response.message);
+                    showToast('Error loading user details: ' + response.message, 'error');
                 }
             });
         }
@@ -217,7 +217,7 @@
                     $('#editUserModalBody').html(createEditUserFormHtml(response.user));
                     $('#editUserModal').modal('show');
                 } else {
-                    alert('Error loading edit form: ' + response.message);
+                    showToast('Error loading edit form: ' + response.message, 'error');
                 }
             });
         }
@@ -225,12 +225,12 @@
         function deleteUser(id, username) {
             if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
                 $.post('/Admin/DeleteUser/' + id, function(response) {
-                    if (response.success) {
-                        alert('User deleted successfully!');
-                        location.reload();
-                    } else {
-                        alert('Error deleting user: ' + response.message);
-                    }
+                                    if (response.success) {
+                    showSubmissionToast('User deleted successfully!', 'success');
+                    location.reload();
+                } else {
+                    showToast('Error deleting user: ' + response.message, 'error');
+                }
                 });
             }
         }
@@ -288,13 +288,13 @@
                 processData: false,
                 contentType: false,
                 success: function(response) {
-                    if (response.success) {
-                        $('#editUserModal').modal('hide');
-                        alert('User updated successfully!');
-                        location.reload();
-                    } else {
-                        alert('Error updating user: ' + response.message);
-                    }
+                                    if (response.success) {
+                    $('#editUserModal').modal('hide');
+                    showSubmissionToast('User updated successfully!', 'success');
+                    location.reload();
+                } else {
+                    showToast('Error updating user: ' + response.message, 'error');
+                }
                 }
             });
         }

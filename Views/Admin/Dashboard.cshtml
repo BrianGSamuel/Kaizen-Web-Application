@@ -3,6 +3,12 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
+<!-- Login Success Toast Message -->
+@if (TempData["LoginSuccessMessage"] != null)
+{
+    <div data-tempdata="login-success" style="display: none;">@TempData["LoginSuccessMessage"]</div>
+}
+
 <div class="row">
     <div class="col mb-4">
         <div class="admin-card h-100">
@@ -74,6 +80,8 @@
         </div>
     </div>
 </div>
+
+
 
 <div class="row">
     <div class="col-md-6 mb-4">

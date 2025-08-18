@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Http;
 
 namespace KaizenWebApp.ViewModels
 {
@@ -40,7 +39,8 @@ namespace KaizenWebApp.ViewModels
         [Display(Name = "Role")]
         public string Role { get; set; } = "User";
 
-        [Display(Name = "Employee Image")]
-        public IFormFile? EmployeeImage { get; set; }
+        [Display(Name = "Email")]
+        [EmailAddress(ErrorMessage = "Invalid email address.")]
+        public string? Email { get; set; }
     }
 }

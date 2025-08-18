@@ -4,6 +4,7 @@ using KaizenWebApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KaizenWebApplication.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250818061841_AddEmailToUsers")]
+    partial class AddEmailToUsers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,7 +59,7 @@ namespace KaizenWebApplication.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DepartmentTargets", (string)null);
+                    b.ToTable("DepartmentTargets");
                 });
 
             modelBuilder.Entity("KaizenWebApp.Models.KaizenForm", b =>
@@ -148,14 +151,6 @@ namespace KaizenWebApplication.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("InterDeptApprovedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("InterDeptStatus")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<string>("KaizenNo")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -192,7 +187,7 @@ namespace KaizenWebApplication.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("KaizenForms", (string)null);
+                    b.ToTable("KaizenForms");
                 });
 
             modelBuilder.Entity("KaizenWebApp.Models.Users", b =>
@@ -205,9 +200,6 @@ namespace KaizenWebApplication.Migrations
 
                     b.Property<string>("DepartmentName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("EmployeeName")
@@ -239,7 +231,7 @@ namespace KaizenWebApplication.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 #pragma warning restore 612, 618
         }

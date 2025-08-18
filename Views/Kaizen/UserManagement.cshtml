@@ -138,12 +138,12 @@
                     `;
                     new bootstrap.Modal(document.getElementById('userModal')).show();
                 } else {
-                    alert('Error: ' + data.message);
+                    showToast('Error: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while fetching user details.');
+                showToast('An error occurred while fetching user details.', 'error');
             });
     }
 

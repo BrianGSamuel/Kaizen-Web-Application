@@ -1,6 +1,7 @@
 ﻿using KaizenWebApp.Data;
 using KaizenWebApp.Models;
 using KaizenWebApp.ViewModels;
+using KaizenWebApp.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -19,11 +20,15 @@ namespace KaizenWebApp.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IFileService _fileService;
+        private readonly IEmailService _emailService;
 
-        public KaizenController(AppDbContext context, IWebHostEnvironment env)
+        public KaizenController(AppDbContext context, IWebHostEnvironment env, IFileService fileService, IEmailService emailService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _env = env ?? throw new ArgumentNullException(nameof(env));
+            _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
+            _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
         }
 
         // Method to check if request is direct URL access and end session if so
@@ -239,13 +244,11 @@ namespace KaizenWebApp.Controllers
                 {
                     viewModel.EmployeeName = userByEmployeeNumber.EmployeeName ?? "";
                     viewModel.EmployeeNo = userByEmployeeNumber.EmployeeNumber ?? "";
-                    viewModel.EmployeePhotoPath = userByEmployeeNumber.EmployeePhotoPath;
                     viewModel.Department = userByEmployeeNumber.DepartmentName;
                     viewModel.Plant = userByEmployeeNumber.Plant;
                     
                     Console.WriteLine($"Auto-populated Employee Name: {viewModel.EmployeeName}");
                     Console.WriteLine($"Auto-populated Employee Number: {viewModel.EmployeeNo}");
-                    Console.WriteLine($"Auto-populated Employee Photo Path: '{viewModel.EmployeePhotoPath}'");
                     Console.WriteLine($"Auto-populated Department: {viewModel.Department}");
                     Console.WriteLine($"Auto-populated Plant: {viewModel.Plant}");
                 }
@@ -258,16 +261,16 @@ namespace KaizenWebApp.Controllers
                     {
                         viewModel.EmployeeName = currentUser.EmployeeName ?? "";
                         viewModel.EmployeeNo = currentUser.EmployeeNumber ?? "";
-                        viewModel.EmployeePhotoPath = currentUser.EmployeePhotoPath;
                         viewModel.Department = currentUser.DepartmentName;
                         viewModel.Plant = currentUser.Plant;
                         Console.WriteLine($"Fallback - Auto-populated Employee Name: {viewModel.EmployeeName}");
                         Console.WriteLine($"Fallback - Auto-populated Employee Number: {viewModel.EmployeeNo}");
-                        Console.WriteLine($"Fallback - Auto-populated Employee Photo Path: '{viewModel.EmployeePhotoPath}'");
                         Console.WriteLine($"Fallback - Auto-populated Department: {viewModel.Department}");
                         Console.WriteLine($"Fallback - Auto-populated Plant: {viewModel.Plant}");
                     }
                 }
+
+
 
                 // Debug information
                 Console.WriteLine($"User authenticated: {User.Identity?.IsAuthenticated}");
@@ -401,21 +404,21 @@ namespace KaizenWebApp.Controllers
                 bool hasImageError = false;
                 
                 // Validate file uploads and track which step they belong to
-                if (viewModel.BeforeKaizenImage != null && !IsValidImage(viewModel.BeforeKaizenImage))
+                if (viewModel.BeforeKaizenImage != null && !await IsValidImageAsync(viewModel.BeforeKaizenImage))
                 {
                     ModelState.AddModelError("BeforeKaizenImage", "Invalid image format. Only PNG, JPG, JPEG, WebP files up to 5MB are allowed.");
                     errorStep = 3; // Step 3 contains BeforeKaizenImage
                     hasImageError = true;
                 }
 
-                if (viewModel.AfterKaizenImage != null && !IsValidImage(viewModel.AfterKaizenImage))
+                if (viewModel.AfterKaizenImage != null && !await IsValidImageAsync(viewModel.AfterKaizenImage))
                 {
                     ModelState.AddModelError("AfterKaizenImage", "Invalid image format. Only PNG, JPG, JPEG, WebP files up to 5MB are allowed.");
                     errorStep = 3; // Step 3 contains AfterKaizenImage
                     hasImageError = true;
                 }
 
-                if (viewModel.EmployeePhoto != null && !IsValidImage(viewModel.EmployeePhoto))
+                if (viewModel.EmployeePhoto != null && !await IsValidImageAsync(viewModel.EmployeePhoto))
                 {
                     ModelState.AddModelError("EmployeePhoto", "Invalid image format. Only PNG, JPG, JPEG, WebP files up to 5MB are allowed.");
                     errorStep = 2; // Step 2 contains EmployeePhoto
@@ -458,68 +461,66 @@ namespace KaizenWebApp.Controllers
                     OtherBenefits = viewModel.OtherBenefits?.Trim()
                 };
 
-                // Handle file uploads for BeforeKaizenImage
+                // Handle file uploads for BeforeKaizenImage using FileService
                 if (viewModel.BeforeKaizenImage != null && viewModel.BeforeKaizenImage.Length > 0)
                 {
-                    string beforeFileName = $"{Guid.NewGuid()}{Path.GetExtension(viewModel.BeforeKaizenImage.FileName)}";
-                    string beforePath = Path.Combine("uploads", beforeFileName);
-                    string fullBeforePath = Path.Combine(_env.WebRootPath, beforePath);
-
-                    Directory.CreateDirectory(Path.GetDirectoryName(fullBeforePath));
-                    using (var stream = new FileStream(fullBeforePath, FileMode.Create))
+                    string beforeImagePath = await _fileService.SaveImageAsync(viewModel.BeforeKaizenImage, "uploads");
+                    if (!string.IsNullOrEmpty(beforeImagePath))
                     {
-                        await viewModel.BeforeKaizenImage.CopyToAsync(stream);
+                        model.BeforeKaizenImagePath = beforeImagePath;
                     }
-                    model.BeforeKaizenImagePath = "/" + beforePath.Replace("\\", "/");
+                    else
+                    {
+                        ModelState.AddModelError("BeforeKaizenImage", "Failed to upload Before Kaizen image. Please try again.");
+                        return View("~/Views/Home/Kaizenform.cshtml", viewModel);
+                    }
                 }
 
-                // Handle file uploads for AfterKaizenImage
+                // Handle file uploads for AfterKaizenImage using FileService
                 if (viewModel.AfterKaizenImage != null && viewModel.AfterKaizenImage.Length > 0)
                 {
-                    string afterFileName = $"{Guid.NewGuid()}{Path.GetExtension(viewModel.AfterKaizenImage.FileName)}";
-                    string afterPath = Path.Combine("uploads", afterFileName);
-                    string fullAfterPath = Path.Combine(_env.WebRootPath, afterPath);
-
-                    Directory.CreateDirectory(Path.GetDirectoryName(fullAfterPath));
-                    using (var stream = new FileStream(fullAfterPath, FileMode.Create))
+                    string afterImagePath = await _fileService.SaveImageAsync(viewModel.AfterKaizenImage, "uploads");
+                    if (!string.IsNullOrEmpty(afterImagePath))
                     {
-                        await viewModel.AfterKaizenImage.CopyToAsync(stream);
+                        model.AfterKaizenImagePath = afterImagePath;
                     }
-                    model.AfterKaizenImagePath = "/" + afterPath.Replace("\\", "/");
+                    else
+                    {
+                        ModelState.AddModelError("AfterKaizenImage", "Failed to upload After Kaizen image. Please try again.");
+                        return View("~/Views/Home/Kaizenform.cshtml", viewModel);
+                    }
                 }
 
-                // Handle EmployeePhoto - either from uploaded file or from user's profile
+                // Handle EmployeePhoto - user must upload their photo
                 Console.WriteLine($"=== EMPLOYEE PHOTO DEBUG ===");
                 Console.WriteLine($"viewModel.EmployeePhoto: {(viewModel.EmployeePhoto != null ? "NOT NULL" : "NULL")}");
                 Console.WriteLine($"viewModel.EmployeePhoto.Length: {(viewModel.EmployeePhoto?.Length ?? 0)}");
-                Console.WriteLine($"viewModel.EmployeePhotoPath: '{viewModel.EmployeePhotoPath}'");
                 
-                if (viewModel.EmployeePhoto != null && viewModel.EmployeePhoto.Length > 0)
+                if (viewModel.EmployeePhoto == null || viewModel.EmployeePhoto.Length == 0)
                 {
-                    // New file uploaded - save it
-                    Console.WriteLine("Processing new uploaded employee photo file");
-                    string employeePhotoFileName = $"{Guid.NewGuid()}{Path.GetExtension(viewModel.EmployeePhoto.FileName)}";
-                    string employeePhotoPath = Path.Combine("uploads", employeePhotoFileName);
-                    string fullEmployeePhotoPath = Path.Combine(_env.WebRootPath, employeePhotoPath);
-
-                    Directory.CreateDirectory(Path.GetDirectoryName(fullEmployeePhotoPath));
-                    using (var stream = new FileStream(fullEmployeePhotoPath, FileMode.Create))
-                    {
-                        await viewModel.EmployeePhoto.CopyToAsync(stream);
-                    }
-                    model.EmployeePhotoPath = "/" + employeePhotoPath.Replace("\\", "/");
-                    Console.WriteLine($"Saved new employee photo to: {model.EmployeePhotoPath}");
+                    ModelState.AddModelError("EmployeePhoto", "Employee photo is required. Please upload your photo.");
+                    return View("~/Views/Home/Kaizenform.cshtml", viewModel);
                 }
-                else if (!string.IsNullOrEmpty(viewModel.EmployeePhotoPath))
+                
+                // Validate the uploaded image
+                if (!await _fileService.IsValidImageAsync(viewModel.EmployeePhoto))
                 {
-                    // No new file uploaded, but we have the fetched profile photo path
-                    model.EmployeePhotoPath = viewModel.EmployeePhotoPath;
-                    Console.WriteLine($"Using fetched employee photo path: {viewModel.EmployeePhotoPath}");
+                    ModelState.AddModelError("EmployeePhoto", "Please upload a valid image file (PNG, JPG, JPEG, WebP) with size less than 5MB.");
+                    return View("~/Views/Home/Kaizenform.cshtml", viewModel);
+                }
+                
+                // Save the uploaded employee photo
+                Console.WriteLine("Processing uploaded employee photo file");
+                string employeePhotoPath = await _fileService.SaveImageAsync(viewModel.EmployeePhoto, "uploads");
+                if (!string.IsNullOrEmpty(employeePhotoPath))
+                {
+                    model.EmployeePhotoPath = employeePhotoPath;
+                    Console.WriteLine($"Saved employee photo to: {model.EmployeePhotoPath}");
                 }
                 else
                 {
-                    Console.WriteLine("WARNING: No employee photo file uploaded AND no EmployeePhotoPath provided!");
-                    model.EmployeePhotoPath = null;
+                    ModelState.AddModelError("EmployeePhoto", "Failed to upload employee photo. Please try again.");
+                    return View("~/Views/Home/Kaizenform.cshtml", viewModel);
                 }
                 
                 Console.WriteLine($"Final model.EmployeePhotoPath: '{model.EmployeePhotoPath}'");
@@ -535,7 +536,10 @@ namespace KaizenWebApp.Controllers
                 Console.WriteLine($"EmployeeName: {model.EmployeeName}");
                 Console.WriteLine($"EmployeePhotoPath saved: '{model.EmployeePhotoPath}'");
 
-                TempData["Success"] = "Kaizen suggestion submitted successfully!";
+                // Send email notification to engineer in the department
+                await SendEmailNotificationToEngineer(model);
+
+                TempData["SubmissionSuccessMessage"] = "Kaizen suggestion submitted successfully! Your submission has been received and is being processed.";
                 return RedirectToAction("SuccessMessage", "Home");
             }
             catch (Exception ex)
@@ -1217,6 +1221,27 @@ namespace KaizenWebApp.Controllers
             }
         }
 
+        // GET: /Kaizen/GetDepartments - Get all departments for dropdown
+        [HttpGet]
+        public async Task<IActionResult> GetDepartments()
+        {
+            try
+            {
+                var departments = await _context.Users
+                    .Where(u => !string.IsNullOrEmpty(u.DepartmentName))
+                    .Select(u => u.DepartmentName)
+                    .Distinct()
+                    .OrderBy(d => d)
+                    .ToListAsync();
+
+                return Json(new { success = true, departments = departments });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error retrieving departments: {ex.Message}" });
+            }
+        }
+
         // GET: /Kaizen/GetExecutiveFillData/{id}
         [HttpGet]
         public async Task<IActionResult> GetExecutiveFillData(int id)
@@ -1560,6 +1585,14 @@ namespace KaizenWebApp.Controllers
             return allowedExtensions.Contains(extension);
         }
 
+        // Updated to use FileService for consistency with RegisterUser
+        private async Task<bool> IsValidImageAsync(IFormFile file)
+        {
+            return await _fileService.IsValidImageAsync(file);
+        }
+
+
+
         private async Task<string> GetCurrentUserPlant()
         {
             try
@@ -1652,8 +1685,341 @@ namespace KaizenWebApp.Controllers
             }
         }
 
-        // ------------------- MANAGER FUNCTIONALITY -------------------
+        // Send email notification to engineer in the department
+        private async Task SendEmailNotificationToEngineer(KaizenForm kaizenForm)
+        {
+            try
+            {
+                Console.WriteLine($"=== SENDING EMAIL NOTIFICATION ===");
+                Console.WriteLine($"Kaizen No: {kaizenForm.KaizenNo}");
+                Console.WriteLine($"Department: {kaizenForm.Department}");
 
+                // Find engineer in the same department
+                var engineer = await _context.Users
+                    .Where(u => u.DepartmentName == kaizenForm.Department && 
+                               u.Role.ToLower() == "engineer" && 
+                               !string.IsNullOrEmpty(u.Email))
+                    .FirstOrDefaultAsync();
+
+                if (engineer == null)
+                {
+                    Console.WriteLine($"No engineer found in department: {kaizenForm.Department}");
+                    return;
+                }
+
+                Console.WriteLine($"Found engineer: {engineer.EmployeeName} ({engineer.Email})");
+
+                // Generate website URL
+                var websiteUrl = $"{Request.Scheme}://{Request.Host}";
+                Console.WriteLine($"Website URL: {websiteUrl}");
+
+                // Send email
+                var emailSent = await _emailService.SendKaizenNotificationAsync(
+                    engineer.Email ?? "",
+                    kaizenForm.KaizenNo,
+                    kaizenForm.EmployeeName,
+                    kaizenForm.Department ?? "",
+                    kaizenForm.SuggestionDescription,
+                    websiteUrl
+                );
+
+                if (emailSent)
+                {
+                    Console.WriteLine($"Email sent successfully to {engineer.Email}");
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to send email to {engineer.Email}");
+                }
+
+                Console.WriteLine($"=== END EMAIL NOTIFICATION ===");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending email notification: {ex.Message}");
+                // Don't throw the exception to avoid breaking the kaizen submission process
+            }
+        }
+
+        // Send email notification to manager in the department after engineer review
+        private async Task SendManagerEmailNotification(KaizenForm kaizenForm, string engineerName)
+        {
+            try
+            {
+                Console.WriteLine($"=== SENDING MANAGER EMAIL NOTIFICATION ===");
+                Console.WriteLine($"Kaizen No: {kaizenForm.KaizenNo}");
+                Console.WriteLine($"Department: {kaizenForm.Department}");
+                Console.WriteLine($"Engineer: {engineerName}");
+
+                // Find manager in the same department
+                var manager = await _context.Users
+                    .Where(u => u.DepartmentName == kaizenForm.Department && 
+                               u.Role.ToLower() == "manager" && 
+                               !string.IsNullOrEmpty(u.Email))
+                    .FirstOrDefaultAsync();
+
+                if (manager == null)
+                {
+                    Console.WriteLine($"No manager found in department: {kaizenForm.Department}");
+                    return;
+                }
+
+                Console.WriteLine($"Found manager: {manager.EmployeeName} ({manager.Email})");
+
+                // Generate website URL
+                var websiteUrl = $"{Request.Scheme}://{Request.Host}";
+                Console.WriteLine($"Website URL: {websiteUrl}");
+
+                // Send email
+                var emailSent = await _emailService.SendManagerNotificationAsync(
+                    manager.Email ?? "",
+                    kaizenForm.KaizenNo,
+                    kaizenForm.EmployeeName,
+                    kaizenForm.Department ?? "",
+                    engineerName ?? "Engineer",
+                    kaizenForm.Comments,
+                    websiteUrl
+                );
+
+                if (emailSent)
+                {
+                    Console.WriteLine($"Manager email sent successfully to {manager.Email}");
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to send manager email to {manager.Email}");
+                }
+
+                Console.WriteLine($"=== END MANAGER EMAIL NOTIFICATION ===");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending manager email notification: {ex.Message}");
+                // Don't throw the exception to avoid breaking the review submission process
+            }
+        }
+
+        // Send email notification to engineers in specified departments for inter-department implementation
+        private async Task SendInterDepartmentEmailNotifications(KaizenForm kaizenForm, string implementationArea)
+        {
+            try
+            {
+                Console.WriteLine($"=== SENDING INTER-DEPARTMENT EMAIL NOTIFICATIONS ===");
+                Console.WriteLine($"Kaizen No: {kaizenForm.KaizenNo}");
+                Console.WriteLine($"Source Department: {kaizenForm.Department}");
+                Console.WriteLine($"Implementation Area: {implementationArea}");
+
+                if (string.IsNullOrEmpty(implementationArea))
+                {
+                    Console.WriteLine("No implementation area specified, skipping inter-department notifications");
+                    return;
+                }
+
+                // Parse the implementation area to get individual departments
+                var targetDepartments = implementationArea.Split(',')
+                    .Select(d => d.Trim())
+                    .Where(d => !string.IsNullOrEmpty(d) && d != kaizenForm.Department)
+                    .ToList();
+
+                if (!targetDepartments.Any())
+                {
+                    Console.WriteLine("No target departments found (excluding source department)");
+                    return;
+                }
+
+                Console.WriteLine($"Target departments: {string.Join(", ", targetDepartments)}");
+
+                // Generate website URL
+                var websiteUrl = $"{Request.Scheme}://{Request.Host}";
+                Console.WriteLine($"Website URL: {websiteUrl}");
+
+                // Find engineers in each target department
+                foreach (var targetDepartment in targetDepartments)
+                {
+                    var engineers = await _context.Users
+                        .Where(u => u.DepartmentName == targetDepartment && 
+                                   u.Role.ToLower() == "engineer" && 
+                                   !string.IsNullOrEmpty(u.Email))
+                        .ToListAsync();
+
+                    if (!engineers.Any())
+                    {
+                        Console.WriteLine($"No engineers found in department: {targetDepartment}");
+                        continue;
+                    }
+
+                    Console.WriteLine($"Found {engineers.Count} engineers in department: {targetDepartment}");
+
+                    // Send email to each engineer
+                    foreach (var engineer in engineers)
+                    {
+                        var emailSent = await _emailService.SendInterDepartmentNotificationAsync(
+                            engineer.Email ?? "",
+                            kaizenForm.KaizenNo,
+                            kaizenForm.EmployeeName,
+                            kaizenForm.Department ?? "",
+                            targetDepartment,
+                            kaizenForm.SuggestionDescription,
+                            websiteUrl
+                        );
+
+                        if (emailSent)
+                        {
+                            Console.WriteLine($"Inter-department email sent successfully to {engineer.EmployeeName} ({engineer.Email}) in {targetDepartment}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Failed to send inter-department email to {engineer.EmployeeName} ({engineer.Email}) in {targetDepartment}");
+                        }
+                    }
+                }
+
+                Console.WriteLine($"=== END INTER-DEPARTMENT EMAIL NOTIFICATIONS ===");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending inter-department email notifications: {ex.Message}");
+                // Don't throw the exception to avoid breaking the review submission process
+            }
+        }
+
+        // ------------------- ENGINEER FUNCTIONALITY -------------------
+
+        // GET: /Kaizen/InterDeptSuggestions - For engineers to view kaizens from their department
+        [HttpGet]
+        public async Task<IActionResult> InterDeptSuggestions(string searchString, string startDate, string endDate, string category, string engineerStatus, string managerStatus)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow engineers (users with "engineer" in their username)
+            if (!IsEngineerRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                Console.WriteLine($"=== INTERDEPTSUGGESTIONS DEBUG ===");
+                Console.WriteLine($"InterDeptSuggestions called by: {User?.Identity?.Name}");
+                Console.WriteLine($"SearchString: {searchString}, StartDate: {startDate}, EndDate: {endDate}, Category: {category}, EngineerStatus: {engineerStatus}, ManagerStatus: {managerStatus}");
+
+                var query = _context.KaizenForms.AsQueryable();
+
+                // Get current user's department
+                var userDepartment = await GetCurrentUserDepartment();
+                Console.WriteLine($"Current user department: {userDepartment}");
+
+                // Filter by user's department only - this is the key difference from KaizenListEngineer
+                if (!string.IsNullOrEmpty(userDepartment))
+                {
+                    // Handle multiple implementation areas (comma-separated)
+                    query = query.Where(k => 
+                        k.ImplementationArea == userDepartment || 
+                        k.ImplementationArea.StartsWith(userDepartment + ",") ||
+                        k.ImplementationArea.EndsWith("," + userDepartment) ||
+                        k.ImplementationArea.Contains("," + userDepartment + ",")
+                    );
+                    Console.WriteLine($"Filtered by user department (ImplementationArea): {userDepartment}");
+                }
+                else
+                {
+                    Console.WriteLine("No user department found, showing no results");
+                    return View("~/Views/Kaizen/InterDeptSuggestions.cshtml", new List<KaizenForm>());
+                }
+
+                // Engineers can see all kaizens in their department, including pending ones
+                Console.WriteLine("Engineers can see all kaizens in their department including pending ones");
+
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    var searchLower = searchString.ToLower();
+                    query = query.Where(k => 
+                        k.KaizenNo.ToLower().Contains(searchLower) ||
+                        k.EmployeeName.ToLower().Contains(searchLower) ||
+                        k.EmployeeNo.ToLower().Contains(searchLower)
+                    );
+                    Console.WriteLine($"Applied search filter for: {searchString}");
+                }
+
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                    Console.WriteLine($"Applied start date filter: {startDate}");
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                    Console.WriteLine($"Applied end date filter: {endDate}");
+                }
+
+                // Filter by category
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                    Console.WriteLine($"Applied category filter: {category}");
+                }
+
+                // Apply engineer status filter
+                if (!string.IsNullOrEmpty(engineerStatus))
+                {
+                    if (engineerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.EngineerStatus == null || k.EngineerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.EngineerStatus == engineerStatus);
+                    }
+                    Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
+                }
+
+                // Apply manager status filter
+                if (!string.IsNullOrEmpty(managerStatus))
+                {
+                    if (managerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.ManagerStatus == null || k.ManagerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.ManagerStatus == managerStatus);
+                    }
+                    Console.WriteLine($"Applied manager status filter: {managerStatus}");
+                }
+
+                var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
+                Console.WriteLine($"InterDeptSuggestions returned {kaizens.Count} results (all kaizens in department)");
+                
+                // Debug: Show sample results
+                foreach (var k in kaizens.Take(3))
+                {
+                    Console.WriteLine($"  - {k.KaizenNo}: {k.EmployeeName} ({k.Department})");
+                    Console.WriteLine($"    EngineerStatus: '{k.EngineerStatus}'");
+                    Console.WriteLine($"    Category: '{k.Category}'");
+                    Console.WriteLine($"    Comments: '{k.Comments}'");
+                    Console.WriteLine($"    CanImplementInOtherFields: '{k.CanImplementInOtherFields}'");
+                }
+                
+                Console.WriteLine($"=== END INTERDEPTSUGGESTIONS DEBUG ===");
+
+                return View("~/Views/Kaizen/InterDeptSuggestions.cshtml", kaizens);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in InterDeptSuggestions: {ex.Message}");
+                return View("~/Views/Kaizen/InterDeptSuggestions.cshtml", new List<KaizenForm>());
+            }
+        }
+
+        // GET: /Kaizen/KaizenListEngineer - For users with "engineer" in their username
         [HttpGet]
         public async Task<IActionResult> KaizenListEngineer(string searchString, string startDate, string endDate, string category, string engineerStatus, string managerStatus)
         {
@@ -3402,6 +3768,16 @@ namespace KaizenWebApp.Controllers
 
                 await _context.SaveChangesAsync();
 
+                // Send email notification to manager in the same department
+                await SendManagerEmailNotification(kaizen, approvedBy?.Trim());
+
+                // Send email notifications to engineers in specified departments for inter-department implementation
+                if (!string.IsNullOrEmpty(implementationArea?.Trim()) && 
+                    canImplementInOtherFields?.ToLower() == "yes")
+                {
+                    await SendInterDepartmentEmailNotifications(kaizen, implementationArea.Trim());
+                }
+
                 return Json(new { success = true, message = "Review saved successfully!" });
             }
             catch (Exception ex)
@@ -4526,11 +4902,12 @@ namespace KaizenWebApp.Controllers
             {
                 // Get current user information
                 var username = User?.Identity?.Name;
-                var currentUser = await GetUserByEmployeeNumberFromUsernameAsync();
+                var currentUser = await GetCurrentUserAsync();
                 var currentUserDepartment = await GetCurrentUserDepartment();
 
                 if (currentUser == null || string.IsNullOrEmpty(currentUserDepartment))
                 {
+                    Console.WriteLine($"UserDashboard - User not found or no department. Username: {username}, CurrentUser: {currentUser?.UserName}, Department: {currentUserDepartment}");
                     return RedirectToAction("Kaizenform");
                 }
 
@@ -4597,6 +4974,24 @@ namespace KaizenWebApp.Controllers
                     .Where(k => k.CostSaving.HasValue && k.CostSaving > 0)
                     .Sum(k => k.CostSaving.Value);
 
+                // Calculate additional statistics for enhanced dashboard
+                var fullyImplementedKaizens = currentMonthKaizens.Count(k => 
+                    k.DateImplemented.HasValue);
+                var bothApprovedKaizens = currentMonthKaizens.Count(k => 
+                    k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
+                
+                // UserContributionToDepartment is now a computed property in the view model
+
+                // Get previous month target for comparison
+                var previousMonthTarget = await _context.DepartmentTargets
+                    .Where(dt => dt.Department == currentUserDepartment && 
+                                dt.Year == previousYear && 
+                                dt.Month == previousMonth)
+                    .FirstOrDefaultAsync();
+                var previousMonthTargetCount = previousMonthTarget?.TargetCount ?? 0;
+                var previousMonthAchievement = previousMonthTargetCount > 0 ? 
+                    (double)previousMonthKaizens.Count / previousMonthTargetCount * 100 : 0;
+
                 // Create dashboard view model
                 var dashboardViewModel = new UserDashboardViewModel
                 {
@@ -4616,7 +5011,12 @@ namespace KaizenWebApp.Controllers
                     EmployeeNumber = currentUser.EmployeeNumber,
                     Department = currentUserDepartment,
                     CurrentMonth = currentMonth,
-                    CurrentYear = currentYear
+                    CurrentYear = currentYear,
+                    // Additional properties for enhanced dashboard
+                    FullyImplementedKaizens = fullyImplementedKaizens,
+                    BothApprovedKaizens = bothApprovedKaizens,
+                    PreviousMonthTarget = previousMonthTargetCount,
+                    PreviousMonthAchievement = previousMonthAchievement
                 };
 
                 return View("~/Views/Kaizen/UserDashboard.cshtml", dashboardViewModel);
@@ -5121,7 +5521,7 @@ namespace KaizenWebApp.Controllers
 
                 _context.SaveChanges();
 
-                TempData["SuccessMessage"] = "Award assigned successfully!";
+                TempData["SubmissionSuccessMessage"] = "Award assigned successfully!";
                 return RedirectToAction("AwardTrackingManager");
             }
             catch (Exception ex)
@@ -5631,7 +6031,7 @@ namespace KaizenWebApp.Controllers
 
             _context.SaveChanges();
 
-            TempData["SuccessMessage"] = "User updated successfully!";
+            TempData["SubmissionSuccessMessage"] = "User updated successfully!";
             return RedirectToAction("SupervisorUserManagement");
         }
 
@@ -5666,6 +6066,91 @@ namespace KaizenWebApp.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = "Error deleting user: " + ex.Message });
+            }
+        }
+
+        // GET: /Kaizen/TestEmail - Test endpoint to verify email functionality
+        [HttpGet]
+        public async Task<IActionResult> TestEmail()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow managers and engineers to test email functionality
+            if (IsUserRole())
+            {
+                return Json(new { success = false, message = "Access denied. Only managers and engineers can test email functionality." });
+            }
+
+            try
+            {
+                Console.WriteLine("=== TESTING EMAIL FUNCTIONALITY ===");
+                
+                // Get current user's department
+                var userDepartment = await GetCurrentUserDepartment();
+                Console.WriteLine($"Current user department: {userDepartment}");
+
+                if (string.IsNullOrEmpty(userDepartment))
+                {
+                    return Json(new { success = false, message = "No department found for current user." });
+                }
+
+                // Find engineer in the same department
+                var engineer = await _context.Users
+                    .Where(u => u.DepartmentName == userDepartment && 
+                               u.Role.ToLower() == "engineer" && 
+                               !string.IsNullOrEmpty(u.Email))
+                    .FirstOrDefaultAsync();
+
+                if (engineer == null)
+                {
+                    return Json(new { success = false, message = $"No engineer found in department: {userDepartment}" });
+                }
+
+                Console.WriteLine($"Found engineer: {engineer.EmployeeName} ({engineer.Email})");
+
+                // Generate website URL
+                var websiteUrl = $"{Request.Scheme}://{Request.Host}";
+                Console.WriteLine($"Website URL: {websiteUrl}");
+
+                // Send test email
+                var emailSent = await _emailService.SendKaizenNotificationAsync(
+                    engineer.Email ?? "",
+                    "TEST-KAIZEN-001",
+                    "Test Employee",
+                    userDepartment,
+                    "This is a test kaizen suggestion to verify email functionality.",
+                    websiteUrl
+                );
+
+                if (emailSent)
+                {
+                    Console.WriteLine($"Test email sent successfully to {engineer.Email}");
+                    return Json(new { 
+                        success = true, 
+                        message = $"Test email sent successfully to {engineer.Email}",
+                        engineerEmail = engineer.Email,
+                        department = userDepartment
+                    });
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to send test email to {engineer.Email}");
+                    return Json(new { 
+                        success = false, 
+                        message = $"Failed to send test email to {engineer.Email}",
+                        engineerEmail = engineer.Email,
+                        department = userDepartment
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in TestEmail: {ex.Message}");
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
         }
     }

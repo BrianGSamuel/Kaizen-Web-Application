@@ -33,6 +33,12 @@ namespace KaizenWebApp.ViewModels
         public int CurrentMonth { get; set; }
         public int CurrentYear { get; set; }
 
+        // Additional properties for enhanced dashboard
+        public int FullyImplementedKaizens { get; set; }
+        public int BothApprovedKaizens { get; set; }
+        public int PreviousMonthTarget { get; set; }
+        public double PreviousMonthAchievement { get; set; }
+
         // Helper properties for display
         public string CurrentMonthName => System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(CurrentMonth);
         public string PreviousMonthName

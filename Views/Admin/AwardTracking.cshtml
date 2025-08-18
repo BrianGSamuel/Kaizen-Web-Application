@@ -92,14 +92,7 @@
                     </div>
                 </div>
 
-                @if (TempData["SuccessMessage"] != null)
-                {
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle me-2"></i>
-                        @TempData["SuccessMessage"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                }
+                <!-- Messages now handled by toast system -->
 
                 @if (!Model.Any())
                 {
@@ -310,7 +303,7 @@
             
             if (!awardPrice || !signature) {
                 e.preventDefault();
-                alert('Please fill in all required fields.');
+                showToast('Please fill in all required fields.', 'error');
                 return false;
             }
         });
@@ -338,7 +331,7 @@
                 
                 if (startDateInput.value && endDateInput.value && startDate > endDate) {
                     e.preventDefault();
-                    alert('Start date cannot be after end date.');
+                    showToast('Start date cannot be after end date.', 'error');
                     return false;
                 }
             });

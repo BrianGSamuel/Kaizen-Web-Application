@@ -405,7 +405,7 @@
                 
                 if (startDateInput.value && endDateInput.value && startDate > endDate) {
                     e.preventDefault();
-                    alert('Start date cannot be after end date.');
+                    showToast('Start date cannot be after end date.', 'error');
                     return false;
                 }
             });

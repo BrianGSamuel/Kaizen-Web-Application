@@ -728,6 +728,44 @@
         <i class="fas fa-bars"></i>
     </button>
 
+    <!-- Toast Notification System -->
+    @if (TempData["Success"] != null)
+    {
+        <div data-tempdata="success" style="display: none;">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div data-tempdata="error" style="display: none;">@TempData["Error"]</div>
+    }
+    @if (TempData["AlertMessage"] != null)
+    {
+        <div data-tempdata="alert" style="display: none;">@TempData["AlertMessage"]</div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div data-tempdata="success" style="display: none;">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div data-tempdata="error" style="display: none;">@TempData["ErrorMessage"]</div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div data-tempdata="info" style="display: none;">@TempData["Info"]</div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div data-tempdata="warning" style="display: none;">@TempData["Warning"]</div>
+    }
+    @if (TempData["LoginSuccessMessage"] != null)
+    {
+        <div data-tempdata="login-success" style="display: none;">@TempData["LoginSuccessMessage"]</div>
+    }
+    @if (TempData["SubmissionSuccessMessage"] != null)
+    {
+        <div data-tempdata="submission-success" style="display: none;">@TempData["SubmissionSuccessMessage"]</div>
+    }
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

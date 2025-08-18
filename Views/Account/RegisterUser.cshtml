@@ -30,7 +30,7 @@
         </div>
     }
 
-    <form asp-action="RegisterUser" method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
+    <form asp-action="RegisterUser" method="post" class="needs-validation" novalidate>
         <!-- Hidden field for Role - always "User" for supervisor registrations -->
         <input type="hidden" asp-for="Role" value="User" />
         <div class="row">
@@ -101,20 +101,6 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6 mb-3">
-                <label asp-for="EmployeeImage" class="form-label">
-                    <i class="fas fa-image me-1"></i>Employee Image
-                </label>
-                <input asp-for="EmployeeImage" type="file" class="form-control" accept="image/*" />
-                <span asp-validation-for="EmployeeImage" class="text-danger"></span>
-                <div class="invalid-feedback">
-                    Please select an employee image.
-                </div>
-                <small class="form-text text-muted">
-                    <i class="fas fa-info-circle me-1"></i>Upload employee photo (JPG, PNG, JPEG)
-                </small>
-            </div>
-
             <div class="col-md-6 mb-3">
                 <div class="form-group">
                     <label class="form-label">
@@ -210,6 +196,8 @@
                 bsAlert.close();
             });
         }, 5000);
+
+
     </script>
 }
 

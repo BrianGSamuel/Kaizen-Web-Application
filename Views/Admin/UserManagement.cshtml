@@ -6,9 +6,11 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">User Management</h2>
-    <a asp-controller="Account" asp-action="RegisterAdmin" class="btn btn-admin">
-        <i class="fas fa-user-plus me-2"></i>Add New User
-    </a>
+    <div>
+        <a asp-controller="Account" asp-action="RegisterAdmin" class="btn btn-admin">
+            <i class="fas fa-user-plus me-2"></i>Add New User
+        </a>
+    </div>
 </div>
 
 @if (TempData["SuccessMessage"] != null)
@@ -20,6 +22,7 @@
 }
 
 <div class="admin-card">
+    @Html.AntiForgeryToken()
     <div class="admin-card-header">
         <h5 class="admin-card-title">
             <i class="fas fa-users me-2"></i>All Users
@@ -31,19 +34,22 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Department/Name</th>
                     <th>Username</th>
+                    <th>Department/Name</th>
+                    <th>Plant</th>
                     <th>Role</th>
+                    <th>Employee Name</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var user in Model)
                 {
-                    <tr>
+                    <tr data-user-id="@user.Id">
                         <td>@user.Id</td>
-                        <td>@user.DepartmentName</td>
                         <td>@user.UserName</td>
+                        <td>@user.DepartmentName</td>
+                        <td>@user.Plant</td>
                         <td>
                             @{
                                 var role = user.Role ?? "User";
@@ -56,6 +62,7 @@
                             }
                             <span class="badge bg-primary">@roleDisplay</span>
                         </td>
+                        <td>@(user.EmployeeName ?? "Not specified")</td>
                         <td>
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-sm btn-outline-primary" 
@@ -100,19 +107,7 @@
     </div>
 </div>
 
-<!-- Loading Modal -->
-<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-body text-center">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2 mb-0">Loading...</p>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <script>
     function viewUser(userId) {
@@ -140,11 +135,27 @@
                                     </tr>
                                     <tr>
                                         <td><strong>Department/Name:</strong></td>
-                                        <td>${user.departmentName}</td>
+                                        <td>${user.departmentName || 'Not specified'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Plant:</strong></td>
+                                        <td>${user.plant || 'Not specified'}</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Role:</strong></td>
                                         <td><span class="badge bg-primary">${user.role}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Employee Name:</strong></td>
+                                        <td>${user.employeeName || 'Not specified'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Employee Number:</strong></td>
+                                        <td>${user.employeeNumber || 'Not specified'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Employee Photo Path:</strong></td>
+                                        <td>${user.employeePhotoPath || 'Not specified'}</td>
                                     </tr>
                                 </table>
                             </div>
@@ -168,33 +179,59 @@
 
     function deleteUser(userId, username) {
         if (confirm(`Are you sure you want to delete user: ${username}?\n\nThis action cannot be undone.`)) {
-            // Show loading modal
-            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-            loadingModal.show();
+            // Get the anti-forgery token
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
             
-            // Delete user via AJAX
+            // Create form data with anti-forgery token
+            const formData = new FormData();
+            if (token) {
+                formData.append('__RequestVerificationToken', token);
+            }
+            
             fetch(`/Admin/DeleteUser/${userId}`, {
                 method: 'POST',
+                body: formData,
                 headers: {
-                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                loadingModal.hide();
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 
-                if (data.success) {
-                    alert('User deleted successfully!');
-                    location.reload(); // Refresh the page to update the table
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
                 } else {
-                    alert('Error: ' + data.message);
+                    throw new Error('Response is not JSON');
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    // Show success toast message
+                    showToast(data.message, 'success');
+                    
+                    // Remove the row from the table
+                    const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+                    if (row) {
+                        row.remove();
+                    } else {
+                        location.reload();
+                    }
+                } else {
+                    // Show error toast message
+                    showToast(`Error: ${data.message}`, 'error');
                 }
             })
             .catch(error => {
-                loadingModal.hide();
-                console.error('Error:', error);
-                alert('An error occurred while deleting the user.');
+                console.error('Delete error:', error);
+                
+                // Show error toast message
+                showToast(`An error occurred while deleting the user: ${error.message}`, 'error');
             });
         }
     }
+
+
 </script> 

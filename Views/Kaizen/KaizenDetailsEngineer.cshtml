@@ -366,6 +366,47 @@
         color: white;
     }
 
+         /* Suggestions container styles */
+     .suggestions-container {
+         position: absolute;
+         top: 100%;
+         left: 0;
+         right: 0;
+         background: white;
+         border: 1px solid #dee2e6;
+         border-top: none;
+         border-radius: 0 0 4px 4px;
+         max-height: 200px;
+         overflow-y: auto;
+         z-index: 1000;
+         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+     }
+ 
+     .suggestion-item {
+         padding: 8px 12px;
+         cursor: pointer;
+         border-bottom: 1px solid #f8f9fa;
+         transition: background-color 0.2s ease;
+     }
+ 
+     .suggestion-item:hover {
+         background-color: #f8f9fa;
+     }
+ 
+     .suggestion-item.selected {
+         background-color: #007bff;
+         color: white;
+     }
+ 
+     .suggestion-item:last-child {
+         border-bottom: none;
+     }
+ 
+     /* Position the input field container relatively for absolute positioning of suggestions */
+     #implementationAreaField {
+         position: relative;
+     }
+
     /* Responsive Design */
     @@media (max-width: 768px) {
         .kaizen-details-container {
@@ -870,7 +911,9 @@
                             <label for="enhancedEditImplementationArea" class="form-label">
                                 <i class="fas fa-map-marker-alt me-2"></i>Specify Area
                             </label>
-                            <input type="text" id="enhancedEditImplementationArea" name="ImplementationArea" class="form-control" placeholder="Enter the specific area where this can be implemented..." />
+                            <input type="text" id="enhancedEditImplementationArea" name="ImplementationArea" class="form-control" placeholder="Type departments separated by commas (e.g., HR, IT, Admin)" />
+                            <div id="suggestionsContainer" class="suggestions-container" style="display: none;"></div>
+                            <small class="form-text text-muted">Type department names and separate multiple departments with commas</small>
                         </div>
                     </div>
                 </form>
@@ -960,6 +1003,160 @@
 
 <script>
     let currentKaizenId = null;
+    
+         // Load departments for autocomplete
+     let departmentsLoaded = false;
+     let allDepartments = [];
+     
+     function loadDepartments() {
+         if (departmentsLoaded) return;
+         
+         fetch('/Kaizen/GetDepartments')
+             .then(response => response.json())
+             .then(data => {
+                 if (data.success) {
+                     allDepartments = data.departments;
+                     departmentsLoaded = true;
+                     
+                     // Initialize autocomplete for the input field
+                     initializeAutocomplete();
+                 } else {
+                     console.error('Error loading departments:', data.message);
+                 }
+             })
+             .catch(error => {
+                 console.error('Error loading departments:', error);
+             });
+     }
+    
+         // Load departments when page loads
+     document.addEventListener('DOMContentLoaded', function() {
+         loadDepartments();
+     });
+ 
+     function initializeAutocomplete() {
+         const input = document.getElementById('enhancedEditImplementationArea');
+         const suggestionsContainer = document.getElementById('suggestionsContainer');
+         
+         if (!input || !suggestionsContainer) return;
+         
+         let selectedIndex = -1;
+         
+         input.addEventListener('input', function() {
+             const value = this.value;
+             const cursorPosition = this.selectionStart;
+             
+             // Get the current word being typed (before the cursor)
+             const beforeCursor = value.substring(0, cursorPosition);
+             const words = beforeCursor.split(',').map(word => word.trim());
+             const currentWord = words[words.length - 1];
+             
+             if (currentWord.length >= 1) {
+                 // Filter departments that match the current word
+                 const suggestions = allDepartments.filter(dept => 
+                     dept.toLowerCase().includes(currentWord.toLowerCase()) &&
+                     !words.slice(0, -1).includes(dept) // Don't suggest already selected departments
+                 );
+                 
+                 if (suggestions.length > 0) {
+                     showSuggestions(suggestions, currentWord);
+                 } else {
+                     hideSuggestions();
+                 }
+             } else {
+                 hideSuggestions();
+             }
+         });
+         
+         input.addEventListener('keydown', function(e) {
+             const suggestions = suggestionsContainer.querySelectorAll('.suggestion-item');
+             
+             if (e.key === 'ArrowDown') {
+                 e.preventDefault();
+                 selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
+                 updateSelectedSuggestion(suggestions);
+             } else if (e.key === 'ArrowUp') {
+                 e.preventDefault();
+                 selectedIndex = Math.max(selectedIndex - 1, -1);
+                 updateSelectedSuggestion(suggestions);
+             } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                 e.preventDefault();
+                 selectSuggestion(suggestions[selectedIndex]);
+             } else if (e.key === 'Escape') {
+                 hideSuggestions();
+                 selectedIndex = -1;
+             }
+         });
+         
+         // Hide suggestions when clicking outside
+         document.addEventListener('click', function(e) {
+             if (!input.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                 hideSuggestions();
+                 selectedIndex = -1;
+             }
+         });
+     }
+     
+     function showSuggestions(suggestions, currentWord) {
+         const suggestionsContainer = document.getElementById('suggestionsContainer');
+         suggestionsContainer.innerHTML = '';
+         
+         suggestions.forEach(suggestion => {
+             const item = document.createElement('div');
+             item.className = 'suggestion-item';
+             item.textContent = suggestion;
+             
+             item.addEventListener('click', function() {
+                 selectSuggestion(this);
+             });
+             
+             suggestionsContainer.appendChild(item);
+         });
+         
+         suggestionsContainer.style.display = 'block';
+     }
+     
+     function hideSuggestions() {
+         const suggestionsContainer = document.getElementById('suggestionsContainer');
+         suggestionsContainer.style.display = 'none';
+     }
+     
+     function updateSelectedSuggestion(suggestions) {
+         suggestions.forEach((item, index) => {
+             if (index === selectedIndex) {
+                 item.classList.add('selected');
+             } else {
+                 item.classList.remove('selected');
+             }
+         });
+     }
+     
+     function selectSuggestion(suggestionElement) {
+         const input = document.getElementById('enhancedEditImplementationArea');
+         const value = input.value;
+         const cursorPosition = input.selectionStart;
+         
+         // Get the current word being typed (before the cursor)
+         const beforeCursor = value.substring(0, cursorPosition);
+         const afterCursor = value.substring(cursorPosition);
+         const words = beforeCursor.split(',').map(word => word.trim());
+         const currentWord = words[words.length - 1];
+         
+         // Replace the current word with the selected suggestion
+         const newBeforeCursor = beforeCursor.substring(0, beforeCursor.lastIndexOf(currentWord)) + suggestionElement.textContent;
+         const newValue = newBeforeCursor + afterCursor;
+         
+         input.value = newValue;
+         
+         // Position cursor after the selected suggestion
+         const newCursorPosition = newBeforeCursor.length;
+         input.setSelectionRange(newCursorPosition, newCursorPosition);
+         
+         hideSuggestions();
+         
+         // Trigger input event to update suggestions for the next word
+         input.dispatchEvent(new Event('input'));
+     }
 
     function editKaizen(id) {
         currentKaizenId = id;
@@ -984,12 +1181,12 @@
                     const modal = new bootstrap.Modal(document.getElementById('editKaizenModal'));
                     modal.show();
                 } else {
-                    alert('Error: ' + data.message);
+                    showToast('Error: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while loading the kaizen data.');
+                showToast('An error occurred while loading the kaizen data.', 'error');
             });
     }
 
@@ -1009,22 +1206,28 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message);
+                showSubmissionToast(data.message, 'success');
                 bootstrap.Modal.getInstance(document.getElementById('editKaizenModal')).hide();
                 // Reload the page to show updated data
                 location.reload();
             } else {
-                alert('Error: ' + data.message);
+                showToast('Error: ' + data.message, 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while saving the changes.');
+            showToast('An error occurred while saving the changes.', 'error');
         });
     }
 
-    function executiveFilling(id) {
-        currentKaizenId = id;
+         function executiveFilling(id) {
+         currentKaizenId = id;
+         
+         // Load departments if not already loaded
+         loadDepartments();
+         
+         // Initialize autocomplete functionality
+         initializeAutocomplete();
         
         // Fetch kaizen data for enhanced edit
         fetch(`/Kaizen/Edit/${id}`)
@@ -1057,27 +1260,30 @@
                     document.getElementById('enhancedEditApprovedBy').value = data.data.engineerApprovedBy || '';
                     document.getElementById('enhancedEditComments').value = data.data.comments || '';
 
-                    // Set implementation area fields
-                    const canImplement = data.data.canImplementInOtherFields || '';
-                    if (canImplement === 'Yes') {
-                        document.getElementById('enhanced_implementYes').checked = true;
-                        document.getElementById('implementationAreaField').style.display = 'block';
-                        document.getElementById('enhancedEditImplementationArea').value = data.data.implementationArea || '';
-                    } else if (canImplement === 'No') {
-                        document.getElementById('enhanced_implementNo').checked = true;
-                        document.getElementById('implementationAreaField').style.display = 'none';
-                    }
+                                         // Set implementation area fields
+                     const canImplement = data.data.canImplementInOtherFields || '';
+                     if (canImplement === 'Yes') {
+                         document.getElementById('enhanced_implementYes').checked = true;
+                         document.getElementById('implementationAreaField').style.display = 'block';
+                         
+                         // Set the implementation area text input
+                         const implementationArea = data.data.implementationArea || '';
+                         document.getElementById('enhancedEditImplementationArea').value = implementationArea;
+                     } else if (canImplement === 'No') {
+                         document.getElementById('enhanced_implementNo').checked = true;
+                         document.getElementById('implementationAreaField').style.display = 'none';
+                     }
 
                     // Show modal
                     const modal = new bootstrap.Modal(document.getElementById('enhancedEditModal'));
                     modal.show();
                 } else {
-                    alert('Error: ' + data.message);
+                    showToast('Error: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while loading the kaizen data.');
+                showToast('An error occurred while loading the kaizen data.', 'error');
             });
     }
 
@@ -1091,24 +1297,24 @@
         const selectedCategories = document.querySelectorAll('#enhancedEditModal input[name="Category"]:checked');
         
         if (!approvedBy) {
-            alert('Please enter your name for signature.');
+            showToast('Please enter your name for signature.', 'error');
             document.getElementById('enhancedEditApprovedBy').focus();
             return;
         }
         
         if (!comments) {
-            alert('Please provide comments and recommendations.');
+            showToast('Please provide comments and recommendations.', 'error');
             document.getElementById('enhancedEditComments').focus();
             return;
         }
 
         if (selectedCategories.length === 0) {
-            alert('Please select at least one recommended category.');
+            showToast('Please select at least one recommended category.', 'error');
             return;
         }
 
         if (!canImplementInOtherFields) {
-            alert('Please select whether this suggestion can be implemented in other fields.');
+            showToast('Please select whether this suggestion can be implemented in other fields.', 'error');
             return;
         }
 
@@ -1130,10 +1336,10 @@
         formData.append('Comments', comments);
         formData.append('CanImplementInOtherFields', canImplementInOtherFields);
         
-        if (canImplementInOtherFields === 'Yes') {
-            const implementationArea = document.getElementById('enhancedEditImplementationArea').value.trim();
-            formData.append('ImplementationArea', implementationArea);
-        }
+                 if (canImplementInOtherFields === 'Yes') {
+             const implementationArea = document.getElementById('enhancedEditImplementationArea').value.trim();
+             formData.append('ImplementationArea', implementationArea);
+         }
         
         formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
 
@@ -1145,16 +1351,16 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Executive review saved successfully!');
+                                    showSubmissionToast('Executive review saved successfully!', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('enhancedEditModal')).hide();
                 location.reload();
             } else {
-                alert('Error: ' + data.message);
+                showToast('Error: ' + data.message, 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while saving the executive review.');
+            showToast('An error occurred while saving the executive review.', 'error');
         })
         .finally(() => {
             saveBtn.innerHTML = originalText;
@@ -1184,7 +1390,7 @@
                 }
                 modal.hide();
             } else {
-                alert('Please enter your name to confirm the action.');
+                showToast('Please enter your name to confirm the action.', 'error');
                 document.getElementById('userNameInput').focus();
             }
         };
@@ -1208,16 +1414,16 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Kaizen suggestion approved successfully!');
+                    showSubmissionToast('Kaizen suggestion approved successfully!', 'success');
                     bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
                     location.reload();
                 } else {
-                    alert('Error: ' + data.message);
+                    showToast('Error: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while approving the suggestion.');
+                showToast('An error occurred while approving the suggestion.', 'error');
             });
         }
     }
@@ -1236,29 +1442,31 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Kaizen suggestion rejected successfully!');
+                    showSubmissionToast('Kaizen suggestion rejected successfully!', 'success');
                     bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
                     location.reload();
                 } else {
-                    alert('Error: ' + data.message);
+                    showToast('Error: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while rejecting the suggestion.');
+                showToast('An error occurred while rejecting the suggestion.', 'error');
             });
         }
     }
 
-    function toggleEnhancedImplementationArea() {
-        const implementYes = document.getElementById('enhanced_implementYes');
-        const implementationAreaField = document.getElementById('implementationAreaField');
-        
-        if (implementYes.checked) {
-            implementationAreaField.style.display = 'block';
-        } else {
-            implementationAreaField.style.display = 'none';
-            document.getElementById('enhancedEditImplementationArea').value = '';
-        }
-    }
+         function toggleEnhancedImplementationArea() {
+         const implementYes = document.getElementById('enhanced_implementYes');
+         const implementationAreaField = document.getElementById('implementationAreaField');
+         const implementationAreaInput = document.getElementById('enhancedEditImplementationArea');
+         
+         if (implementYes.checked) {
+             implementationAreaField.style.display = 'block';
+         } else {
+             implementationAreaField.style.display = 'none';
+             // Clear the input field
+             implementationAreaInput.value = '';
+         }
+     }
 </script>

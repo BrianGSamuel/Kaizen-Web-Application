@@ -156,9 +156,18 @@
         box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
         text-decoration: none;
     }
+
+
 </style>
 
+<!-- Login Success Toast Message -->
+@if (TempData["LoginSuccessMessage"] != null)
+{
+    <div data-tempdata="login-success" style="display: none;">@TempData["LoginSuccessMessage"]</div>
+}
+
 <div class="container">
+
     <!-- Welcome Section -->
     <div class="welcome-section">
         <div class="row align-items-center">
@@ -298,3 +307,5 @@
         </div>
     </div>
 </div>
+
+

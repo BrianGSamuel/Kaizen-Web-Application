@@ -115,14 +115,14 @@
                 // Only validate if password is provided
                 if (password && confirmPassword !== password) {
                     e.preventDefault();
-                    alert('Passwords do not match.');
+                    showToast('Passwords do not match.', 'error');
                     return false;
                 }
                 
                 // If password is provided, confirm password is required
                 if (password && !confirmPassword) {
                     e.preventDefault();
-                    alert('Please confirm your password.');
+                    showToast('Please confirm your password.', 'error');
                     return false;
                 }
             });

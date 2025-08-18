@@ -36,6 +36,7 @@ namespace KaizenWebApp.Models
         [Display(Name = "Employee Number")]
         public string EmployeeNo { get; set; }
 
+        [Required(ErrorMessage = "Employee photo is required.")]
         [Display(Name = "Employee Photo")]
         public IFormFile? EmployeePhoto { get; set; }
 

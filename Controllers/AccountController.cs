@@ -1,7 +1,6 @@
 ﻿using KaizenWebApp.Data;
 using KaizenWebApp.Models;
 using KaizenWebApp.ViewModels;
-using KaizenWebApp.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -15,12 +14,10 @@ namespace KaizenWebApp.Controllers
     public class AccountController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly IFileService _fileService;
 
-        public AccountController(AppDbContext context, IFileService fileService)
+        public AccountController(AppDbContext context)
         {
             _context = context;
-            _fileService = fileService;
         }
 
         // Method to check if request is direct URL access and end session if so
@@ -102,6 +99,9 @@ namespace KaizenWebApp.Controllers
             var principal = new ClaimsPrincipal(identity);
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            // Add persistent login success message
+            TempData["LoginSuccessMessage"] = $"Welcome back, {user.EmployeeName}! You have successfully logged in.";
 
             // Check user role to determine navigation
             Console.WriteLine($"User logged in: {user.UserName} with role: {user.Role}, redirecting...");
@@ -195,10 +195,22 @@ namespace KaizenWebApp.Controllers
                 return RedirectToAction("AccessDenied", "Home");
             }
 
+            // Additional validation for Engineer and Manager roles
+            if ((model.Role == "Engineer" || model.Role == "Manager") && string.IsNullOrEmpty(model.Email))
+            {
+                ModelState.AddModelError("Email", "Email is required for Engineer and Manager roles.");
+            }
+            
+            // Clear email validation errors for non-Engineer/Manager roles
+            if (model.Role != "Engineer" && model.Role != "Manager")
+            {
+                ModelState.Remove("Email");
+            }
+
             if (!ModelState.IsValid)
                 return View("RegisterAdmin", model);
 
-            Console.WriteLine($"Admin registration attempt - Username: {model.Username}, Employee Name: {model.EmployeeName}, Employee Number: {model.EmployeeNumber}, Department: {model.Department}, Plant: {model.Plant}, Role: {model.Role}");
+            Console.WriteLine($"Admin registration attempt - Username: {model.Username}, Employee Name: {model.EmployeeName}, Employee Number: {model.EmployeeNumber}, Department: {model.Department}, Plant: {model.Plant}, Role: {model.Role}, Email: {model.Email}");
 
             if (_context.Users.Any(u => u.UserName == model.Username))
             {
@@ -214,7 +226,8 @@ namespace KaizenWebApp.Controllers
                 DepartmentName = model.Department,
                 Plant = model.Plant,
                 Password = model.Password, // ⚠ Store securely using hashing in production
-                Role = model.Role
+                Role = model.Role,
+                Email = model.Email
             };
 
             Console.WriteLine($"Creating user - Username: {user.UserName}, Employee Name: {user.EmployeeName}, Employee Number: {user.EmployeeNumber}, Department: {user.DepartmentName}, Plant: {user.Plant}, Role: {user.Role}");
@@ -327,7 +340,7 @@ namespace KaizenWebApp.Controllers
             }
             
             // Access granted for usernames without "user"
-            TempData["Success"] = "Access Granted: You can change your password.";
+            TempData["SubmissionSuccessMessage"] = "Access Granted: You can change your password.";
             return View(new ChangePasswordViewModel { Username = username });
         }
 
@@ -378,7 +391,7 @@ namespace KaizenWebApp.Controllers
             user.Password = model.NewPassword; // ⚠ Use hashing in production
             _context.SaveChanges();
 
-            TempData["Success"] = "Password changed successfully!";
+            TempData["SubmissionSuccessMessage"] = "Password changed successfully!";
             
             // Redirect based on user role
             if (username.ToLower().Contains("user"))
@@ -473,7 +486,7 @@ namespace KaizenWebApp.Controllers
             user.Password = model.NewPassword; // ⚠ Use hashing in production
             _context.SaveChanges();
 
-            TempData["Success"] = "Password changed successfully!";
+            TempData["SubmissionSuccessMessage"] = "Password changed successfully!";
             return RedirectToAction("KaizenListManager", "Kaizen");
         }
 
@@ -531,23 +544,7 @@ namespace KaizenWebApp.Controllers
                 return View("RegisterUser", model);
             }
 
-            // Handle employee image upload
-            string? employeePhotoPath = null;
-            if (model.EmployeeImage != null)
-            {
-                if (!await _fileService.IsValidImageAsync(model.EmployeeImage))
-                {
-                    ModelState.AddModelError("EmployeeImage", "Please upload a valid image file (JPG, PNG, JPEG, WEBP) with size less than 5MB.");
-                    return View("RegisterUser", model);
-                }
 
-                employeePhotoPath = await _fileService.SaveImageAsync(model.EmployeeImage, "uploads");
-                if (string.IsNullOrEmpty(employeePhotoPath))
-                {
-                    ModelState.AddModelError("EmployeeImage", "Failed to upload employee image. Please try again.");
-                    return View("RegisterUser", model);
-                }
-            }
 
             var newUser = new Users
             {
@@ -557,18 +554,17 @@ namespace KaizenWebApp.Controllers
                 DepartmentName = model.Department,
                 Plant = model.Plant,
                 Password = model.Password, // ⚠ Store securely using hashing in production
-                Role = model.Role,
-                EmployeePhotoPath = employeePhotoPath
+                Role = model.Role
             };
 
-            Console.WriteLine($"Creating user - Username: {newUser.UserName}, Department: {newUser.DepartmentName}, Plant: {newUser.Plant}, Role: {newUser.Role}, EmployeePhotoPath: {newUser.EmployeePhotoPath}");
+            Console.WriteLine($"Creating user - Username: {newUser.UserName}, Department: {newUser.DepartmentName}, Plant: {newUser.Plant}, Role: {newUser.Role}");
 
             _context.Users.Add(newUser);
             _context.SaveChanges();
 
             Console.WriteLine($"User saved with ID: {newUser.Id}");
 
-            TempData["Success"] = "User registered successfully!";
+            TempData["SubmissionSuccessMessage"] = "User registered successfully!";
             return RedirectToAction("SupervisorDashboard", "Kaizen");
         }
 
@@ -650,7 +646,7 @@ namespace KaizenWebApp.Controllers
             user.Password = model.NewPassword; // ⚠ Use hashing in production
             _context.SaveChanges();
 
-            TempData["Success"] = "Password changed successfully!";
+            TempData["SubmissionSuccessMessage"] = "Password changed successfully!";
             return RedirectToAction("EngineerDashboard", "Kaizen");
         }
 
@@ -724,7 +720,7 @@ namespace KaizenWebApp.Controllers
             user.Password = model.NewPassword; // ⚠ Use hashing in production
             _context.SaveChanges();
 
-            TempData["Success"] = "Password changed successfully!";
+            TempData["SubmissionSuccessMessage"] = "Password changed successfully!";
             return RedirectToAction("Kaizenform", "Kaizen");
         }
 
@@ -798,7 +794,7 @@ namespace KaizenWebApp.Controllers
             user.Password = model.NewPassword; // ⚠ Use hashing in production
             _context.SaveChanges();
 
-            TempData["SuccessMessage"] = "Password changed successfully!";
+            TempData["SubmissionSuccessMessage"] = "Password changed successfully!";
             return RedirectToAction("SupervisorDashboard", "Kaizen");
         }
     }

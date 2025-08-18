@@ -3,6 +3,12 @@
     Layout = "~/Views/Shared/_KaizenTeamLayout.cshtml";
 }
 
+<!-- Login Success Toast Message -->
+@if (TempData["LoginSuccessMessage"] != null)
+{
+    <div data-tempdata="login-success" style="display: none;">@TempData["LoginSuccessMessage"]</div>
+}
+
 <div class="row">
     <div class="col mb-4">
                     <div class="manager-card h-100">
@@ -229,6 +235,9 @@
     .kaizen-card {
         transition: all 0.3s ease;
     }
+</style>
+
+
     
     .kaizen-card:hover {
         transform: translateY(-5px);

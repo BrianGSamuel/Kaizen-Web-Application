@@ -32,6 +32,10 @@ namespace KaizenWebApp.Models
         [Display(Name = "Employee Number")]
         public string? EmployeeNumber { get; set; }
 
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string? Email { get; set; }
+
         public string? EmployeePhotoPath { get; set; }
 
         [NotMapped] // Not stored in DB, used only for confirmation during registration

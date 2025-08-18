@@ -639,7 +639,9 @@
                             <label for="enhancedEditImplementationArea" class="form-label">
                                 <i class="fas fa-map-marker-alt me-2"></i>Specify Area
                             </label>
-                            <input type="text" id="enhancedEditImplementationArea" name="ImplementationArea" class="form-control" placeholder="Enter the specific area where this can be implemented..." readonly />
+                            <select id="enhancedEditImplementationArea" name="ImplementationArea" class="form-control" readonly>
+                                <option value="">Select a department...</option>
+                            </select>
                         </div>
                     </div>
                 </form>
@@ -821,8 +823,44 @@
 }
 
 <script>
+    // Load departments for dropdown
+    let departmentsLoaded = false;
+    
+    function loadDepartments() {
+        if (departmentsLoaded) return;
+        
+        fetch('/Kaizen/GetDepartments')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const dropdown = document.getElementById('enhancedEditImplementationArea');
+                    if (dropdown) {
+                        // Clear existing options except the first one
+                        dropdown.innerHTML = '<option value="">Select a department...</option>';
+                        
+                        // Add department options
+                        data.departments.forEach(department => {
+                            const option = document.createElement('option');
+                            option.value = department;
+                            option.textContent = department;
+                            dropdown.appendChild(option);
+                        });
+                        
+                        departmentsLoaded = true;
+                    }
+                } else {
+                    console.error('Error loading departments:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading departments:', error);
+            });
+    }
+
     // Search functionality enhancements
     document.addEventListener('DOMContentLoaded', function() {
+        // Load departments when page loads
+        loadDepartments();
         const searchForm = document.getElementById('searchForm');
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
@@ -844,7 +882,7 @@
             
             if (startDateInput.value && endDateInput.value && startDate > endDate) {
                 e.preventDefault();
-                alert('Start date cannot be after end date.');
+                showToast('Start date cannot be after end date.', 'error');
                 return false;
             }
         });
@@ -948,13 +986,13 @@
                         managerCommentBtn.style.display = 'block';
                     }
                 } else {
-                    alert('Error: ' + data.message);
+                    showToast('Error: ' + data.message, 'error');
                     modal.hide();
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while loading the kaizen data.');
+                showToast('An error occurred while loading the kaizen data.', 'error');
                 modal.hide();
             });
     }
@@ -962,6 +1000,9 @@
     function executiveFilling() {
         // Get the current kaizen ID from the edit modal
         const kaizenId = document.getElementById('editKaizenId').value;
+
+        // Load departments if not already loaded
+        loadDepartments();
 
         // Close the current modal
         bootstrap.Modal.getInstance(document.getElementById('editKaizenModal')).hide();
@@ -1022,13 +1063,13 @@
                     // Hide save button since form is read-only
                     document.getElementById('saveExecutiveBtn').style.display = 'none';
                 } else {
-                    alert('Error: ' + data.message);
+                    showToast('Error: ' + data.message, 'error');
                     enhancedModal.hide();
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while loading the kaizen data.');
+                showToast('An error occurred while loading the kaizen data.', 'error');
                 enhancedModal.hide();
             });
     }
@@ -1073,17 +1114,17 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message);
+                showSubmissionToast(data.message, 'success');
                 bootstrap.Modal.getInstance(document.getElementById('editKaizenModal')).hide();
                 // Reload the page to show updated data
                 location.reload();
             } else {
-                alert('Error: ' + data.message);
+                showToast('Error: ' + data.message, 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while saving the changes.');
+            showToast('An error occurred while saving the changes.', 'error');
         });
     }
 
@@ -1114,7 +1155,7 @@
                 }
                 modal.hide();
             } else {
-                alert('Please enter your name to confirm the action.');
+                showToast('Please enter your name to confirm the action.', 'error');
                 document.getElementById('userNameInput').focus();
             }
         };
@@ -1140,16 +1181,16 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Kaizen suggestion approved successfully!');
+                    showSubmissionToast('Kaizen suggestion approved successfully!', 'success');
                     bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
                     location.reload();
                 } else {
-                    alert('Error: ' + data.message);
+                    showToast('Error: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while approving the suggestion.');
+                showToast('An error occurred while approving the suggestion.', 'error');
             });
         }
     }
@@ -1168,16 +1209,16 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Kaizen suggestion rejected successfully!');
+                    showSubmissionToast('Kaizen suggestion rejected successfully!', 'success');
                     bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
                     location.reload();
                 } else {
-                    alert('Error: ' + data.message);
+                    showToast('Error: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while rejecting the suggestion.');
+                showToast('An error occurred while rejecting the suggestion.', 'error');
             });
         }
     }
@@ -1187,7 +1228,7 @@
         // Get the current kaizen ID from the edit modal
         const kaizenId = document.getElementById('editKaizenId').value;
         if (!kaizenId) {
-            alert('No Kaizen selected. Please select a Kaizen first.');
+            showToast('No Kaizen selected. Please select a Kaizen first.', 'error');
             return;
         }
 
@@ -1208,12 +1249,12 @@
                         managerModal.show();
                     }
                 } else {
-                    alert('Error: ' + data.message);
+                    showToast('Error: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while loading the kaizen data.');
+                showToast('An error occurred while loading the kaizen data.', 'error');
             });
     }
 
@@ -1251,13 +1292,13 @@
         const signature = document.getElementById('managerSignature').value.trim();
         
         if (!comments) {
-            alert('Please provide comments and recommendations.');
+            showToast('Please provide comments and recommendations.', 'error');
             document.getElementById('managerCommentText').focus();
             return;
         }
         
         if (!signature) {
-            alert('Please enter your name for signature.');
+            showToast('Please enter your name for signature.', 'error');
             document.getElementById('managerSignature').focus();
             return;
         }
@@ -1282,7 +1323,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Manager comment saved successfully!');
+                                    showSubmissionToast('Manager comment saved successfully!', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('managerCommentModal')).hide();
                 
                 // Clear the form
@@ -1292,12 +1333,12 @@
                 // Reload the page to show updated data
                 location.reload();
             } else {
-                alert('Error: ' + data.message);
+                showToast('Error: ' + data.message, 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while saving the manager comment.');
+            showToast('An error occurred while saving the manager comment.', 'error');
         })
         .finally(() => {
             // Restore button state
@@ -1317,24 +1358,24 @@
         const selectedCategories = document.querySelectorAll('#enhancedEditModal input[name="Category"]:checked');
         
         if (!approvedBy) {
-            alert('Please enter your name for signature.');
+            showToast('Please enter your name for signature.', 'error');
             document.getElementById('enhancedEditApprovedBy').focus();
             return;
         }
         
         if (!comments) {
-            alert('Please provide comments and recommendations.');
+            showToast('Please provide comments and recommendations.', 'error');
             document.getElementById('enhancedEditComments').focus();
             return;
         }
 
         if (selectedCategories.length === 0) {
-            alert('Please select at least one recommended category.');
+            showToast('Please select at least one recommended category.', 'error');
             return;
         }
 
         if (!canImplementInOtherFields) {
-            alert('Please select whether this suggestion can be implemented in other fields.');
+            showToast('Please select whether this suggestion can be implemented in other fields.', 'error');
             return;
         }
 
@@ -1373,18 +1414,18 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Executive review saved successfully!');
+                                    showSubmissionToast('Executive review saved successfully!', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('enhancedEditModal')).hide();
                 
                 // Reload the page to show updated data
                 location.reload();
             } else {
-                alert('Error: ' + data.message);
+                showToast('Error: ' + data.message, 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while saving the executive review.');
+            showToast('An error occurred while saving the executive review.', 'error');
         })
         .finally(() => {
             // Restore button state

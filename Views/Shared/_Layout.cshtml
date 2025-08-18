@@ -428,34 +428,8 @@
             transform: translateY(-2px);
         }
 
-        /* Alert styles */
-        .alert {
-            border-radius: 15px;
-            border: none;
-            padding: 2rem;
-        }
-
-        .alert-info {
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            color: #17a2b8;
-            border-left: 4px solid #17a2b8;
-        }
-
-        .alert-danger {
-            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-            color: #dc3545;
-            border-left: 4px solid #dc3545;
-        }
-
-        /* No data alert */
-        .no-data-alert {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            border: none;
-            border-radius: 10px;
-            padding: 2rem;
-            text-align: center;
-            color: #1976d2;
-        }
+        /* Toast Notification System - Replaces Bootstrap alerts */
+        /* Legacy alert styles removed - using modern toast system instead */
 
         /* Loading spinner */
         .spinner-border {
@@ -799,27 +773,7 @@
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm">
                 <div class="container-fluid">
                                             @{
-                            string dashboardAction;
-                            if (isKaizenTeam)
-                            {
-                                dashboardAction = "KaizenTeamDashboard";
-                            }
-                            else if (isSupervisor)
-                            {
-                                dashboardAction = "SupervisorDashboard";
-                            }
-                            else if (isManager)
-                            {
-                                dashboardAction = "KaizenListManager";
-                            }
-                            else if (isUser)
-                            {
-                                dashboardAction = "Kaizenform";
-                            }
-                            else
-                            {
-                                dashboardAction = "Kaizenform"; // Default fallback
-                            }
+                            // Dashboard actions are handled in the navigation sections below
                         }
                     <a class="navbar-brand" asp-controller="Home" asp-action="KaizenList">
                         <img src="~/images/flintec-logo.png" alt="Flintec Logo" class="company-logo" />
@@ -979,6 +933,44 @@
         </footer>
     }
 
+    <!-- Toast Notification System -->
+    @if (TempData["Success"] != null)
+    {
+        <div data-tempdata="success" style="display: none;">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div data-tempdata="error" style="display: none;">@TempData["Error"]</div>
+    }
+    @if (TempData["AlertMessage"] != null)
+    {
+        <div data-tempdata="alert" style="display: none;">@TempData["AlertMessage"]</div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div data-tempdata="success" style="display: none;">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div data-tempdata="error" style="display: none;">@TempData["ErrorMessage"]</div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div data-tempdata="info" style="display: none;">@TempData["Info"]</div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div data-tempdata="warning" style="display: none;">@TempData["Warning"]</div>
+    }
+    @if (TempData["LoginSuccessMessage"] != null)
+    {
+        <div data-tempdata="login-success" style="display: none;">@TempData["LoginSuccessMessage"]</div>
+    }
+    @if (TempData["SubmissionSuccessMessage"] != null)
+    {
+        <div data-tempdata="submission-success" style="display: none;">@TempData["SubmissionSuccessMessage"]</div>
+    }
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
@@ -1010,8 +1002,22 @@
             const navLinks = document.querySelectorAll('.user-nav-link');
             
             navLinks.forEach(link => {
-                if (link.getAttribute('href') && currentPath.includes(link.getAttribute('href'))) {
-                    link.classList.add('active');
+                const href = link.getAttribute('href');
+                if (href) {
+                    // Remove active class from all links first
+                    link.classList.remove('active');
+                    
+                    // Check if current path matches the href
+                    if (currentPath === href || 
+                        (href.includes('UserDashboard') && currentPath.includes('UserDashboard')) ||
+                        (href.includes('Kaizenform') && currentPath.includes('Kaizenform')) ||
+                        (href.includes('UserKaizenList') && currentPath.includes('UserKaizenList')) ||
+                        (href.includes('MyKaizens') && currentPath.includes('MyKaizens')) ||
+                        (href.includes('Leaderboard') && currentPath.includes('Leaderboard')) ||
+                        (href.includes('Analytics') && currentPath.includes('Analytics')) ||
+                        (href.includes('ChangeUserPassword') && currentPath.includes('ChangeUserPassword'))) {
+                        link.classList.add('active');
+                    }
                 }
             });
         });

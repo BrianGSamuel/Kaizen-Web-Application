@@ -53,15 +53,16 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="mb-3">
-                    <label asp-for="Username" class="form-label">Username</label>
-                    <input asp-for="Username" class="form-control" placeholder="Enter username" />
+                    <label asp-for="Username" class="form-label">Username <i class="fas fa-magic text-info" title="Auto-generated"></i></label>
+                    <input asp-for="Username" class="form-control" id="usernameInput" placeholder="Username will be auto-generated" readonly />
                     <span asp-validation-for="Username" class="text-danger"></span>
+                    <small class="form-text text-muted">Username is automatically generated from Employee Number and Role</small>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="mb-3">
                     <label asp-for="Role" class="form-label">Role</label>
-                    <select asp-for="Role" class="form-control">
+                    <select asp-for="Role" class="form-control" id="roleSelect">
                         <option value="">Select Role</option>
                         <option value="User">User</option>
                         <option value="Engineer">Engineer</option>
@@ -71,6 +72,17 @@
                         <option value="Admin">Admin</option>
                     </select>
                     <span asp-validation-for="Role" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row" id="emailRow" style="display: none;">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">Email <span class="text-danger">*</span></label>
+                    <input asp-for="Email" type="email" class="form-control" placeholder="Enter email address" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                    <small class="form-text text-muted">Email is required for Engineer and Manager roles</small>
                 </div>
             </div>
         </div>
@@ -107,4 +119,70 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
     }
+    
+    <script>
+        $(document).ready(function() {
+            // Function to generate username
+            function generateUsername() {
+                var employeeNumber = $('#EmployeeNumber').val().trim();
+                var role = $('#roleSelect').val();
+                
+                if (employeeNumber && role) {
+                    var username = employeeNumber + '_' + role;
+                    $('#usernameInput').val(username);
+                } else {
+                    $('#usernameInput').val('');
+                }
+            }
+            
+            // Function to show/hide email field based on role
+            function toggleEmailField() {
+                var role = $('#roleSelect').val();
+                if (role === 'Engineer' || role === 'Manager') {
+                    $('#emailRow').show();
+                    $('#Email').prop('required', true);
+                    $('#Email').attr('data-val-required', 'Email is required for Engineer and Manager roles.');
+                } else {
+                    $('#emailRow').hide();
+                    $('#Email').prop('required', false);
+                    $('#Email').removeAttr('data-val-required');
+                    $('#Email').val('');
+                }
+            }
+            
+            // Function to validate form before submission
+            function validateForm() {
+                var role = $('#roleSelect').val();
+                var email = $('#Email').val().trim();
+                
+                if ((role === 'Engineer' || role === 'Manager') && !email) {
+                    alert('Email is required for Engineer and Manager roles.');
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            // Event listeners
+            $('#EmployeeNumber, #roleSelect').on('input change', function() {
+                generateUsername();
+            });
+            
+            $('#roleSelect').on('change', function() {
+                toggleEmailField();
+            });
+            
+            // Form submission validation
+            $('form').on('submit', function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Initialize on page load
+            generateUsername();
+            toggleEmailField();
+        });
+    </script>
 } 

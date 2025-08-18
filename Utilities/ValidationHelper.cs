@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace KaizenWebApp.Utilities
 {
     public static class ValidationHelper
@@ -76,8 +78,19 @@ namespace KaizenWebApp.Utilities
         public static bool IsImageFile(string fileName)
         {
             var extension = GetFileExtension(fileName);
-            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".webp", ".gif" };
+            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".webp" };
             return allowedExtensions.Contains(extension);
+        }
+
+        public static bool IsValidImageFile(IFormFile file, int maxSizeInMB = 5)
+        {
+            if (file == null || file.Length == 0)
+                return false;
+
+            if (file.Length > maxSizeInMB * 1024 * 1024)
+                return false;
+
+            return IsImageFile(file.FileName);
         }
 
         public static string GenerateRandomString(int length = 8)

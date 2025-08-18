@@ -469,14 +469,7 @@
                     </div>
                 </div>
 
-                @if (TempData["AlertMessage"] != null)
-                {
-                    <script>
-                        window.onload = function() {
-                            alert('@TempData["AlertMessage"]');
-                        };
-                    </script>
-                }
+                <!-- Alert messages now handled by toast system -->
 
                 <!-- Progress Bar -->
                 <div class="progress-bar">
@@ -509,18 +502,7 @@
                     <!-- Debug information -->
                     @if (!ViewData.ModelState.IsValid)
                     {
-                        <div class="alert alert-danger">
-                            <h6>Validation Errors:</h6>
-                            <ul>
-                                @foreach (var modelState in ViewData.ModelState.Values)
-                                {
-                                    foreach (var error in modelState.Errors)
-                                    {
-                                        <li>@error.ErrorMessage</li>
-                                    }
-                                }
-                            </ul>
-                        </div>
+                        <!-- Validation errors now handled by toast system -->
                     }
                     
 
@@ -611,30 +593,15 @@
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">@Localizer["EmployeePhoto"]</label>
-                                
-                                @if (!string.IsNullOrEmpty(Model.EmployeePhotoPath))
-                                {
-                                    <div class="mt-2">
-                                        <img src="@(Model.EmployeePhotoPath.StartsWith("/") ? Model.EmployeePhotoPath : "/" + Model.EmployeePhotoPath)" alt="Current Profile Photo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" />
-                                        <small class="text-success d-block mt-1">
-                                            <i class="fas fa-check-circle me-1"></i>Auto-populated from your profile
-                                        </small>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="text-muted">
-                                        <i class="fas fa-user-circle fa-3x"></i>
-                                        <p class="mt-2">No profile photo available</p>
-                                        <small class="text-info">
-                                            <i class="fas fa-info-circle me-1"></i>Auto-populated from your profile
-                                        </small>
-                                    </div>
-                                }
-                                
-                                <!-- Hidden field to submit EmployeePhotoPath with the form -->
-                                <input type="hidden" asp-for="EmployeePhotoPath" />
+                                <label asp-for="EmployeePhoto" class="form-label">@Localizer["EmployeePhoto"]</label>
+                                <input asp-for="EmployeePhoto" type="file" class="form-control" accept="image/png,image/jpg,image/jpeg,image/webp" onchange="previewImage(this, 'employeePhotoPreview')" />
+                                <span asp-validation-for="EmployeePhoto" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Upload your employee photo (PNG, JPG, JPEG, WebP up to 5MB)
+                                </small>
+                                <div class="mt-2">
+                                    <img id="employeePhotoPreview" src="" alt="Employee Photo Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px; display: none;" />
+                                </div>
                             </div>
                         </div>
 
@@ -658,14 +625,26 @@
 
                         <div class="mb-3">
                             <label asp-for="BeforeKaizenImage" class="form-label">@Localizer["BeforeKaizenImage"]</label>
-                            <input asp-for="BeforeKaizenImage" type="file" class="form-control" accept="image/*" />
+                            <input asp-for="BeforeKaizenImage" type="file" class="form-control" accept="image/png,image/jpg,image/jpeg,image/webp" onchange="previewImage(this, 'beforeImagePreview')" />
                             <span asp-validation-for="BeforeKaizenImage" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>Upload image (PNG, JPG, JPEG, WebP up to 5MB)
+                            </small>
+                            <div class="mt-2">
+                                <img id="beforeImagePreview" src="" alt="Before Kaizen Preview" class="img-thumbnail" style="max-width: 200px; max-height: 200px; display: none;" />
+                            </div>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="AfterKaizenImage" class="form-label">@Localizer["AfterKaizenImage"]</label>
-                            <input asp-for="AfterKaizenImage" type="file" class="form-control" accept="image/*" />
+                            <input asp-for="AfterKaizenImage" type="file" class="form-control" accept="image/png,image/jpg,image/jpeg,image/webp" onchange="previewImage(this, 'afterImagePreview')" />
                             <span asp-validation-for="AfterKaizenImage" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>Upload image (PNG, JPG, JPEG, WebP up to 5MB)
+                            </small>
+                            <div class="mt-2">
+                                <img id="afterImagePreview" src="" alt="After Kaizen Preview" class="img-thumbnail" style="max-width: 200px; max-height: 200px; display: none;" />
+                            </div>
                         </div>
                     </div>
 
@@ -735,14 +714,7 @@
                 </form>
                 
                 <!-- Success Message Display -->
-                @if (TempData["Success"] != null)
-                {
-                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                        <i class="fas fa-check-circle me-2"></i>
-                        @TempData["Success"]
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                }
+                    <!-- Success messages now handled by toast system -->
 
                 <!-- Debug Information (only show in development) -->
                 @if (Context.Request.Query.ContainsKey("debug"))
@@ -1292,6 +1264,8 @@
         document.getElementById('kaizenForm').submit();
     }
 
+
+
     // Function to refresh employee data
     async function refreshEmployeeData() {
         console.log('Refreshing employee data...');
@@ -1386,40 +1360,45 @@
         }
     }
 
-    // Function to show toast notifications
-    function showToast(message, type = 'info') {
-        // Create toast container if it doesn't exist
-        let toastContainer = document.getElementById('toastContainer');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.id = 'toastContainer';
-            toastContainer.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 9999;
-                max-width: 350px;
-            `;
-            document.body.appendChild(toastContainer);
+    // Toast notifications now handled by global site.js
+
+    // Image validation and preview functions
+    function validateImageFile(file, maxSizeMB = 5) {
+        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
+        const maxSize = maxSizeMB * 1024 * 1024; // Convert to bytes
+        
+        if (!allowedTypes.includes(file.type)) {
+            return { valid: false, message: 'Please select a valid image file (PNG, JPG, JPEG, WebP)' };
         }
         
-        // Create toast element
-        const toast = document.createElement('div');
-        toast.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show`;
-        toast.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
+        if (file.size > maxSize) {
+            return { valid: false, message: `File size must be less than ${maxSizeMB}MB` };
+        }
         
-        // Add to container
-        toastContainer.appendChild(toast);
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
+        return { valid: true, message: 'Image is valid' };
+    }
+
+    function previewImage(input, previewId) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const validation = validateImageFile(file);
+            
+            if (!validation.valid) {
+                showToast(validation.message, 'error');
+                input.value = '';
+                return;
             }
-        }, 5000);
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(previewId);
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
     }
 
 
@@ -1448,34 +1427,34 @@
         
         // Validate essential fields
         if (!formData.employeeName) {
-            alert('@Localizer["EmployeeNameRequired"]');
+            showToast('@Localizer["EmployeeNameRequired"]', 'error');
             return false;
         }
         
         if (!formData.employeeNo) {
-            alert('@Localizer["EmployeeNoRequired"]');
+            showToast('@Localizer["EmployeeNoRequired"]', 'error');
             return false;
         }
         
         if (!formData.suggestionDescription) {
-            alert('@Localizer["SuggestionDescriptionRequired"]');
+            showToast('@Localizer["SuggestionDescriptionRequired"]', 'error');
             return false;
         }
         
         if (!formData.plant) {
-            alert('Plant is required. Please ensure you are logged in with a valid plant.');
+            showToast('Plant is required. Please ensure you are logged in with a valid plant.', 'error');
             return false;
         }
         
         // Validate cost saving fields if "Has Cost Saving" is selected
         if (formData.costSavingType === 'HasCostSaving') {
             if (!formData.costSaving || parseFloat(formData.costSaving) <= 0) {
-                alert('@Localizer["CostSavingRequired"]');
+                showToast('@Localizer["CostSavingRequired"]', 'error');
                 return false;
             }
             
             if (!formData.dollarRate || parseFloat(formData.dollarRate) <= 0) {
-                alert('@Localizer["DollarRateRequired"]');
+                showToast('@Localizer["DollarRateRequired"]', 'error');
                 return false;
             }
         }

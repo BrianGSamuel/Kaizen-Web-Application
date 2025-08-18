@@ -18,37 +18,37 @@
         flex-direction: column;
     }
 
-    .summary-card .d-flex {
-        flex: 1;
-    }
+        .summary-card .d-flex {
+            flex: 1;
+        }
 
-    .summary-card:hover {
-        transform: translateY(-5px);
-    }
+        .summary-card:hover {
+            transform: translateY(-5px);
+        }
 
-    .summary-card.submissions {
-        border-left: 5px solid #007bff;
-    }
+        .summary-card.submissions {
+            border-left: 5px solid #007bff;
+        }
 
-    .summary-card.target {
-        border-left: 5px solid #28a745;
-    }
+        .summary-card.target {
+            border-left: 5px solid #28a745;
+        }
 
-    .summary-card.cost-savings {
-        border-left: 5px solid #ffc107;
-    }
+        .summary-card.cost-savings {
+            border-left: 5px solid #ffc107;
+        }
 
-    .summary-card.pending {
-        border-left: 5px solid #dc3545;
-    }
+        .summary-card.pending {
+            border-left: 5px solid #dc3545;
+        }
 
-    .summary-card.approved {
-        border-left: 5px solid #17a2b8;
-    }
+        .summary-card.approved {
+            border-left: 5px solid #17a2b8;
+        }
 
-    .summary-card.rejected {
-        border-left: 5px solid #6f42c1;
-    }
+        .summary-card.rejected {
+            border-left: 5px solid #6f42c1;
+        }
 
     .metric-value {
         font-size: 2.5rem;
@@ -69,17 +69,17 @@
         font-weight: 600;
     }
 
-    .metric-change.positive {
-        color: #28a745;
-    }
+        .metric-change.positive {
+            color: #28a745;
+        }
 
-    .metric-change.negative {
-        color: #dc3545;
-    }
+        .metric-change.negative {
+            color: #dc3545;
+        }
 
-    .metric-change.neutral {
-        color: #6c757d;
-    }
+        .metric-change.neutral {
+            color: #6c757d;
+        }
 
     .status-badge {
         padding: 0.2rem 0.4rem;
@@ -90,10 +90,25 @@
         min-width: fit-content;
     }
 
-    .status-completed { background-color: #d4edda; color: #155724; }
-    .status-on-track { background-color: #d1ecf1; color: #0c5460; }
-    .status-behind { background-color: #fff3cd; color: #856404; }
-    .status-at-risk { background-color: #f8d7da; color: #721c24; }
+    .status-completed {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .status-on-track {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-behind {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .status-at-risk {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
 
     .progress-bar {
         height: 8px;
@@ -109,10 +124,21 @@
         transition: width 0.3s ease;
     }
 
-    .progress-fill.completed { background-color: #28a745; }
-    .progress-fill.on-track { background-color: #17a2b8; }
-    .progress-fill.behind { background-color: #ffc107; }
-    .progress-fill.at-risk { background-color: #dc3545; }
+        .progress-fill.completed {
+            background-color: #28a745;
+        }
+
+        .progress-fill.on-track {
+            background-color: #17a2b8;
+        }
+
+        .progress-fill.behind {
+            background-color: #ffc107;
+        }
+
+        .progress-fill.at-risk {
+            background-color: #dc3545;
+        }
 
     .welcome-section {
         background: white;
@@ -128,10 +154,10 @@
         flex-wrap: wrap;
     }
 
-    .row > [class*="col-"] {
-        display: flex;
-        flex-direction: column;
-    }
+        .row > [class*="col-"] {
+            display: flex;
+            flex-direction: column;
+        }
 
     .text-purple {
         color: #6f42c1 !important;
@@ -149,14 +175,18 @@
         display: inline-block;
     }
 
-    .btn-user:hover {
-        background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 100%);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
-        text-decoration: none;
-    }
+        .btn-user:hover {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+            text-decoration: none;
+        }
+
+
 </style>
+
+
 
 <div class="container">
     <!-- Welcome Section -->
@@ -273,3 +303,5 @@
 
 
 </div>
+
+
