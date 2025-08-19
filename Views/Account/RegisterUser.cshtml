@@ -1,0 +1,127 @@
+@model KaizenWebApp.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Register New User";
+    Layout = "~/Views/Shared/_SupervisorLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="supervisor-card">
+                <div class="supervisor-card-header">
+                    <h4 class="supervisor-card-title">
+                        <i class="fas fa-user-plus me-2"></i>Register New User
+                    </h4>
+                </div>
+                <div class="supervisor-card-body">
+                    <form asp-action="RegisterUser" method="post" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-1"></i>Supervisors can only register regular users
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="EmployeeName" class="form-label">Employee Name *</label>
+                                    <input asp-for="EmployeeName" class="form-control" required />
+                                    <span asp-validation-for="EmployeeName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="EmployeeNumber" class="form-label">Employee Number *</label>
+                                    <input asp-for="EmployeeNumber" class="form-control" required />
+                                    <span asp-validation-for="EmployeeNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Department" class="form-label">Department *</label>
+                                    <select asp-for="Department" class="form-select" required>
+                                        <option value="">Select Department</option>
+                                        <option value="Production">Production</option>
+                                        <option value="Quality">Quality</option>
+                                        <option value="Maintenance">Maintenance</option>
+                                        <option value="Engineering">Engineering</option>
+                                        <option value="HR">HR</option>
+                                        <option value="Finance">Finance</option>
+                                        <option value="IT">IT</option>
+                                    </select>
+                                    <span asp-validation-for="Department" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Plant" class="form-label">Plant *</label>
+                                    <select asp-for="Plant" class="form-select" required>
+                                        <option value="">Select Plant</option>
+                                        <option value="Plant 1">Plant 1</option>
+                                        <option value="Plant 2">Plant 2</option>
+                                        <option value="Plant 3">Plant 3</option>
+                                    </select>
+                                    <span asp-validation-for="Plant" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Username" class="form-label">Username</label>
+                                    <input asp-for="Username" class="form-control" />
+                                    <span asp-validation-for="Username" class="text-danger"></span>
+                                    <small class="form-text text-muted">Leave empty to auto-generate from Employee Number</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Password" class="form-label">Password *</label>
+                                    <input asp-for="Password" type="password" class="form-control" required />
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="ConfirmPassword" class="form-label">Confirm Password *</label>
+                                    <input asp-for="ConfirmPassword" type="password" class="form-control" required />
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-controller="Kaizen" asp-action="SupervisorUserManagement" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-supervisor">
+                                <i class="fas fa-user-plus me-2"></i>Register User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-generate username from employee number
+        document.getElementById('EmployeeNumber').addEventListener('blur', function() {
+            const employeeNumber = this.value;
+            const usernameField = document.getElementById('Username');
+            
+            if (employeeNumber && !usernameField.value) {
+                usernameField.value = employeeNumber + '-User';
+            }
+        });
+    </script>
+}

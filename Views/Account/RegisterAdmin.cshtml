@@ -1,0 +1,179 @@
+@model RegisterViewModel;
+@{
+    ViewData["Title"] = "Register New User";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h4 class="admin-card-title">
+                        <i class="fas fa-user-plus me-2"></i>Register New User
+                    </h4>
+                </div>
+                <div class="admin-card-body">
+                    <form asp-action="RegisterAdmin" method="post" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Role" class="form-label">Role *</label>
+                                    <select asp-for="Role" class="form-select" required>
+                                        <option value="">Select Role</option>
+                                        <option value="User">User</option>
+                                        <option value="Supervisor">Supervisor</option>
+                                        <option value="Manager">Manager</option>
+                                        <option value="Engineer">Engineer</option>
+                                        <option value="KaizenTeam">Kaizen Team</option>
+                                    </select>
+                                    <span asp-validation-for="Role" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="EmployeeNumber" class="form-label">Employee Number *</label>
+                                    <input asp-for="EmployeeNumber" class="form-control" required />
+                                    <span asp-validation-for="EmployeeNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Username" class="form-label">Username *</label>
+                                    <input asp-for="Username" class="form-control" required readonly />
+                                    <span asp-validation-for="Username" class="text-danger"></span>
+                                    <small class="form-text text-muted">Auto-generated from Employee Number and Role</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="EmployeeName" class="form-label">Employee Name *</label>
+                                    <input asp-for="EmployeeName" class="form-control" required />
+                                    <span asp-validation-for="EmployeeName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Department" class="form-label">Department *</label>
+                                    <input asp-for="Department" class="form-control" required />
+                                    <span asp-validation-for="Department" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Plant" class="form-label">Plant *</label>
+                                    <input asp-for="Plant" class="form-control" required />
+                                    <span asp-validation-for="Plant" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Password" class="form-label">Password *</label>
+                                    <input asp-for="Password" type="password" class="form-control" required />
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="ConfirmPassword" class="form-label">Confirm Password *</label>
+                                    <input asp-for="ConfirmPassword" type="password" class="form-control" required />
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6" id="emailField" style="display: none;">
+                                <div class="mb-3">
+                                    <label asp-for="Email" class="form-label">Email *</label>
+                                    <input asp-for="Email" type="email" class="form-control" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                    <small class="form-text text-muted">Required for Engineer and Manager roles</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-controller="Admin" asp-action="UserManagement" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-admin">
+                                <i class="fas fa-user-plus me-1"></i>Register User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Function to generate username
+        function generateUsername() {
+            const employeeNumber = document.getElementById('EmployeeNumber').value;
+            const role = document.getElementById('Role').value;
+            const usernameField = document.getElementById('Username');
+            
+            if (employeeNumber && role) {
+                // Convert role to lowercase and remove spaces for username
+                const roleForUsername = role.toLowerCase().replace(/\s+/g, '');
+                usernameField.value = employeeNumber + roleForUsername;
+            } else {
+                usernameField.value = '';
+            }
+        }
+
+        // Auto-generate username when employee number changes
+        document.getElementById('EmployeeNumber').addEventListener('input', generateUsername);
+        
+        // Auto-generate username when role changes
+        document.getElementById('Role').addEventListener('change', function() {
+            generateUsername();
+            
+            // Show/hide email field based on role selection
+            const emailField = document.getElementById('emailField');
+            const emailInput = document.getElementById('Email');
+            const role = this.value;
+            
+            if (role === 'Engineer' || role === 'Manager') {
+                emailField.style.display = 'block';
+                emailInput.required = true;
+            } else {
+                emailField.style.display = 'none';
+                emailInput.required = false;
+                emailInput.value = ''; // Clear the email field when hidden
+            }
+        });
+
+        // Handle KaizenTeam role - hide certain fields
+        document.getElementById('Role').addEventListener('change', function() {
+            const role = this.value;
+            const employeeNameField = document.getElementById('EmployeeName').closest('.mb-3');
+            const employeeNumberField = document.getElementById('EmployeeNumber').closest('.mb-3');
+            const departmentField = document.getElementById('Department').closest('.mb-3');
+            
+            if (role === 'KaizenTeam') {
+                employeeNameField.style.display = 'none';
+                employeeNumberField.style.display = 'none';
+                departmentField.style.display = 'none';
+            } else {
+                employeeNameField.style.display = 'block';
+                employeeNumberField.style.display = 'block';
+                departmentField.style.display = 'block';
+            }
+        });
+    </script>
+}

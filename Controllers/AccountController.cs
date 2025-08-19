@@ -125,6 +125,166 @@ namespace KaizenWebApp.Controllers
             }
         }
 
+        // ------------------- ADMIN REGISTER -------------------
+
+        [Authorize]
+        public IActionResult RegisterAdmin()
+        {
+            // Check if user is admin or kaizen team
+            var username = User.Identity?.Name;
+            var role = User.FindFirst("Role")?.Value;
+            
+            if (username?.ToLower() != "admin" && role != "KaizenTeam")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            return View("RegisterAdmin");
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public IActionResult RegisterAdmin(RegisterViewModel model)
+        {
+            // Check if user is admin or kaizen team
+            var username = User.Identity?.Name;
+            var role = User.FindFirst("Role")?.Value;
+            
+            if (username?.ToLower() != "admin" && role != "KaizenTeam")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            // Additional validation for Engineer and Manager roles
+            if ((model.Role == "Engineer" || model.Role == "Manager") && string.IsNullOrEmpty(model.Email))
+            {
+                ModelState.AddModelError("Email", "Email is required for Engineer and Manager roles.");
+            }
+            
+            // Clear email validation errors for non-Engineer/Manager roles
+            if (model.Role != "Engineer" && model.Role != "Manager")
+            {
+                ModelState.Remove("Email");
+            }
+
+            // Handle KaizenTeam role - clear validation errors for fields that are hidden
+            if (model.Role == "KaizenTeam")
+            {
+                ModelState.Remove("EmployeeName");
+                ModelState.Remove("EmployeeNumber");
+                ModelState.Remove("Department");
+            }
+
+            if (!ModelState.IsValid)
+                return View("RegisterAdmin", model);
+
+            Console.WriteLine($"Admin registration attempt - Username: {model.Username}, Employee Name: {model.EmployeeName}, Employee Number: {model.EmployeeNumber}, Department: {model.Department}, Plant: {model.Plant}, Role: {model.Role}, Email: {model.Email}");
+
+            if (_context.Users.Any(u => u.UserName == model.Username))
+            {
+                ModelState.AddModelError("", "Username already exists.");
+                return View("RegisterAdmin", model);
+            }
+
+            var user = new Users
+            {
+                UserName = model.Username,
+                EmployeeName = model.Role == "KaizenTeam" ? "Kaizen Team" : model.EmployeeName,
+                EmployeeNumber = model.Role == "KaizenTeam" ? "KAIZEN" : model.EmployeeNumber,
+                DepartmentName = model.Role == "KaizenTeam" ? "Kaizen Department" : model.Department,
+                Plant = model.Plant,
+                Password = model.Password, // ⚠ Store securely using hashing in production
+                Role = model.Role,
+                Email = model.Email
+            };
+
+            Console.WriteLine($"Creating user - Username: {user.UserName}, Employee Name: {user.EmployeeName}, Employee Number: {user.EmployeeNumber}, Department: {user.DepartmentName}, Plant: {user.Plant}, Role: {user.Role}");
+
+            _context.Users.Add(user);
+            _context.SaveChanges();
+
+            Console.WriteLine($"User saved with ID: {user.Id}");
+
+            return RedirectToAction("Dashboard", "Admin");
+        }
+
+        // ------------------- SUPERVISOR REGISTRATION -------------------
+
+        [Authorize]
+        public IActionResult RegisterUser()
+        {
+            // Check if user is supervisor
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.UserName == username);
+            if (user?.Role?.ToLower() != "supervisor")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var model = new RegisterViewModel
+            {
+                Role = "User" // Supervisors can only register regular users
+            };
+
+            return View("RegisterUser", model);
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegisterUser(RegisterViewModel model)
+        {
+            // Check if user is supervisor
+            var username = User.Identity?.Name;
+            var user = _context.Users.FirstOrDefault(u => u.UserName == username);
+            if (user?.Role?.ToLower() != "supervisor")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            if (!ModelState.IsValid)
+                return View("RegisterUser", model);
+
+            // Auto-generate username if not provided
+            if (string.IsNullOrEmpty(model.Username) && !string.IsNullOrEmpty(model.EmployeeNumber))
+            {
+                model.Username = model.EmployeeNumber + "-User";
+            }
+
+            // Force role to be "User" for supervisor registrations
+            model.Role = "User";
+
+            Console.WriteLine($"Supervisor registration attempt - Username: {model.Username}, Employee Number: {model.EmployeeNumber}, Department: {model.Department}, Plant: {model.Plant}, Role: {model.Role}");
+
+            if (_context.Users.Any(u => u.UserName == model.Username))
+            {
+                ModelState.AddModelError("", "Username already exists.");
+                return View("RegisterUser", model);
+            }
+
+            var newUser = new Users
+            {
+                UserName = model.Username,
+                EmployeeName = model.EmployeeName,
+                EmployeeNumber = model.EmployeeNumber,
+                DepartmentName = model.Department,
+                Plant = model.Plant,
+                Password = model.Password, // ⚠ Store securely using hashing in production
+                Role = model.Role
+            };
+
+            Console.WriteLine($"Creating user - Username: {newUser.UserName}, Department: {newUser.DepartmentName}, Plant: {newUser.Plant}, Role: {newUser.Role}");
+
+            _context.Users.Add(newUser);
+            _context.SaveChanges();
+
+            Console.WriteLine($"User saved with ID: {newUser.Id}");
+
+            TempData["SubmissionSuccessMessage"] = "User registered successfully!";
+            return RedirectToAction("SupervisorDashboard", "Kaizen");
+        }
+
         // ------------------- LOGOUT -------------------
 
         [HttpPost]

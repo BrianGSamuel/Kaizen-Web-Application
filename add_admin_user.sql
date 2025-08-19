@@ -30,3 +30,4 @@ ELSE
 BEGIN
     PRINT 'Admin user already exists in the database.';
 END
+
