@@ -34,37 +34,7 @@ namespace KaizenWebApp.Services
                 .ToListAsync();
         }
 
-        public async Task<Users> CreateUserAsync(RegisterViewModel model)
-        {
-            var user = new Users
-            {
-                UserName = model.Username,
-                DepartmentName = model.Department,
-                Plant = model.Plant,
-                Password = model.Password // TODO: Hash password in production
-            };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            
-            _logger.LogInformation("User created: {Username} with ID {UserId}", user.UserName, user.Id);
-            
-            return user;
-        }
-
-        public async Task<bool> UpdateUserAsync(int id, RegisterViewModel model)
-        {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return false;
-
-            user.UserName = model.Username;
-            user.DepartmentName = model.Department;
-            user.Plant = model.Plant;
-            user.Password = model.Password; // TODO: Hash password in production
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
 
         public async Task<bool> DeleteUserAsync(int id)
         {

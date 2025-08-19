@@ -1,0 +1,289 @@
+@model IEnumerable<KaizenWebApp.Models.KaizenForm>
+
+@{
+    ViewData["Title"] = "Inter-Department Suggestions";
+    Layout = "~/Views/Shared/_SupervisorLayout.cshtml";
+}
+
+@{
+    // Add anti-forgery token for AJAX requests
+    var token = Html.AntiForgeryToken();
+}
+
+<div class="container-fluid">
+    @token
+    <div class="row">
+        <div class="col-12">
+            <div class="supervisor-card">
+                <div class="supervisor-card-header">
+                    <h5 class="supervisor-card-title mb-0">
+                        <i class="fas fa-search me-2"></i>
+                        Search & Filter
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="@Url.Action("SupervisorInterDeptSuggestions", "Kaizen")" id="searchForm">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="startDate" class="form-label fw-bold">Start Date</label>
+                                    <input type="date" class="form-control" id="startDate" name="startDate" 
+                                           value="@Context.Request.Query["startDate"]">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="endDate" class="form-label fw-bold">End Date</label>
+                                    <input type="date" class="form-control" id="endDate" name="endDate" 
+                                           value="@Context.Request.Query["endDate"]">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="category" class="form-label fw-bold">Category</label>
+                                    <select class="form-select" id="category" name="category">
+                                        <option value="">All Categories</option>
+                                        <option value="Cost reduction" selected="@(Context.Request.Query["category"].ToString() == "Cost reduction")">Major Cost reduction by innovation</option>
+                                        <option value="Productivity Improvement" selected="@(Context.Request.Query["category"].ToString() == "Productivity Improvement")">Productivity Improvement</option>
+                                        <option value="OHS Improvement" selected="@(Context.Request.Query["category"].ToString() == "OHS Improvement")">OHS Improvement</option>
+                                        <option value="Quality Improvements" selected="@(Context.Request.Query["category"].ToString() == "Quality Improvements")">Quality Improvements</option>
+                                        <option value="Environmental friendly" selected="@(Context.Request.Query["category"].ToString() == "Environmental friendly")">Environmental friendly Innovation</option>
+                                        <option value="5S Improvement" selected="@(Context.Request.Query["category"].ToString() == "5S Improvement")">5S Improvement</option>
+                                        <option value="Ergonomics Improvements" selected="@(Context.Request.Query["category"].ToString() == "Ergonomics Improvements")">Ergonomics Improvements</option>
+                                        <option value="Energy Saving Improvement" selected="@(Context.Request.Query["category"].ToString() == "Energy Saving Improvement")">Energy Saving Improvement</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="engineerStatus" class="form-label fw-bold">Engineer Status</label>
+                                    <select class="form-select" id="engineerStatus" name="engineerStatus">
+                                        <option value="">All Status</option>
+                                        <option value="Approved" selected="@(Context.Request.Query["engineerStatus"].ToString() == "Approved")">Approved</option>
+                                        <option value="Rejected" selected="@(Context.Request.Query["engineerStatus"].ToString() == "Rejected")">Rejected</option>
+                                        <option value="Pending" selected="@(Context.Request.Query["engineerStatus"].ToString() == "Pending")">Pending</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="managerStatus" class="form-label fw-bold">Manager Status</label>
+                                    <select class="form-select" id="managerStatus" name="managerStatus">
+                                        <option value="">All Status</option>
+                                        <option value="Approved" selected="@(Context.Request.Query["managerStatus"].ToString() == "Approved")">Approved</option>
+                                        <option value="Rejected" selected="@(Context.Request.Query["managerStatus"].ToString() == "Rejected")">Rejected</option>
+                                        <option value="Pending" selected="@(Context.Request.Query["managerStatus"].ToString() == "Pending")">Pending</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="searchString" class="form-label fw-bold">Search</label>
+                                    <input type="text" class="form-control" id="searchString" name="searchString" 
+                                           placeholder="Search by Kaizen No, Employee Name, or Employee No..."
+                                           value="@Context.Request.Query["searchString"]">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">&nbsp;</label>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn-supervisor">
+                                            <i class="fas fa-search me-2"></i>
+                                            Search
+                                        </button>
+                                        <a href="@Url.Action("SupervisorInterDeptSuggestions", "Kaizen")" class="btn-supervisor-outline">
+                                            <i class="fas fa-times me-2"></i>
+                                            Clear Filters
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @if (!Model?.Any() ?? true)
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Approved Inter-Department Suggestions Found</h5>
+                    <p class="text-muted">No approved inter-department kaizens from your department match your current search criteria.</p>
+                    <a href="@Url.Action("SupervisorInterDeptSuggestions", "Kaizen")" class="btn-supervisor">
+                        <i class="fas fa-times me-2"></i>
+                        Clear Filters
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="supervisor-card">
+                    <div class="supervisor-card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted">
+                                <i class="fas fa-list me-2"></i>
+                                Showing @Model.Count() approved inter-department suggestion(s)
+                            </div>
+                            @if (!string.IsNullOrEmpty(Context.Request.Query["startDate"]) || 
+                                  !string.IsNullOrEmpty(Context.Request.Query["endDate"]) || 
+                                  !string.IsNullOrEmpty(Context.Request.Query["category"]) ||
+                                  !string.IsNullOrEmpty(Context.Request.Query["engineerStatus"]) ||
+                                  !string.IsNullOrEmpty(Context.Request.Query["managerStatus"]) ||
+                                  !string.IsNullOrEmpty(Context.Request.Query["searchString"]))
+                            {
+                                <div class="text-muted small">
+                                    <i class="fas fa-filter me-1"></i>
+                                    Filters applied
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                                                 <thead class="table-dark">
+                                     <tr>
+                                         <th>Date Submitted</th>
+                                         <th>Kaizen No</th>
+                                         <th>Employee</th>
+                                         <th>Cost Saving</th>
+                                         <th>Engineer Status</th>
+                                         <th>Manager Status</th>
+                                         <th>Department</th>
+                                         <th>Actions</th>
+                                     </tr>
+                                 </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <small>@item.DateSubmitted.ToString("MMM dd, yyyy")</small>
+                                            </td>
+                                            <td>
+                                                <strong>@Html.DisplayFor(modelItem => item.KaizenNo)</strong>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(item.EmployeePhotoPath))
+                                                    {
+                                                        <img src="@item.EmployeePhotoPath" 
+                                                             alt="Employee Photo" 
+                                                             class="rounded-circle me-2" 
+                                                             style="width: 30px; height: 30px; object-fit: cover;">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                             style="width: 30px; height: 30px;">
+                                                            <i class="fas fa-user text-white" style="font-size: 12px;"></i>
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        <div class="fw-bold">@Html.DisplayFor(modelItem => item.EmployeeName)</div>
+                                                        <small class="text-muted">@Html.DisplayFor(modelItem => item.EmployeeNo)</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (item.CostSaving.HasValue && item.CostSaving > 0)
+                                                {
+                                                    <span class="text-success fw-bold">
+                                                        $@item.CostSaving.Value.ToString("N2")
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No cost saving</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var engineerStatus = item.EngineerStatus ?? "Pending";
+                                                    var statusClass = engineerStatus switch
+                                                    {
+                                                        "Approved" => "badge bg-success",
+                                                        "Rejected" => "badge bg-danger",
+                                                        _ => "badge bg-warning text-dark"
+                                                    };
+                                                }
+                                                <span class="@statusClass">
+                                                    <i class="fas fa-@(engineerStatus == "Approved" ? "check" : engineerStatus == "Rejected" ? "times" : "clock") me-1"></i>
+                                                    @engineerStatus
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var currentEngineerStatus = item.EngineerStatus ?? "Pending";
+                                                    string managerStatusDisplay;
+                                                    string managerStatusClass;
+                                                    
+                                                    if (currentEngineerStatus == "Rejected")
+                                                    {
+                                                        managerStatusDisplay = null;
+                                                        managerStatusClass = "text-muted";
+                                                    }
+                                                    else
+                                                    {
+                                                        var managerStatus = item.ManagerStatus ?? "Pending";
+                                                        managerStatusDisplay = managerStatus;
+                                                        managerStatusClass = managerStatus switch
+                                                        {
+                                                            "Approved" => "badge bg-success",
+                                                            "Rejected" => "badge bg-danger",
+                                                            _ => "badge bg-warning text-dark"
+                                                        };
+                                                    }
+                                                }
+                                                @if (currentEngineerStatus == "Rejected")
+                                                {
+                                                    <span class="@managerStatusClass">-</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="@managerStatusClass">
+                                                        <i class="fas fa-@(managerStatusDisplay == "Approved" ? "check" : managerStatusDisplay == "Rejected" ? "times" : "clock") me-1"></i>
+                                                        @managerStatusDisplay
+                                                    </span>
+                                                                                                 }
+                                             </td>
+                                             <td>
+                                                 @if (!string.IsNullOrEmpty(item.Department))
+                                                 {
+                                                     <span class="badge bg-secondary">
+                                                         <i class="fas fa-building me-1"></i>
+                                                         @item.Department
+                                                     </span>
+                                                 }
+                                                 else
+                                                 {
+                                                     <span class="text-muted">Not specified</span>
+                                                 }
+                                             </td>
+                                             <td>
+                                                 <a href="@Url.Action("SupervisorInterDeptKaizenDetails", "Kaizen", new { id = item.Id })" 
+                                                    class="btn btn-sm btn-outline-primary">
+                                                     <i class="fas fa-eye me-1"></i>
+                                                     View Details
+                                                 </a>
+                                             </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Page-specific scripts can be added here if needed
+    </script>
+}

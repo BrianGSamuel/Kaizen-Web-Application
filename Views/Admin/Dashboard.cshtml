@@ -79,7 +79,112 @@
             </div>
         </div>
     </div>
+    
+    <div class="col mb-4">
+        <div class="admin-card h-100">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="fas fa-trophy fa-2x text-warning"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">@ViewBag.AwardedKaizens</h3>
+                    <p class="text-muted mb-0">Awarded Kaizens</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title">
+                    <i class="fas fa-bullseye me-2"></i>Department Performance
+                </h5>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <p class="mb-1"><strong>Most Active Department:</strong></p>
+                    <p class="text-muted">@ViewBag.MostActiveDepartment</p>
+                </div>
+                <div class="col-6">
+                    <p class="mb-1"><strong>Total Submissions:</strong></p>
+                    <p class="text-muted">@ViewBag.MostActiveCount</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <p class="mb-1"><strong>Highest Cost Saving:</strong></p>
+                    <p class="text-success">$@ViewBag.HighestCostSaving.ToString("N0")</p>
+                </div>
+                <div class="col-6">
+                    <p class="mb-1"><strong>Department:</strong></p>
+                    <p class="text-muted">@ViewBag.HighestCostSavingDepartment</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title">
+                    <i class="fas fa-info-circle me-2"></i>System Information
+                </h5>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <p class="mb-1"><strong>Current User:</strong></p>
+                    <p class="text-muted">@User.Identity?.Name</p>
+                </div>
+                <div class="col-6">
+                    <p class="mb-1"><strong>Role:</strong></p>
+                    <p class="text-muted">Administrator</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <p class="mb-1"><strong>System Status:</strong></p>
+                    <p class="text-success">Online</p>
+                </div>
+                <div class="col-6">
+                    <p class="mb-1"><strong>Last Updated:</strong></p>
+                    <p class="text-muted">@DateTime.Now.ToString("MMM dd, yyyy")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .status-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    
+    .status-number {
+        font-size: 16px;
+        font-weight: 700;
+    }
+    
+    .admin-card {
+        transition: all 0.3s ease;
+    }
+    
+    .admin-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+</style>
 
 
 
@@ -126,27 +231,27 @@
         <div class="admin-card">
             <div class="admin-card-header">
                 <h5 class="admin-card-title">
-                    <i class="fas fa-info-circle me-2"></i>System Information
+                    <i class="fas fa-chart-pie me-2"></i>Status Distribution
                 </h5>
             </div>
             <div class="row">
-                <div class="col-6">
-                    <p class="mb-1"><strong>Current User:</strong></p>
-                    <p class="text-muted">@User.Identity?.Name</p>
+                <div class="col-4 text-center">
+                    <div class="status-circle bg-warning">
+                        <span class="status-number">@ViewBag.PendingPercentage%</span>
+                    </div>
+                    <p class="text-muted mt-2">Pending</p>
                 </div>
-                <div class="col-6">
-                    <p class="mb-1"><strong>Role:</strong></p>
-                    <p class="text-muted">Administrator</p>
+                <div class="col-4 text-center">
+                    <div class="status-circle bg-success">
+                        <span class="status-number">@ViewBag.ApprovedPercentage%</span>
+                    </div>
+                    <p class="text-muted mt-2">Approved</p>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-6">
-                    <p class="mb-1"><strong>System Status:</strong></p>
-                    <p class="text-success">Online</p>
-                </div>
-                <div class="col-6">
-                    <p class="mb-1"><strong>Last Updated:</strong></p>
-                    <p class="text-muted">@DateTime.Now.ToString("MMM dd, yyyy")</p>
+                <div class="col-4 text-center">
+                    <div class="status-circle bg-danger">
+                        <span class="status-number">@ViewBag.RejectedPercentage%</span>
+                    </div>
+                    <p class="text-muted mt-2">Rejected</p>
                 </div>
             </div>
         </div>

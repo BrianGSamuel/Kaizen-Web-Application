@@ -100,5 +100,18 @@ namespace KaizenWebApp.Models
         public string? CommitteeSignature { get; set; }
 
         public DateTime? AwardDate { get; set; }
+
+        // Inter-department approval fields
+        [StringLength(20)]
+        public string? InterDeptStatus { get; set; } // "Pending", "Approved", "Rejected"
+
+        [StringLength(100)]
+        public string? InterDeptApprovedBy { get; set; }
+
+        [StringLength(1000)]
+        public string? InterDeptApprovedDepartments { get; set; } // Comma-separated list of approved departments
+
+        [StringLength(1000)]
+        public string? InterDeptRejectedDepartments { get; set; } // Comma-separated list of rejected departments
     }
 }

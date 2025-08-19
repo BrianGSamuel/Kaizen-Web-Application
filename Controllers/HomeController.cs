@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using KaizenWebApp.Models;
 using KaizenWebApp.Data;
+using KaizenWebApp.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -20,12 +21,14 @@ namespace KaizenWebApp.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly ISystemService _systemService;
 
-        public HomeController(ILogger<HomeController> logger, AppDbContext context, IWebHostEnvironment env)
+        public HomeController(ILogger<HomeController> logger, AppDbContext context, IWebHostEnvironment env, ISystemService systemService)
         {
             _logger = logger;
             _context = context;
             _env = env;
+            _systemService = systemService;
         }
 
         // Method to check if request is direct URL access and end session if so
@@ -61,6 +64,12 @@ namespace KaizenWebApp.Controllers
         // Custom authorization method for kaizen team role
         private bool IsKaizenTeamRole()
         {
+            // First check the role claim (more reliable)
+            var role = User?.FindFirst("Role")?.Value;
+            if (!string.IsNullOrEmpty(role) && role.ToLower() == "kaizenteam")
+                return true;
+                
+            // Fallback to username check for backward compatibility
             var username = User?.Identity?.Name;
             if (string.IsNullOrEmpty(username))
                 return false;
@@ -70,7 +79,8 @@ namespace KaizenWebApp.Controllers
             return usernameLower.Contains("kaizenteam") || 
                    usernameLower.Contains("kaizen team") || 
                    usernameLower.Contains("kaizenteam") ||
-                   usernameLower.Contains("kaizen-team");
+                   usernameLower.Contains("kaizen-team") ||
+                   usernameLower == "kaizen_team";
         }
 
         // Removed Kaizenform action - it's handled by KaizenController
@@ -529,6 +539,14 @@ namespace KaizenWebApp.Controllers
                 document.Close();
                 return ms.ToArray();
             }
+        }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> Maintenance()
+        {
+            var maintenance = await _systemService.GetSystemMaintenanceStatusAsync();
+            ViewBag.MaintenanceMessage = maintenance.MaintenanceMessage;
+            return View();
         }
 
     }

@@ -97,6 +97,12 @@ namespace KaizenWebApp.Controllers
         // Custom authorization method for kaizen team role
         private bool IsKaizenTeamRole()
         {
+            // First check the role claim (more reliable)
+            var role = User?.FindFirst("Role")?.Value;
+            if (!string.IsNullOrEmpty(role) && role.ToLower() == "kaizenteam")
+                return true;
+                
+            // Fallback to username check for backward compatibility
             var username = User?.Identity?.Name;
             if (string.IsNullOrEmpty(username))
                 return false;
@@ -106,7 +112,8 @@ namespace KaizenWebApp.Controllers
             return usernameLower.Contains("kaizenteam") || 
                    usernameLower.Contains("kaizen team") || 
                    usernameLower.Contains("kaizenteam") ||
-                   usernameLower.Contains("kaizen-team");
+                   usernameLower.Contains("kaizen-team") ||
+                   usernameLower == "kaizen_team";
         }
 
         // Custom authorization method for supervisor role
@@ -1585,7 +1592,7 @@ namespace KaizenWebApp.Controllers
             return allowedExtensions.Contains(extension);
         }
 
-        // Updated to use FileService for consistency with RegisterUser
+        // Updated to use FileService for consistency
         private async Task<bool> IsValidImageAsync(IFormFile file)
         {
             return await _fileService.IsValidImageAsync(file);
@@ -1807,7 +1814,7 @@ namespace KaizenWebApp.Controllers
                 Console.WriteLine($"=== SENDING INTER-DEPARTMENT EMAIL NOTIFICATIONS ===");
                 Console.WriteLine($"Kaizen No: {kaizenForm.KaizenNo}");
                 Console.WriteLine($"Source Department: {kaizenForm.Department}");
-                Console.WriteLine($"Implementation Area: {implementationArea}");
+                Console.WriteLine($"Implementation Area: '{implementationArea}'");
 
                 if (string.IsNullOrEmpty(implementationArea))
                 {
@@ -1816,26 +1823,37 @@ namespace KaizenWebApp.Controllers
                 }
 
                 // Parse the implementation area to get individual departments
-                var targetDepartments = implementationArea.Split(',')
+                var allDepartments = implementationArea.Split(',')
                     .Select(d => d.Trim())
-                    .Where(d => !string.IsNullOrEmpty(d) && d != kaizenForm.Department)
+                    .Where(d => !string.IsNullOrEmpty(d))
+                    .ToList();
+
+                Console.WriteLine($"All departments from implementation area: {string.Join(", ", allDepartments)}");
+
+                var targetDepartments = allDepartments
+                    .Where(d => d != kaizenForm.Department)
                     .ToList();
 
                 if (!targetDepartments.Any())
                 {
-                    Console.WriteLine("No target departments found (excluding source department)");
+                    Console.WriteLine($"No target departments found (excluding source department: {kaizenForm.Department})");
                     return;
                 }
 
-                Console.WriteLine($"Target departments: {string.Join(", ", targetDepartments)}");
+                Console.WriteLine($"Target departments (excluding source): {string.Join(", ", targetDepartments)}");
 
                 // Generate website URL
                 var websiteUrl = $"{Request.Scheme}://{Request.Host}";
                 Console.WriteLine($"Website URL: {websiteUrl}");
 
+                int totalEmailsSent = 0;
+                int totalEmailsFailed = 0;
+
                 // Find engineers in each target department
                 foreach (var targetDepartment in targetDepartments)
                 {
+                    Console.WriteLine($"Processing department: {targetDepartment}");
+                    
                     var engineers = await _context.Users
                         .Where(u => u.DepartmentName == targetDepartment && 
                                    u.Role.ToLower() == "engineer" && 
@@ -1853,6 +1871,8 @@ namespace KaizenWebApp.Controllers
                     // Send email to each engineer
                     foreach (var engineer in engineers)
                     {
+                        Console.WriteLine($"Sending email to: {engineer.EmployeeName} ({engineer.Email}) in {targetDepartment}");
+                        
                         var emailSent = await _emailService.SendInterDepartmentNotificationAsync(
                             engineer.Email ?? "",
                             kaizenForm.KaizenNo,
@@ -1865,20 +1885,27 @@ namespace KaizenWebApp.Controllers
 
                         if (emailSent)
                         {
-                            Console.WriteLine($"Inter-department email sent successfully to {engineer.EmployeeName} ({engineer.Email}) in {targetDepartment}");
+                            Console.WriteLine($"✓ Inter-department email sent successfully to {engineer.EmployeeName} ({engineer.Email}) in {targetDepartment}");
+                            totalEmailsSent++;
                         }
                         else
                         {
-                            Console.WriteLine($"Failed to send inter-department email to {engineer.EmployeeName} ({engineer.Email}) in {targetDepartment}");
+                            Console.WriteLine($"✗ Failed to send inter-department email to {engineer.EmployeeName} ({engineer.Email}) in {targetDepartment}");
+                            totalEmailsFailed++;
                         }
                     }
                 }
 
+                Console.WriteLine($"=== EMAIL SUMMARY ===");
+                Console.WriteLine($"Total emails sent: {totalEmailsSent}");
+                Console.WriteLine($"Total emails failed: {totalEmailsFailed}");
+                Console.WriteLine($"Total departments processed: {targetDepartments.Count}");
                 Console.WriteLine($"=== END INTER-DEPARTMENT EMAIL NOTIFICATIONS ===");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error sending inter-department email notifications: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 // Don't throw the exception to avoid breaking the review submission process
             }
         }
@@ -1911,17 +1938,19 @@ namespace KaizenWebApp.Controllers
 
                 // Get current user's department
                 var userDepartment = await GetCurrentUserDepartment();
+                ViewBag.UserDepartment = userDepartment;
                 Console.WriteLine($"Current user department: {userDepartment}");
 
                 // Filter by user's department only - this is the key difference from KaizenListEngineer
                 if (!string.IsNullOrEmpty(userDepartment))
                 {
-                    // Handle multiple implementation areas (comma-separated)
+                    // Handle multiple implementation areas (comma-separated) and any occurrence of department name
                     query = query.Where(k => 
                         k.ImplementationArea == userDepartment || 
                         k.ImplementationArea.StartsWith(userDepartment + ",") ||
                         k.ImplementationArea.EndsWith("," + userDepartment) ||
-                        k.ImplementationArea.Contains("," + userDepartment + ",")
+                        k.ImplementationArea.Contains("," + userDepartment + ",") ||
+                        k.ImplementationArea.Contains(userDepartment)
                     );
                     Console.WriteLine($"Filtered by user department (ImplementationArea): {userDepartment}");
                 }
@@ -2016,6 +2045,422 @@ namespace KaizenWebApp.Controllers
             {
                 Console.WriteLine($"Error in InterDeptSuggestions: {ex.Message}");
                 return View("~/Views/Kaizen/InterDeptSuggestions.cshtml", new List<KaizenForm>());
+            }
+        }
+
+        // GET: /Kaizen/SupervisorInterDeptSuggestions - For supervisors to view approved inter-department suggestions
+        [HttpGet]
+        public async Task<IActionResult> SupervisorInterDeptSuggestions(string searchString, string startDate, string endDate, string category, string engineerStatus, string managerStatus)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow supervisors
+            if (!IsSupervisorRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                Console.WriteLine($"=== SUPERVISORINTERDEPTSUGGESTIONS DEBUG ===");
+                Console.WriteLine($"SupervisorInterDeptSuggestions called by: {User?.Identity?.Name}");
+                Console.WriteLine($"SearchString: {searchString}, StartDate: {startDate}, EndDate: {endDate}, Category: {category}, EngineerStatus: {engineerStatus}, ManagerStatus: {managerStatus}");
+
+                var query = _context.KaizenForms.AsQueryable();
+
+                // Get current user's department
+                var userDepartment = await GetCurrentUserDepartment();
+                ViewBag.UserDepartment = userDepartment;
+                Console.WriteLine($"Current user department: {userDepartment}");
+
+                // Filter by user's department only - show kaizens that are approved in the engineer's Inter-Department Suggestions
+                if (!string.IsNullOrEmpty(userDepartment))
+                {
+                    // Handle multiple implementation areas (comma-separated) and any occurrence of department name
+                    query = query.Where(k => 
+                        k.ImplementationArea == userDepartment || 
+                        k.ImplementationArea.StartsWith(userDepartment + ",") ||
+                        k.ImplementationArea.EndsWith("," + userDepartment) ||
+                        k.ImplementationArea.Contains("," + userDepartment + ",") ||
+                        k.ImplementationArea.Contains(userDepartment)
+                    );
+                    Console.WriteLine($"Filtered by user department (ImplementationArea): {userDepartment}");
+                }
+                else
+                {
+                    Console.WriteLine("No user department found, showing no results");
+                    return View("~/Views/Kaizen/SupervisorInterDeptSuggestions.cshtml", new List<KaizenForm>());
+                }
+
+                // Only show kaizens that are approved by engineers (for inter-department suggestions)
+                query = query.Where(k => k.EngineerStatus == "Approved");
+                Console.WriteLine("Filtered to show only engineer-approved kaizens");
+
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    var searchLower = searchString.ToLower();
+                    query = query.Where(k => 
+                        k.KaizenNo.ToLower().Contains(searchLower) ||
+                        k.EmployeeName.ToLower().Contains(searchLower) ||
+                        k.EmployeeNo.ToLower().Contains(searchLower)
+                    );
+                    Console.WriteLine($"Applied search filter for: {searchString}");
+                }
+
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                    Console.WriteLine($"Applied start date filter: {startDate}");
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                    Console.WriteLine($"Applied end date filter: {endDate}");
+                }
+
+                // Filter by category
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                    Console.WriteLine($"Applied category filter: {category}");
+                }
+
+                // Apply engineer status filter (should only be "Approved" for this view)
+                if (!string.IsNullOrEmpty(engineerStatus))
+                {
+                    if (engineerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.EngineerStatus == null || k.EngineerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.EngineerStatus == engineerStatus);
+                    }
+                    Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
+                }
+
+                // Apply manager status filter
+                if (!string.IsNullOrEmpty(managerStatus))
+                {
+                    if (managerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.ManagerStatus == null || k.ManagerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.ManagerStatus == managerStatus);
+                    }
+                    Console.WriteLine($"Applied manager status filter: {managerStatus}");
+                }
+
+                var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
+                Console.WriteLine($"SupervisorInterDeptSuggestions returned {kaizens.Count} results (approved inter-department suggestions)");
+                
+                // Debug: Show sample results
+                foreach (var k in kaizens.Take(3))
+                {
+                    Console.WriteLine($"  - {k.KaizenNo}: {k.EmployeeName} ({k.Department})");
+                    Console.WriteLine($"    EngineerStatus: '{k.EngineerStatus}'");
+                    Console.WriteLine($"    Category: '{k.Category}'");
+                    Console.WriteLine($"    ImplementationArea: '{k.ImplementationArea}'");
+                }
+                
+                Console.WriteLine($"=== END SUPERVISORINTERDEPTSUGGESTIONS DEBUG ===");
+
+                return View("~/Views/Kaizen/SupervisorInterDeptSuggestions.cshtml", kaizens);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in SupervisorInterDeptSuggestions: {ex.Message}");
+                return View("~/Views/Kaizen/SupervisorInterDeptSuggestions.cshtml", new List<KaizenForm>());
+            }
+        }
+
+        // GET: /Kaizen/ManagerInterDeptSuggestions - For managers to view approved inter-department suggestions
+        [HttpGet]
+        public async Task<IActionResult> ManagerInterDeptSuggestions(string searchString, string startDate, string endDate, string category, string engineerStatus, string managerStatus)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow managers
+            if (!IsManagerRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                Console.WriteLine($"=== MANAGERINTERDEPTSUGGESTIONS DEBUG ===");
+                Console.WriteLine($"ManagerInterDeptSuggestions called by: {User?.Identity?.Name}");
+                Console.WriteLine($"SearchString: {searchString}, StartDate: {startDate}, EndDate: {endDate}, Category: {category}, EngineerStatus: {engineerStatus}, ManagerStatus: {managerStatus}");
+
+                var query = _context.KaizenForms.AsQueryable();
+
+                // Get current user's department
+                var userDepartment = await GetCurrentUserDepartment();
+                ViewBag.UserDepartment = userDepartment;
+                Console.WriteLine($"Current user department: {userDepartment}");
+
+                // Filter by user's department only - show kaizens that are approved in the engineer's Inter-Department Suggestions
+                if (!string.IsNullOrEmpty(userDepartment))
+                {
+                    // Handle multiple implementation areas (comma-separated) and any occurrence of department name
+                    query = query.Where(k => 
+                        k.ImplementationArea == userDepartment || 
+                        k.ImplementationArea.StartsWith(userDepartment + ",") ||
+                        k.ImplementationArea.EndsWith("," + userDepartment) ||
+                        k.ImplementationArea.Contains("," + userDepartment + ",") ||
+                        k.ImplementationArea.Contains(userDepartment)
+                    );
+                    Console.WriteLine($"Filtered by user department (ImplementationArea): {userDepartment}");
+                }
+                else
+                {
+                    Console.WriteLine("No user department found, showing no results");
+                    return View("~/Views/Kaizen/ManagerInterDeptSuggestions.cshtml", new List<KaizenForm>());
+                }
+
+                // Only show kaizens that are approved by engineers (for inter-department suggestions)
+                query = query.Where(k => k.EngineerStatus == "Approved");
+                Console.WriteLine("Filtered to show only engineer-approved kaizens");
+
+                if (!string.IsNullOrEmpty(searchString))
+                {
+                    var searchLower = searchString.ToLower();
+                    query = query.Where(k => 
+                        k.KaizenNo.ToLower().Contains(searchLower) ||
+                        k.EmployeeName.ToLower().Contains(searchLower) ||
+                        k.EmployeeNo.ToLower().Contains(searchLower)
+                    );
+                    Console.WriteLine($"Applied search filter for: {searchString}");
+                }
+
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                    Console.WriteLine($"Applied start date filter: {startDate}");
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                    Console.WriteLine($"Applied end date filter: {endDate}");
+                }
+
+                // Filter by category
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                    Console.WriteLine($"Applied category filter: {category}");
+                }
+
+                // Apply engineer status filter (should only be "Approved" for this view)
+                if (!string.IsNullOrEmpty(engineerStatus))
+                {
+                    if (engineerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.EngineerStatus == null || k.EngineerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.EngineerStatus == engineerStatus);
+                    }
+                    Console.WriteLine($"Applied engineer status filter: {engineerStatus}");
+                }
+
+                // Apply manager status filter
+                if (!string.IsNullOrEmpty(managerStatus))
+                {
+                    if (managerStatus == "Pending")
+                    {
+                        query = query.Where(k => k.ManagerStatus == null || k.ManagerStatus == "Pending");
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.ManagerStatus == managerStatus);
+                    }
+                    Console.WriteLine($"Applied manager status filter: {managerStatus}");
+                }
+
+                var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
+                Console.WriteLine($"ManagerInterDeptSuggestions returned {kaizens.Count} results (approved inter-department suggestions)");
+                
+                // Debug: Show sample results
+                foreach (var k in kaizens.Take(3))
+                {
+                    Console.WriteLine($"  - {k.KaizenNo}: {k.EmployeeName} ({k.Department})");
+                    Console.WriteLine($"    EngineerStatus: '{k.EngineerStatus}'");
+                    Console.WriteLine($"    Category: '{k.Category}'");
+                    Console.WriteLine($"    ImplementationArea: '{k.ImplementationArea}'");
+                }
+                
+                Console.WriteLine($"=== END MANAGERINTERDEPTSUGGESTIONS DEBUG ===");
+
+                return View("~/Views/Kaizen/ManagerInterDeptSuggestions.cshtml", kaizens);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ManagerInterDeptSuggestions: {ex.Message}");
+                return View("~/Views/Kaizen/ManagerInterDeptSuggestions.cshtml", new List<KaizenForm>());
+            }
+        }
+
+        // GET: /Kaizen/ManagerInterDeptKaizenDetails - For managers to view inter-department kaizen details
+        [HttpGet]
+        public async Task<IActionResult> ManagerInterDeptKaizenDetails(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow managers
+            if (!IsManagerRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                Console.WriteLine($"=== MANAGERINTERDEPTKAIZENDETAILS DEBUG ===");
+                Console.WriteLine($"ManagerInterDeptKaizenDetails called by: {User?.Identity?.Name} for kaizen ID: {id}");
+
+                var kaizen = await _context.KaizenForms
+                    .FirstOrDefaultAsync(k => k.Id == id);
+
+                if (kaizen == null)
+                {
+                    Console.WriteLine($"Kaizen with ID {id} not found");
+                    TempData["ErrorMessage"] = "Kaizen not found.";
+                    return RedirectToAction("ManagerInterDeptSuggestions");
+                }
+
+                // Get current user's department
+                var userDepartment = await GetCurrentUserDepartment();
+                Console.WriteLine($"Current user department: {userDepartment}");
+
+                // Verify that this kaizen is relevant to the manager's department
+                if (!string.IsNullOrEmpty(userDepartment))
+                {
+                    bool isRelevant = kaizen.ImplementationArea == userDepartment || 
+                                     kaizen.ImplementationArea.StartsWith(userDepartment + ",") ||
+                                     kaizen.ImplementationArea.EndsWith("," + userDepartment) ||
+                                     kaizen.ImplementationArea.Contains("," + userDepartment + ",");
+
+                    if (!isRelevant)
+                    {
+                        Console.WriteLine($"Kaizen {id} is not relevant to manager's department {userDepartment}");
+                        TempData["ErrorMessage"] = "You don't have permission to view this kaizen.";
+                        return RedirectToAction("ManagerInterDeptSuggestions");
+                    }
+                }
+
+                // Verify that the kaizen is approved by engineer
+                if (kaizen.EngineerStatus != "Approved")
+                {
+                    Console.WriteLine($"Kaizen {id} is not approved by engineer (Status: {kaizen.EngineerStatus})");
+                    TempData["ErrorMessage"] = "This kaizen is not approved by an engineer.";
+                    return RedirectToAction("ManagerInterDeptSuggestions");
+                }
+
+                Console.WriteLine($"Successfully retrieved kaizen {id} for manager view");
+                Console.WriteLine($"=== END MANAGERINTERDEPTKAIZENDETAILS DEBUG ===");
+
+                return View("~/Views/Kaizen/ManagerInterDeptKaizenDetails.cshtml", kaizen);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ManagerInterDeptKaizenDetails: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while retrieving the kaizen details.";
+                return RedirectToAction("ManagerInterDeptSuggestions");
+            }
+        }
+
+        // GET: /Kaizen/SupervisorInterDeptKaizenDetails - For supervisors to view inter-department kaizen details
+        [HttpGet]
+        public async Task<IActionResult> SupervisorInterDeptKaizenDetails(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow supervisors
+            if (!IsSupervisorRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                Console.WriteLine($"=== SUPERVISORINTERDEPTKAIZENDETAILS DEBUG ===");
+                Console.WriteLine($"SupervisorInterDeptKaizenDetails called by: {User?.Identity?.Name} for kaizen ID: {id}");
+
+                var kaizen = await _context.KaizenForms
+                    .FirstOrDefaultAsync(k => k.Id == id);
+
+                if (kaizen == null)
+                {
+                    Console.WriteLine($"Kaizen with ID {id} not found");
+                    TempData["ErrorMessage"] = "Kaizen not found.";
+                    return RedirectToAction("SupervisorInterDeptSuggestions");
+                }
+
+                // Get current user's department
+                var userDepartment = await GetCurrentUserDepartment();
+                Console.WriteLine($"Current user department: {userDepartment}");
+
+                // Verify that this kaizen is relevant to the supervisor's department
+                if (!string.IsNullOrEmpty(userDepartment))
+                {
+                    bool isRelevant = kaizen.ImplementationArea == userDepartment || 
+                                     kaizen.ImplementationArea.StartsWith(userDepartment + ",") ||
+                                     kaizen.ImplementationArea.EndsWith("," + userDepartment) ||
+                                     kaizen.ImplementationArea.Contains("," + userDepartment + ",");
+
+                    if (!isRelevant)
+                    {
+                        Console.WriteLine($"Kaizen {id} is not relevant to supervisor's department {userDepartment}");
+                        TempData["ErrorMessage"] = "You don't have permission to view this kaizen.";
+                        return RedirectToAction("SupervisorInterDeptSuggestions");
+                    }
+                }
+
+                // Verify that the kaizen is approved by engineer
+                if (kaizen.EngineerStatus != "Approved")
+                {
+                    Console.WriteLine($"Kaizen {id} is not approved by engineer (Status: {kaizen.EngineerStatus})");
+                    TempData["ErrorMessage"] = "This kaizen is not approved by an engineer.";
+                    return RedirectToAction("SupervisorInterDeptSuggestions");
+                }
+
+                Console.WriteLine($"Successfully retrieved kaizen {id} for supervisor view");
+                Console.WriteLine($"=== END SUPERVISORINTERDEPTKAIZENDETAILS DEBUG ===");
+
+                return View("~/Views/Kaizen/SupervisorInterDeptKaizenDetails.cshtml", kaizen);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in SupervisorInterDeptKaizenDetails: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while retrieving the kaizen details.";
+                return RedirectToAction("SupervisorInterDeptSuggestions");
             }
         }
 
@@ -2693,11 +3138,12 @@ namespace KaizenWebApp.Controllers
             try
             {
                 var username = User?.Identity?.Name;
-                var currentUser = await GetUserByEmployeeNumberFromUsernameAsync();
+                var currentUser = await GetCurrentUserAsync();
                 
                 Console.WriteLine($"=== MYKAIZENS DEBUG ===");
                 Console.WriteLine($"MyKaizens called by: {username}");
-                Console.WriteLine($"Current user employee number: {currentUser?.EmployeeNumber}");
+                Console.WriteLine($"Current user: {currentUser?.EmployeeName} (EmployeeNumber: '{currentUser?.EmployeeNumber}', Department: {currentUser?.DepartmentName})");
+                Console.WriteLine($"Current user username: '{currentUser?.UserName}'");
                 Console.WriteLine($"SearchString: {searchString}, StartDate: {startDate}, EndDate: {endDate}, Category: {category}, EngineerStatus: {engineerStatus}, ManagerStatus: {managerStatus}");
 
                 var query = _context.KaizenForms.AsQueryable();
@@ -2706,16 +3152,88 @@ namespace KaizenWebApp.Controllers
                 var initialCount = await query.CountAsync();
                 Console.WriteLine($"MyKaizens initial query count: {initialCount}");
 
-                // Filter by current user's employee number instead of department
+                // Debug: Show some sample kaizen records to understand the data
+                var sampleKaizens = await _context.KaizenForms.Take(5).ToListAsync();
+                Console.WriteLine($"Sample kaizen records:");
+                foreach (var k in sampleKaizens)
+                {
+                    Console.WriteLine($"  - KaizenNo: {k.KaizenNo}, EmployeeNo: '{k.EmployeeNo}', EmployeeName: {k.EmployeeName}");
+                }
+                
+                // Debug: Show all unique employee numbers in the kaizen table
+                var uniqueEmployeeNumbers = await _context.KaizenForms.Select(k => k.EmployeeNo).Distinct().ToListAsync();
+                Console.WriteLine($"All unique employee numbers in kaizen table: {string.Join(", ", uniqueEmployeeNumbers.Select(e => $"'{e}'"))}");
+                
+                // Debug: Show all users in the database
+                var allUsers = await _context.Users.ToListAsync();
+                Console.WriteLine($"All users in database:");
+                foreach (var u in allUsers)
+                {
+                    Console.WriteLine($"  - Username: '{u.UserName}', EmployeeName: {u.EmployeeName}, EmployeeNumber: '{u.EmployeeNumber}', Department: {u.DepartmentName}");
+                }
+
+                // Filter by current user's employee number
                 if (currentUser != null && !string.IsNullOrEmpty(currentUser.EmployeeNumber))
                 {
-                    query = query.Where(k => k.EmployeeNo == currentUser.EmployeeNumber);
-                    Console.WriteLine($"Filtered by user employee number: {currentUser.EmployeeNumber}");
+                    var userEmployeeNumber = currentUser.EmployeeNumber.Trim();
+                    query = query.Where(k => k.EmployeeNo == userEmployeeNumber);
+                    Console.WriteLine($"Filtered by user employee number: '{userEmployeeNumber}'");
+                    
+                    // Debug: Check if there are any kaizens for this employee number
+                    var userKaizens = await _context.KaizenForms.Where(k => k.EmployeeNo == userEmployeeNumber).ToListAsync();
+                    Console.WriteLine($"Found {userKaizens.Count} kaizen records for employee number '{userEmployeeNumber}'");
+                    foreach (var k in userKaizens)
+                    {
+                        Console.WriteLine($"  - KaizenNo: {k.KaizenNo}, EmployeeNo: '{k.EmployeeNo}', EmployeeName: {k.EmployeeName}");
+                    }
+                    
+                    // If no exact matches found, try a more flexible search
+                    if (userKaizens.Count == 0)
+                    {
+                        Console.WriteLine($"No exact matches found for employee number '{userEmployeeNumber}', trying flexible search...");
+                        var flexibleMatches = await _context.KaizenForms.Where(k => k.EmployeeNo.Contains(userEmployeeNumber) || userEmployeeNumber.Contains(k.EmployeeNo)).ToListAsync();
+                        Console.WriteLine($"Found {flexibleMatches.Count} flexible matches:");
+                        foreach (var k in flexibleMatches)
+                        {
+                            Console.WriteLine($"  - KaizenNo: {k.KaizenNo}, EmployeeNo: '{k.EmployeeNo}', EmployeeName: {k.EmployeeName}");
+                        }
+                        
+                        // If still no matches, try matching by employee name
+                        if (flexibleMatches.Count == 0 && !string.IsNullOrEmpty(currentUser.EmployeeName))
+                        {
+                            Console.WriteLine($"No flexible matches found, trying to match by employee name: '{currentUser.EmployeeName}'");
+                            var nameMatches = await _context.KaizenForms.Where(k => k.EmployeeName == currentUser.EmployeeName).ToListAsync();
+                            Console.WriteLine($"Found {nameMatches.Count} name matches:");
+                            foreach (var k in nameMatches)
+                            {
+                                Console.WriteLine($"  - KaizenNo: {k.KaizenNo}, EmployeeNo: '{k.EmployeeNo}', EmployeeName: {k.EmployeeName}");
+                            }
+                            
+                            // If name matches found, use them instead
+                            if (nameMatches.Count > 0)
+                            {
+                                Console.WriteLine($"Using name matches instead of employee number matches");
+                                query = _context.KaizenForms.Where(k => k.EmployeeName == currentUser.EmployeeName);
+                            }
+                        }
+                    }
                 }
                 else
                 {
                     Console.WriteLine("No user employee number found, showing no results");
                     return View("~/Views/Home/MyKaizens.cshtml", new List<KaizenForm>());
+                }
+                
+                // Debug: If no results found, show all kaizens for debugging
+                var finalCount = await query.CountAsync();
+                if (finalCount == 0)
+                {
+                    Console.WriteLine("No kaizens found for current user, showing all kaizens for debugging:");
+                    var allKaizens = await _context.KaizenForms.Take(10).ToListAsync();
+                    foreach (var k in allKaizens)
+                    {
+                        Console.WriteLine($"  - KaizenNo: {k.KaizenNo}, EmployeeNo: '{k.EmployeeNo}', EmployeeName: {k.EmployeeName}");
+                    }
                 }
 
                 // Apply date range filter
@@ -2788,6 +3306,13 @@ namespace KaizenWebApp.Controllers
                 
                 var kaizens = await query.OrderByDescending(k => k.DateSubmitted).ToListAsync();
                 Console.WriteLine($"MyKaizens returned {kaizens.Count} results");
+                
+                // Debug: Show the final results
+                foreach (var k in kaizens)
+                {
+                    Console.WriteLine($"  - KaizenNo: {k.KaizenNo}, EmployeeNo: '{k.EmployeeNo}', EmployeeName: {k.EmployeeName}");
+                }
+                
                 Console.WriteLine($"=== END MYKAIZENS DEBUG ===");
 
                 return View("~/Views/Home/MyKaizens.cshtml", kaizens);
@@ -2813,6 +3338,8 @@ namespace KaizenWebApp.Controllers
                 Console.WriteLine($"=== LEADERBOARD DEBUG ===");
                 Console.WriteLine($"Leaderboard called by: {User?.Identity?.Name}");
                 Console.WriteLine($"Department: {department}, Quarter: {quarter}, SearchString: {searchString}");
+
+
 
                 var query = _context.KaizenForms.AsQueryable();
 
@@ -2845,16 +3372,16 @@ namespace KaizenWebApp.Controllers
                     Console.WriteLine($"Applied search filter for: {searchString}");
                 }
 
-                // Get leaderboard data grouped by employee
+                // Get leaderboard data grouped by employee number only
                 var leaderboardData = await query
-                    .Where(k => !string.IsNullOrEmpty(k.EmployeeNo) && !string.IsNullOrEmpty(k.EmployeeName))
-                    .GroupBy(k => new { k.EmployeeNo, k.EmployeeName, k.EmployeePhotoPath, k.Department })
+                    .Where(k => !string.IsNullOrEmpty(k.EmployeeNo))
+                    .GroupBy(k => k.EmployeeNo)
                     .Select(g => new
                     {
-                        EmployeeNo = g.Key.EmployeeNo,
-                        EmployeeName = g.Key.EmployeeName,
-                        EmployeePhotoPath = g.Key.EmployeePhotoPath,
-                        Department = g.Key.Department,
+                        EmployeeNo = g.Key,
+                        EmployeeName = g.First().EmployeeName, // Take the first occurrence of the name
+                        EmployeePhotoPath = g.First().EmployeePhotoPath, // Take the first occurrence of the photo
+                        Department = g.First().Department, // Take the first occurrence of the department
                         TotalKaizens = g.Count(),
                         ApprovedKaizens = g.Count(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved"),
                         PendingKaizens = g.Count(k => (k.EngineerStatus == null || k.EngineerStatus == "Pending") || 
@@ -2891,14 +3418,14 @@ namespace KaizenWebApp.Controllers
                     }
 
                     var fullLeaderboardData = await fullLeaderboardQuery
-                        .Where(k => !string.IsNullOrEmpty(k.EmployeeNo) && !string.IsNullOrEmpty(k.EmployeeName))
-                        .GroupBy(k => new { k.EmployeeNo, k.EmployeeName, k.EmployeePhotoPath, k.Department })
+                        .Where(k => !string.IsNullOrEmpty(k.EmployeeNo))
+                        .GroupBy(k => k.EmployeeNo)
                         .Select(g => new
                         {
-                            EmployeeNo = g.Key.EmployeeNo,
-                            EmployeeName = g.Key.EmployeeName,
-                            EmployeePhotoPath = g.Key.EmployeePhotoPath,
-                            Department = g.Key.Department,
+                            EmployeeNo = g.Key,
+                            EmployeeName = g.First().EmployeeName, // Take the first occurrence of the name
+                            EmployeePhotoPath = g.First().EmployeePhotoPath, // Take the first occurrence of the photo
+                            Department = g.First().Department, // Take the first occurrence of the department
                             TotalKaizens = g.Count(),
                             ApprovedKaizens = g.Count(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved"),
                             PendingKaizens = g.Count(k => (k.EngineerStatus == null || k.EngineerStatus == "Pending") || 
@@ -2952,6 +3479,16 @@ namespace KaizenWebApp.Controllers
                 }
 
                 Console.WriteLine($"Leaderboard returned {rankedLeaderboard.Count} entries");
+                
+                // Debug: Show the grouped data
+                Console.WriteLine("Grouped leaderboard data:");
+                foreach (var entry in rankedLeaderboard)
+                {
+                    Console.WriteLine($"  - {entry.EmployeeName} ({entry.EmployeeNo}): {entry.TotalKaizens} total kaizens");
+                }
+                
+
+                
                 Console.WriteLine($"=== END LEADERBOARD DEBUG ===");
 
                 // Get unique departments for filter dropdown
@@ -2966,6 +3503,7 @@ namespace KaizenWebApp.Controllers
                 ViewBag.SelectedDepartment = department;
                 ViewBag.SelectedQuarter = quarter;
                 ViewBag.SearchString = searchString;
+
                 return View("~/Views/Home/Leaderboard.cshtml", rankedLeaderboard);
             }
             catch (Exception ex)
@@ -3771,12 +4309,26 @@ namespace KaizenWebApp.Controllers
                 // Send email notification to manager in the same department
                 await SendManagerEmailNotification(kaizen, approvedBy?.Trim());
 
-                // Send email notifications to engineers in specified departments for inter-department implementation
-                if (!string.IsNullOrEmpty(implementationArea?.Trim()) && 
-                    canImplementInOtherFields?.ToLower() == "yes")
-                {
-                    await SendInterDepartmentEmailNotifications(kaizen, implementationArea.Trim());
-                }
+                        // Send email notifications to engineers in specified departments for inter-department implementation
+        if (!string.IsNullOrEmpty(implementationArea?.Trim()) && 
+            canImplementInOtherFields?.ToLower() == "yes")
+        {
+            Console.WriteLine($"=== EXECUTIVE FILLING - SENDING INTER-DEPARTMENT EMAILS ===");
+            Console.WriteLine($"Implementation Area: '{implementationArea.Trim()}'");
+            Console.WriteLine($"Can Implement in Other Fields: {canImplementInOtherFields}");
+            
+            await SendInterDepartmentEmailNotifications(kaizen, implementationArea.Trim());
+            
+            Console.WriteLine($"=== END EXECUTIVE FILLING - INTER-DEPARTMENT EMAILS ===");
+        }
+        else
+        {
+            Console.WriteLine($"=== EXECUTIVE FILLING - NO INTER-DEPARTMENT EMAILS ===");
+            Console.WriteLine($"Implementation Area: '{implementationArea?.Trim()}'");
+            Console.WriteLine($"Can Implement in Other Fields: {canImplementInOtherFields}");
+            Console.WriteLine($"Skipping inter-department email notifications");
+            Console.WriteLine($"=== END EXECUTIVE FILLING - NO INTER-DEPARTMENT EMAILS ===");
+        }
 
                 return Json(new { success = true, message = "Review saved successfully!" });
             }
@@ -5559,6 +6111,60 @@ namespace KaizenWebApp.Controllers
             }
         }
 
+        // GET: /Kaizen/SupervisorAboutSystem
+        [HttpGet]
+        public async Task<IActionResult> SupervisorAboutSystem()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow supervisors
+            if (!IsSupervisorRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in SupervisorAboutSystem: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // GET: /Kaizen/EngineerAboutSystem
+        [HttpGet]
+        public async Task<IActionResult> EngineerAboutSystem()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow engineers
+            if (!IsEngineerRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in EngineerAboutSystem: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
         // GET: /Kaizen/UserManagement
         [HttpGet]
         public async Task<IActionResult> UserManagement()
@@ -6153,6 +6759,115 @@ namespace KaizenWebApp.Controllers
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
         }
+
+        [HttpPost]
+        public async Task<IActionResult> InterDeptApproval([FromBody] InterDeptApprovalRequest request)
+        {
+            try
+            {
+                // Check if user is engineer
+                if (!IsEngineerRole())
+                {
+                    return Json(new { success = false, message = "Access denied. Only engineers can perform inter-department approvals." });
+                }
+
+                // Get current user
+                var username = User.Identity?.Name;
+                var currentUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
+                if (currentUser == null)
+                {
+                    return Json(new { success = false, message = "User not found." });
+                }
+
+                // Get the kaizen form
+                var kaizen = await _context.KaizenForms.FirstOrDefaultAsync(k => k.Id == request.KaizenId);
+                if (kaizen == null)
+                {
+                    return Json(new { success = false, message = "Kaizen suggestion not found." });
+                }
+
+                // Check if the current user's department is in the implementation area
+                var implementationAreas = kaizen.ImplementationArea?.Split(',').Select(d => d.Trim()).ToList() ?? new List<string>();
+                if (!implementationAreas.Contains(currentUser.DepartmentName))
+                {
+                    return Json(new { success = false, message = "You can only approve/reject kaizens for your own department." });
+                }
+
+                // Check if the requested department is in the implementation area
+                if (!implementationAreas.Contains(request.Department))
+                {
+                    return Json(new { success = false, message = "The selected department is not in the implementation area." });
+                }
+
+                // Initialize approval tracking if not exists
+                if (string.IsNullOrEmpty(kaizen.InterDeptApprovedDepartments))
+                {
+                    kaizen.InterDeptApprovedDepartments = "";
+                }
+                if (string.IsNullOrEmpty(kaizen.InterDeptRejectedDepartments))
+                {
+                    kaizen.InterDeptRejectedDepartments = "";
+                }
+
+                var approvedDepartments = kaizen.InterDeptApprovedDepartments.Split(',').Where(d => !string.IsNullOrEmpty(d.Trim())).ToList();
+                var rejectedDepartments = kaizen.InterDeptRejectedDepartments.Split(',').Where(d => !string.IsNullOrEmpty(d.Trim())).ToList();
+
+                if (request.Action.ToLower() == "approve")
+                {
+                    // Add to approved departments if not already there
+                    if (!approvedDepartments.Contains(request.Department))
+                    {
+                        approvedDepartments.Add(request.Department);
+                    }
+                    // Remove from rejected departments if it was there
+                    rejectedDepartments.Remove(request.Department);
+                }
+                else if (request.Action.ToLower() == "reject")
+                {
+                    // Add to rejected departments if not already there
+                    if (!rejectedDepartments.Contains(request.Department))
+                    {
+                        rejectedDepartments.Add(request.Department);
+                    }
+                    // Remove from approved departments if it was there
+                    approvedDepartments.Remove(request.Department);
+
+                    // Remove the department from implementation area
+                    implementationAreas.Remove(request.Department);
+                    kaizen.ImplementationArea = string.Join(",", implementationAreas);
+                }
+
+                // Update the approval tracking fields
+                kaizen.InterDeptApprovedDepartments = string.Join(",", approvedDepartments);
+                kaizen.InterDeptRejectedDepartments = string.Join(",", rejectedDepartments);
+                kaizen.InterDeptApprovedBy = currentUser.EmployeeName;
+                kaizen.InterDeptStatus = "Processed";
+
+                await _context.SaveChangesAsync();
+
+                string actionText = request.Action.ToLower() == "approve" ? "approved" : "rejected";
+                string message = $"Department '{request.Department}' has been {actionText} successfully.";
+                
+                if (request.Action.ToLower() == "reject")
+                {
+                    message += " The department has been removed from the implementation area.";
+                }
+
+                return Json(new { success = true, message = message });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in InterDeptApproval: {ex.Message}");
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+    }
+
+    public class InterDeptApprovalRequest
+    {
+        public int KaizenId { get; set; }
+        public string Department { get; set; }
+        public string Action { get; set; } // "approve" or "reject"
     }
 
     public class UpdateStatusRequest

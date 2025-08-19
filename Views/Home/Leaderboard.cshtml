@@ -625,16 +625,7 @@
         }
     }
 
-    /* Current user highlight */
-    .current-user {
-        background: linear-gradient(135deg, rgba(52, 152, 219, 0.05) 0%, rgba(52, 152, 219, 0.02) 100%);
-        border-left: 4px solid var(--accent-color);
-    }
 
-    .current-user .rank-badge {
-        box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
-        border: 2px solid var(--accent-color);
-    }
 
 
 
@@ -677,16 +668,7 @@
         <div class="col-12">
             <div class="leaderboard-container">
                 
-                <!-- Header -->
-                <div class="leaderboard-header">
-                    <h1 class="leaderboard-title">
-                        <i class="fas fa-trophy me-3"></i>
-                        Kaizen Leaderboard
-                    </h1>
-                    <p class="leaderboard-subtitle">
-                        Celebrating innovation and continuous improvement across the organization
-                    </p>
-                </div>
+                
 
                 <!-- Filter Section -->
                 <div class="card mb-4">
@@ -802,6 +784,7 @@
                                                 {
                                                     @entry.Rank
                                                 }
+
                                             </div>
                                         </td>
                                         <td>
@@ -865,6 +848,7 @@
                             <i class="fas fa-info-circle me-2"></i>
                             Rankings are based on total kaizens submitted, approved kaizens, and total cost savings
                         </p>
+                        
                     </div>
                 }
             </div>
@@ -885,16 +869,7 @@
                 showLoadingState();
             });
 
-            // Highlight current user with enhanced styling
-            const currentUsername = '@Context.User.Identity?.Name';
-            if (currentUsername) {
-                $('.leaderboard-table tbody tr').each(function() {
-                    const employeeName = $(this).find('.employee-details h6').text().trim();
-                    if (employeeName.toLowerCase().includes(currentUsername.toLowerCase())) {
-                        $(this).addClass('current-user');
-                    }
-                });
-            }
+
 
             // Enhanced hover effects for statistics
             $('.stat-item').hover(

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using KaizenWebApp.Data;
 using KaizenWebApp.Models;
 using KaizenWebApp.ViewModels;
+using KaizenWebApp.Services;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System;
 using System.Collections.Generic; // Added for List
@@ -13,10 +15,12 @@ namespace KaizenWebApp.Controllers
     public class AdminController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly ISystemService _systemService;
 
-        public AdminController(AppDbContext context)
+        public AdminController(AppDbContext context, ISystemService systemService)
         {
             _context = context;
+            _systemService = systemService;
         }
 
         public IActionResult Dashboard()
@@ -48,11 +52,46 @@ namespace KaizenWebApp.Controllers
             var approvedKaizens = _context.KaizenForms.Count(k => 
                 k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
 
+            // Calculate awarded kaizens
+            var awardedKaizens = _context.KaizenForms.Count(k => 
+                k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && 
+                !string.IsNullOrEmpty(k.AwardPrice) && k.AwardPrice != "NO PRICE");
+
+            // Calculate percentages
+            var totalForPercentage = totalKaizens > 0 ? totalKaizens : 1;
+            var pendingPercentage = (int)((double)pendingKaizens / totalForPercentage * 100);
+            var approvedPercentage = (int)((double)approvedKaizens / totalForPercentage * 100);
+            var rejectedPercentage = (int)((double)rejectedKaizens / totalForPercentage * 100);
+
+            // Get most active department
+            var mostActiveDepartment = _context.KaizenForms
+                .Where(k => !string.IsNullOrEmpty(k.Department))
+                .GroupBy(k => k.Department)
+                .OrderByDescending(g => g.Count())
+                .Select(g => new { Department = g.Key, Count = g.Count() })
+                .FirstOrDefault();
+
+            // Get department with highest cost saving
+            var highestCostSavingDept = _context.KaizenForms
+                .Where(k => k.CostSaving.HasValue && k.CostSaving > 0)
+                .GroupBy(k => k.Department)
+                .OrderByDescending(g => g.Sum(k => k.CostSaving.Value))
+                .Select(g => new { Department = g.Key, TotalSaving = g.Sum(k => k.CostSaving.Value) })
+                .FirstOrDefault();
+
             ViewBag.TotalUsers = totalUsers;
             ViewBag.TotalKaizens = totalKaizens;
             ViewBag.PendingKaizens = pendingKaizens;
             ViewBag.RejectedKaizens = rejectedKaizens;
             ViewBag.ApprovedKaizens = approvedKaizens;
+            ViewBag.AwardedKaizens = awardedKaizens;
+            ViewBag.PendingPercentage = pendingPercentage;
+            ViewBag.ApprovedPercentage = approvedPercentage;
+            ViewBag.RejectedPercentage = rejectedPercentage;
+            ViewBag.MostActiveDepartment = mostActiveDepartment?.Department ?? "N/A";
+            ViewBag.MostActiveCount = mostActiveDepartment?.Count ?? 0;
+            ViewBag.HighestCostSaving = highestCostSavingDept?.TotalSaving ?? 0;
+            ViewBag.HighestCostSavingDepartment = highestCostSavingDept?.Department ?? "N/A";
 
             return View();
         }
@@ -983,6 +1022,147 @@ namespace KaizenWebApp.Controllers
             {
                 return Json(new { success = false, message = "Error searching kaizens: " + ex.Message });
             }
+        }
+
+        public async Task<IActionResult> Settings()
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var maintenance = await _systemService.GetSystemMaintenanceStatusAsync();
+            var users = await _context.Users.ToListAsync();
+
+            var viewModel = new SettingsViewModel
+            {
+                IsSystemOffline = maintenance.IsSystemOffline,
+                MaintenanceMessage = maintenance.MaintenanceMessage,
+                MaintenanceStartTime = maintenance.MaintenanceStartTime,
+                MaintenanceEndTime = maintenance.MaintenanceEndTime,
+                AvailableUsers = users
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateSystemMaintenance(SettingsViewModel model)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            if (await _systemService.SetSystemMaintenanceStatusAsync(model.IsSystemOffline, model.MaintenanceMessage, username))
+            {
+                TempData["SuccessMessage"] = model.IsSystemOffline 
+                    ? "System has been put into maintenance mode." 
+                    : "System has been brought back online.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to update system maintenance status.";
+            }
+
+            return RedirectToAction("Settings");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendNotification(SettingsViewModel model)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            if (ModelState.IsValid)
+            {
+                if (await _systemService.SendNotificationAsync(model, username))
+                {
+                    TempData["SuccessMessage"] = "Notification sent successfully.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Failed to send notification.";
+                }
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Please check the notification details.";
+            }
+
+            return RedirectToAction("Settings");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNotifications()
+        {
+            var username = User.Identity?.Name;
+            if (string.IsNullOrEmpty(username))
+            {
+                return Json(new { success = false, message = "User not authenticated" });
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
+            var role = user?.Role ?? "User";
+
+            var notifications = await _systemService.GetNotificationsForUserAsync(username, role);
+            var unreadCount = await _systemService.GetUnreadNotificationCountAsync(username, role);
+
+            return Json(new { 
+                success = true, 
+                notifications = notifications.Select(n => new {
+                    id = n.Id,
+                    title = n.Title,
+                    message = n.Message,
+                    type = n.NotificationType,
+                    isRead = n.IsRead,
+                    createdAt = n.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                }),
+                unreadCount = unreadCount
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkNotificationAsRead(int notificationId)
+        {
+            var username = User.Identity?.Name;
+            if (string.IsNullOrEmpty(username))
+            {
+                return Json(new { success = false, message = "User not authenticated" });
+            }
+
+            var success = await _systemService.MarkNotificationAsReadAsync(notificationId, username);
+            return Json(new { success = success });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteLastNotification()
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            if (await _systemService.DeleteLastNotificationAsync())
+            {
+                TempData["SuccessMessage"] = "Last notification deleted successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to delete last notification or no notifications found.";
+            }
+
+            return RedirectToAction("Settings");
         }
     }
 } 

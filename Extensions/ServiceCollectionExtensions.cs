@@ -28,6 +28,8 @@ namespace KaizenWebApp.Extensions
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<ISystemService, SystemService>();
+            services.AddScoped<DatabaseSeedService>();
 
             // Add HTTP context accessor for accessing HttpContext in services
             services.AddHttpContextAccessor();

@@ -5,7 +5,13 @@
     Layout = "~/Views/Shared/_EngineerLayout.cshtml";
 }
 
+@{
+    // Add anti-forgery token for AJAX requests
+    var token = Html.AntiForgeryToken();
+}
+
 <div class="container-fluid">
+    @token
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -256,6 +262,22 @@
                                                             <i class="fas fa-gavel me-1"></i>Approval
                                                         </button>
                                                     }
+                                                    @{
+                                                        var userDept = ViewBag.UserDepartment as string;
+                                                        var approvedDepts = (item.InterDeptApprovedDepartments ?? "")
+                                                            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                                            .Select(d => d.Trim())
+                                                            .ToList();
+                                                        var canShowInterDeptButton = !string.IsNullOrEmpty(item.ImplementationArea) &&
+                                                            !string.IsNullOrEmpty(userDept) &&
+                                                            !approvedDepts.Contains(userDept);
+                                                    }
+                                                    @if (canShowInterDeptButton)
+                                                    {
+                                                        <button id="interdept-btn-@item.Id" class="btn btn-sm btn-success" onclick="showInterDeptApprovalPopup(@item.Id, '@item.ImplementationArea')">
+                                                            <i class="fas fa-check me-1"></i>Inter-Dept Approval
+                                                        </button>
+                                                    }
                                                 </div>
                                             </td>
                                         </tr>
@@ -278,6 +300,109 @@
                 // Redirect to approval page or show modal
                 window.location.href = `/Kaizen/KaizenDetailsEngineer/${kaizenId}`;
             }
+        }
+
+        // Function to show inter-department approval popup
+        function showInterDeptApprovalPopup(kaizenId, implementationArea) {
+            const departments = implementationArea.split(',').map(dept => dept.trim());
+            let departmentOptions = '';
+            
+            departments.forEach(dept => {
+                departmentOptions += `<option value="${dept}">${dept}</option>`;
+            });
+
+            const modalHtml = `
+                <div class="modal fade" id="interDeptApprovalModal" tabindex="-1" aria-labelledby="interDeptApprovalModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="interDeptApprovalModalLabel">Inter-Department Approval</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Select the department you want to approve or reject:</p>
+                                <select class="form-select mb-3" id="departmentSelect">
+                                    ${departmentOptions}
+                                </select>
+                                <div class="mb-3">
+                                    <label class="form-label">Action:</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="approvalAction" id="approveAction" value="approve" checked>
+                                        <label class="form-check-label" for="approveAction">
+                                            Approve
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="approvalAction" id="rejectAction" value="reject">
+                                        <label class="form-check-label" for="rejectAction">
+                                            Reject
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="submitInterDeptApproval(${kaizenId})">Submit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('interDeptApprovalModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('interDeptApprovalModal'));
+            modal.show();
+        }
+
+        // Function to submit inter-department approval
+        function submitInterDeptApproval(kaizenId) {
+            const department = document.getElementById('departmentSelect').value;
+            const action = document.querySelector('input[name="approvalAction"]:checked').value;
+
+            // Send AJAX request
+            fetch('/Kaizen/InterDeptApproval', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({
+                    kaizenId: kaizenId,
+                    department: department,
+                    action: action
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('interDeptApprovalModal'));
+                    modal.hide();
+                    if (action === 'approve') {
+                        // Remove the button right away
+                        const btn = document.getElementById(`interdept-btn-${kaizenId}`);
+                        if (btn) btn.remove();
+                    } else {
+                        // For reject, reload to reflect ImplementationArea change
+                        location.reload();
+                    }
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing the approval.');
+            });
         }
     </script>
 }

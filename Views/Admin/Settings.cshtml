@@ -1,0 +1,257 @@
+@model KaizenWebApp.ViewModels.SettingsViewModel
+@{
+    ViewData["Title"] = "System Settings";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Server-side messages for toast system -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div data-tempdata="success" style="display: none;">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div data-tempdata="error" style="display: none;">@TempData["ErrorMessage"]</div>
+}
+
+<div class="row">
+    <!-- System Maintenance Section -->
+    <div class="col-md-6 mb-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title">
+                    <i class="fas fa-tools me-2"></i>System Maintenance
+                </h5>
+            </div>
+            
+            <form asp-action="UpdateSystemMaintenance" method="post">
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" asp-for="IsSystemOffline" id="systemOffline">
+                        <label class="form-check-label" for="systemOffline">
+                            <strong>System Maintenance Mode</strong>
+                        </label>
+                    </div>
+                    <small class="text-muted">
+                        When enabled, regular users will see a maintenance message. Admin users can still access the admin panel to manage the system.
+                    </small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="maintenanceMessage" class="form-label">Maintenance Message</label>
+                    <textarea class="form-control" id="maintenanceMessage" asp-for="MaintenanceMessage" 
+                              rows="3" placeholder="Enter maintenance message to display to users..."></textarea>
+                    <small class="text-muted">This message will be shown to users when the system is in maintenance mode.</small>
+                </div>
+
+                @if (Model.MaintenanceStartTime.HasValue)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Maintenance Started</label>
+                        <p class="text-muted mb-0">@Model.MaintenanceStartTime.Value.ToString("MMM dd, yyyy HH:mm")</p>
+                    </div>
+                }
+
+                @if (Model.MaintenanceEndTime.HasValue)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Maintenance Ended</label>
+                        <p class="text-muted mb-0">@Model.MaintenanceEndTime.Value.ToString("MMM dd, yyyy HH:mm")</p>
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-admin">
+                    <i class="fas fa-save me-2"></i>Update Maintenance Status
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification System Section -->
+    <div class="col-md-6 mb-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title">
+                    <i class="fas fa-bell me-2"></i>Send Notifications
+                </h5>
+            </div>
+            
+            <form asp-action="SendNotification" method="post">
+                <div class="mb-3">
+                    <label for="notificationTitle" class="form-label">Notification Title</label>
+                    <input type="text" class="form-control" id="notificationTitle" asp-for="NotificationTitle" 
+                           placeholder="Enter notification title" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="notificationMessage" class="form-label">Notification Message</label>
+                    <textarea class="form-control" id="notificationMessage" asp-for="NotificationMessage" 
+                              rows="3" placeholder="Enter notification message" required></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="recipientRole" class="form-label">Recipient Role</label>
+                        <select class="form-select" id="recipientRole" asp-for="RecipientRole" required>
+                            @foreach (var role in Model.AvailableRoles)
+                            {
+                                <option value="@role">@role</option>
+                            }
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="notificationType" class="form-label">Notification Type</label>
+                        <select class="form-select" id="notificationType" asp-for="NotificationType" required>
+                            @foreach (var type in Model.NotificationTypes)
+                            {
+                                <option value="@type">@type.ToUpper()</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3" id="specificUserSection" style="display: none;">
+                    <label for="recipientUsername" class="form-label">Specific User (Optional)</label>
+                    <select class="form-select" id="recipientUsername" asp-for="RecipientUsername">
+                        <option value="">Select a specific user...</option>
+                        @foreach (var user in Model.AvailableUsers)
+                        {
+                            <option value="@user.UserName">@user.UserName (@user.Role)</option>
+                        }
+                    </select>
+                    <small class="text-muted">Leave empty to send to all users with the selected role.</small>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-admin">
+                        <i class="fas fa-paper-plane me-2"></i>Send Notification
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="deleteLastNotification()">
+                        <i class="fas fa-trash me-2"></i>Delete Last Notification
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- System Status Overview -->
+<div class="row">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="admin-card-title">
+                    <i class="fas fa-info-circle me-2"></i>System Status Overview
+                </h5>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="mb-2">
+                            <i class="fas fa-server fa-2x @(Model.IsSystemOffline ? "text-danger" : "text-success")"></i>
+                        </div>
+                        <h6>System Status</h6>
+                        <span class="badge @(Model.IsSystemOffline ? "bg-danger" : "bg-success")">
+                            @(Model.IsSystemOffline ? "MAINTENANCE" : "ONLINE")
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="mb-2">
+                            <i class="fas fa-users fa-2x text-primary"></i>
+                        </div>
+                        <h6>Total Users</h6>
+                        <span class="badge bg-primary">@Model.AvailableUsers.Count</span>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="mb-2">
+                            <i class="fas fa-clock fa-2x text-warning"></i>
+                        </div>
+                        <h6>Last Updated</h6>
+                        <small class="text-muted">@DateTime.Now.ToString("MMM dd, yyyy HH:mm")</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="mb-2">
+                            <i class="fas fa-user-shield fa-2x text-info"></i>
+                        </div>
+                        <h6>Current Admin</h6>
+                        <small class="text-muted">@User.Identity?.Name</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Show/hide specific user section based on recipient role
+            $('#recipientRole').change(function() {
+                if ($(this).val() === 'All') {
+                    $('#specificUserSection').hide();
+                    $('#recipientUsername').val('');
+                } else {
+                    $('#specificUserSection').show();
+                }
+            });
+
+            // Initialize on page load
+            $('#recipientRole').trigger('change');
+
+            // Confirmation for system maintenance changes
+            $('form[asp-action="UpdateSystemMaintenance"]').submit(function(e) {
+                var isOffline = $('#systemOffline').is(':checked');
+                var message = isOffline ? 
+                    'Are you sure you want to put the system into maintenance mode? Regular users will see a maintenance message, but admin users can still access the admin panel.' :
+                    'Are you sure you want to bring the system back online?';
+                
+                if (!confirm(message)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Confirmation for sending notifications
+            $('form[asp-action="SendNotification"]').submit(function(e) {
+                var recipientRole = $('#recipientRole').val();
+                var message = 'Are you sure you want to send this notification to ' + recipientRole + ' users?';
+                
+                if (!confirm(message)) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Function to delete last notification
+        function deleteLastNotification() {
+            if (confirm('Are you sure you want to delete the last notification? This action cannot be undone.')) {
+                // Create a form and submit it
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '@Url.Action("DeleteLastNotification", "Admin")';
+                
+                // Add anti-forgery token
+                var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                var tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = token;
+                form.appendChild(tokenInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+}

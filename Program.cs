@@ -1,6 +1,9 @@
 using KaizenWebApp.Extensions;
 using KaizenWebApp.Middleware;
+using KaizenWebApp.Data;
+using KaizenWebApp.Models;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +42,19 @@ builder.Services.AddCustomCors();
 
 var app = builder.Build();
 
+// Initialize database and seed admin user
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var seedService = scope.ServiceProvider.GetRequiredService<DatabaseSeedService>();
+    
+    // Ensure database is created
+    context.Database.EnsureCreated();
+    
+    // Seed the database with initial data
+    await seedService.SeedDatabaseAsync();
+}
+
 // Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
@@ -48,6 +64,7 @@ if (!app.Environment.IsDevelopment())
 
 // Add custom middleware
 app.UseRequestLogging();
+app.UseMiddleware<SystemMaintenanceMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

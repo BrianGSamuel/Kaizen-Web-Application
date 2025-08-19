@@ -1,0 +1,307 @@
+@{
+    ViewData["Title"] = "About System";
+    Layout = "~/Views/Shared/_EngineerLayout.cshtml";
+}
+
+<style>
+    .about-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .about-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .about-header h2 {
+        color: var(--engineer-dark-blue);
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .about-header p {
+        color: #6b7280;
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+
+    .feature-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--engineer-dark-blue) 0%, var(--engineer-light-blue) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .feature-title {
+        color: var(--engineer-dark-blue);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 1.2rem;
+    }
+
+    .feature-description {
+        color: #4b5563;
+        line-height: 1.6;
+        margin-bottom: 0;
+    }
+
+    .system-info {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #bfdbfe;
+    }
+
+    .system-info h4 {
+        color: var(--engineer-dark-blue);
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .info-item i {
+        color: var(--engineer-dark-blue);
+        margin-right: 1rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #374151;
+        margin-right: 0.5rem;
+    }
+
+    .info-value {
+        color: #6b7280;
+    }
+
+    .version-badge {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-block;
+        margin-left: 1rem;
+    }
+
+    .contact-section {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-radius: 12px;
+        padding: 2rem;
+        border: 1px solid #fbbf24;
+    }
+
+    .contact-section h4 {
+        color: #92400e;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        color: #92400e;
+    }
+
+    .contact-item i {
+        margin-right: 0.75rem;
+        width: 20px;
+        text-align: center;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- About System Header -->
+    <div class="about-section">
+        <div class="about-header">
+            <h2><i class="fas fa-info-circle me-3"></i>About Kaizen Management System</h2>
+            <p>A comprehensive platform for managing continuous improvement suggestions and fostering innovation within the organization</p>
+            <span class="version-badge">Version 2.0</span>
+        </div>
+
+        <!-- System Information -->
+        <div class="system-info">
+            <h4><i class="fas fa-cogs me-2"></i>System Information</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span class="info-label">Last Updated:</span>
+                        <span class="info-value">@DateTime.Now.ToString("MMMM dd, yyyy")</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-users"></i>
+                        <span class="info-label">User Roles:</span>
+                        <span class="info-value">Employee, Engineer, Manager, Supervisor, Admin</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-building"></i>
+                        <span class="info-label">Departments:</span>
+                        <span class="info-value">Multiple departments supported</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-item">
+                        <i class="fas fa-lightbulb"></i>
+                        <span class="info-label">Kaizen Types:</span>
+                        <span class="info-value">Cost reduction, Productivity, Quality, OHS</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-trophy"></i>
+                        <span class="info-label">Award System:</span>
+                        <span class="info-value">1st, 2nd, 3rd Prize, No Prize</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span class="info-label">Analytics:</span>
+                        <span class="info-value">Real-time dashboards & reports</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Features -->
+        <div class="row">
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h5 class="feature-title">Suggestion Management</h5>
+                    <p class="feature-description">
+                        Streamlined process for submitting, reviewing, and implementing kaizen suggestions with full workflow management.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h5 class="feature-title">Role-Based Access</h5>
+                    <p class="feature-description">
+                        Secure access control with different permissions for employees, engineers, managers, supervisors, and administrators.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h5 class="feature-title">Analytics & Reporting</h5>
+                    <p class="feature-description">
+                        Comprehensive dashboards and reports to track performance, trends, and department targets.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h5 class="feature-title">Award System</h5>
+                    <p class="feature-description">
+                        Recognition system for outstanding kaizen suggestions with committee review and award assignment.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h5 class="feature-title">Target Management</h5>
+                    <p class="feature-description">
+                        Set and monitor department-specific targets for kaizen submissions and improvements.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h5 class="feature-title">Responsive Design</h5>
+                    <p class="feature-description">
+                        Mobile-friendly interface that works seamlessly across all devices and screen sizes.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="contact-section">
+            <h4><i class="fas fa-headset me-2"></i>Support & Contact</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>Email: support@flintec.com</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>Phone: +1 (555) 123-4567</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Support Hours: Mon-Fri 8:00 AM - 6:00 PM</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Location: Flintec Headquarters</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
