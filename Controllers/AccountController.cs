@@ -174,6 +174,12 @@ namespace KaizenWebApp.Controllers
                 ModelState.Remove("EmployeeName");
                 ModelState.Remove("EmployeeNumber");
                 ModelState.Remove("Department");
+                ModelState.Remove("Email");
+                
+                // Set default values for KaizenTeam
+                model.EmployeeName = "Kaizen Team";
+                model.EmployeeNumber = "KAIZEN";
+                model.Department = "Kaizen Department";
             }
 
             if (!ModelState.IsValid)
@@ -243,13 +249,49 @@ namespace KaizenWebApp.Controllers
                 return RedirectToAction("AccessDenied", "Home");
             }
 
-            if (!ModelState.IsValid)
+            Console.WriteLine($"RegisterUser POST - ModelState.IsValid: {ModelState.IsValid}");
+            Console.WriteLine($"EmployeeName: {model.EmployeeName}");
+            Console.WriteLine($"EmployeeNumber: {model.EmployeeNumber}");
+            Console.WriteLine($"Department: {model.Department}");
+            Console.WriteLine($"Plant: {model.Plant}");
+            Console.WriteLine($"Password: {model.Password}");
+            Console.WriteLine($"ConfirmPassword: {model.ConfirmPassword}");
+
+            // Clear email validation errors for RegisterUser (email is not required for regular users)
+            ModelState.Remove("Email");
+            
+            // Simple validation check
+            if (string.IsNullOrEmpty(model.EmployeeName) || 
+                string.IsNullOrEmpty(model.EmployeeNumber) || 
+                string.IsNullOrEmpty(model.Department) || 
+                string.IsNullOrEmpty(model.Plant) || 
+                string.IsNullOrEmpty(model.Password) || 
+                string.IsNullOrEmpty(model.ConfirmPassword))
+            {
+                ModelState.AddModelError("", "All fields are required.");
                 return View("RegisterUser", model);
+            }
+
+            if (model.Password != model.ConfirmPassword)
+            {
+                ModelState.AddModelError("ConfirmPassword", "Password and Confirm Password must match.");
+                return View("RegisterUser", model);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("ModelState is not valid. Errors:");
+                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    Console.WriteLine($"Error: {error.ErrorMessage}");
+                }
+                return View("RegisterUser", model);
+            }
 
             // Auto-generate username if not provided
             if (string.IsNullOrEmpty(model.Username) && !string.IsNullOrEmpty(model.EmployeeNumber))
             {
-                model.Username = model.EmployeeNumber + "-User";
+                model.Username = model.EmployeeNumber + "user";
             }
 
             // Force role to be "User" for supervisor registrations
@@ -271,7 +313,8 @@ namespace KaizenWebApp.Controllers
                 DepartmentName = model.Department,
                 Plant = model.Plant,
                 Password = model.Password, // ⚠ Store securely using hashing in production
-                Role = model.Role
+                Role = model.Role,
+                Email = null // Regular users don't need email
             };
 
             Console.WriteLine($"Creating user - Username: {newUser.UserName}, Department: {newUser.DepartmentName}, Plant: {newUser.Plant}, Role: {newUser.Role}");
@@ -282,6 +325,7 @@ namespace KaizenWebApp.Controllers
             Console.WriteLine($"User saved with ID: {newUser.Id}");
 
             TempData["SubmissionSuccessMessage"] = "User registered successfully!";
+            Console.WriteLine("Registration successful, redirecting to SupervisorDashboard");
             return RedirectToAction("SupervisorDashboard", "Kaizen");
         }
 

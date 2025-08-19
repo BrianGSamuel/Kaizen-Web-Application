@@ -14,12 +14,20 @@
                     </h4>
                 </div>
                 <div class="supervisor-card-body">
-                    <form asp-action="RegisterUser" method="post" class="needs-validation" novalidate>
+                    <form action="/Account/RegisterUser" method="post" class="needs-validation" novalidate id="registerUserForm">
                         @Html.AntiForgeryToken()
                         
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-1"></i>Supervisors can only register regular users
                         </div>
+                        
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger">
+                                <h5>Please correct the following errors:</h5>
+                                <div asp-validation-summary="All" class="text-danger"></div>
+                            </div>
+                        }
 
                         <div class="row">
                             <div class="col-md-6">
@@ -42,16 +50,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Department" class="form-label">Department *</label>
-                                    <select asp-for="Department" class="form-select" required>
-                                        <option value="">Select Department</option>
-                                        <option value="Production">Production</option>
-                                        <option value="Quality">Quality</option>
-                                        <option value="Maintenance">Maintenance</option>
-                                        <option value="Engineering">Engineering</option>
-                                        <option value="HR">HR</option>
-                                        <option value="Finance">Finance</option>
-                                        <option value="IT">IT</option>
-                                    </select>
+                                    <input asp-for="Department" class="form-control" required />
                                     <span asp-validation-for="Department" class="text-danger"></span>
                                 </div>
                             </div>
@@ -60,9 +59,8 @@
                                     <label asp-for="Plant" class="form-label">Plant *</label>
                                     <select asp-for="Plant" class="form-select" required>
                                         <option value="">Select Plant</option>
-                                        <option value="Plant 1">Plant 1</option>
-                                        <option value="Plant 2">Plant 2</option>
-                                        <option value="Plant 3">Plant 3</option>
+                                        <option value="KTY">KTY</option>
+                                        <option value="KGG">KGG</option>
                                     </select>
                                     <span asp-validation-for="Plant" class="text-danger"></span>
                                 </div>
@@ -72,12 +70,24 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label asp-for="Username" class="form-label">Username</label>
-                                    <input asp-for="Username" class="form-control" />
-                                    <span asp-validation-for="Username" class="text-danger"></span>
-                                    <small class="form-text text-muted">Leave empty to auto-generate from Employee Number</small>
+                                    <label asp-for="Role" class="form-label">Role *</label>
+                                    <select asp-for="Role" class="form-select" required>
+                                        <option value="User">User</option>
+                                    </select>
+                                    <span asp-validation-for="Role" class="text-danger"></span>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Username" class="form-label">Username</label>
+                                    <input asp-for="Username" class="form-control" readonly />
+                                    <span asp-validation-for="Username" class="text-danger"></span>
+                                    <small class="form-text text-muted">Auto-generated from Employee Number</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Password" class="form-label">Password *</label>
@@ -85,9 +95,6 @@
                                     <span asp-validation-for="Password" class="text-danger"></span>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="ConfirmPassword" class="form-label">Confirm Password *</label>
@@ -114,14 +121,70 @@
 
 @section Scripts {
     <script>
-        // Auto-generate username from employee number
-        document.getElementById('EmployeeNumber').addEventListener('blur', function() {
-            const employeeNumber = this.value;
+        // Function to generate username
+        function generateUsername() {
+            const employeeNumber = document.getElementById('EmployeeNumber').value;
+            const usernameField = document.getElementById('Username');
+            
+            if (employeeNumber) {
+                usernameField.value = employeeNumber + 'user';
+            } else {
+                usernameField.value = '';
+            }
+        }
+
+        // Auto-generate username when employee number changes
+        document.getElementById('EmployeeNumber').addEventListener('input', generateUsername);
+        
+        // Initialize username on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const employeeNumber = document.getElementById('EmployeeNumber').value;
+            if (employeeNumber) {
+                generateUsername();
+            }
+        });
+
+        // Form submission handling
+        document.getElementById('registerUserForm').addEventListener('submit', function(e) {
+            console.log('Form submission started');
+            
+            // Ensure username is generated if not already set
+            const employeeNumber = document.getElementById('EmployeeNumber').value;
             const usernameField = document.getElementById('Username');
             
             if (employeeNumber && !usernameField.value) {
-                usernameField.value = employeeNumber + '-User';
+                usernameField.value = employeeNumber + 'user';
             }
+            
+            // Validate required fields
+            const requiredFields = ['EmployeeName', 'EmployeeNumber', 'Department', 'Plant', 'Password', 'ConfirmPassword'];
+            let isValid = true;
+            
+            requiredFields.forEach(fieldName => {
+                const field = document.getElementById(fieldName);
+                if (!field.value.trim()) {
+                    console.log('Missing required field:', fieldName);
+                    isValid = false;
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return false;
+            }
+            
+            // Check if passwords match
+            const password = document.getElementById('Password').value;
+            const confirmPassword = document.getElementById('ConfirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Password and Confirm Password must match.');
+                return false;
+            }
+            
+            console.log('Form validation passed, submitting...');
         });
     </script>
 }

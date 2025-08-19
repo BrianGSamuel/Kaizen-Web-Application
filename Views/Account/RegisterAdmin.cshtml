@@ -32,7 +32,7 @@
                                     <span asp-validation-for="Role" class="text-danger"></span>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6" id="employeeNumberField">
                                 <div class="mb-3">
                                     <label asp-for="EmployeeNumber" class="form-label">Employee Number *</label>
                                     <input asp-for="EmployeeNumber" class="form-control" required />
@@ -50,7 +50,7 @@
                                     <small class="form-text text-muted">Auto-generated from Employee Number and Role</small>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6" id="employeeNameField">
                                 <div class="mb-3">
                                     <label asp-for="EmployeeName" class="form-label">Employee Name *</label>
                                     <input asp-for="EmployeeName" class="form-control" required />
@@ -60,7 +60,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-6" id="departmentField">
                                 <div class="mb-3">
                                     <label asp-for="Department" class="form-label">Department *</label>
                                     <input asp-for="Department" class="form-control" required />
@@ -127,7 +127,10 @@
             const role = document.getElementById('Role').value;
             const usernameField = document.getElementById('Username');
             
-            if (employeeNumber && role) {
+            if (role === 'KaizenTeam') {
+                // For KaizenTeam, generate username as "kaizenteam"
+                usernameField.value = 'kaizenteam';
+            } else if (employeeNumber && role) {
                 // Convert role to lowercase and remove spaces for username
                 const roleForUsername = role.toLowerCase().replace(/\s+/g, '');
                 usernameField.value = employeeNumber + roleForUsername;
@@ -136,43 +139,109 @@
             }
         }
 
-        // Auto-generate username when employee number changes
-        document.getElementById('EmployeeNumber').addEventListener('input', generateUsername);
-        
-        // Auto-generate username when role changes
-        document.getElementById('Role').addEventListener('change', function() {
-            generateUsername();
-            
-            // Show/hide email field based on role selection
+        // Function to handle role change
+        function handleRoleChange() {
+            const role = document.getElementById('Role').value;
+            const employeeNameField = document.getElementById('employeeNameField');
+            const employeeNumberField = document.getElementById('employeeNumberField');
+            const departmentField = document.getElementById('departmentField');
             const emailField = document.getElementById('emailField');
-            const emailInput = document.getElementById('Email');
-            const role = this.value;
             
-            if (role === 'Engineer' || role === 'Manager') {
-                emailField.style.display = 'block';
-                emailInput.required = true;
-            } else {
-                emailField.style.display = 'none';
-                emailInput.required = false;
-                emailInput.value = ''; // Clear the email field when hidden
-            }
-        });
-
-        // Handle KaizenTeam role - hide certain fields
-        document.getElementById('Role').addEventListener('change', function() {
-            const role = this.value;
-            const employeeNameField = document.getElementById('EmployeeName').closest('.mb-3');
-            const employeeNumberField = document.getElementById('EmployeeNumber').closest('.mb-3');
-            const departmentField = document.getElementById('Department').closest('.mb-3');
+            // Get the input elements
+            const employeeNameInput = document.getElementById('EmployeeName');
+            const employeeNumberInput = document.getElementById('EmployeeNumber');
+            const departmentInput = document.getElementById('Department');
+            const emailInput = document.getElementById('Email');
             
             if (role === 'KaizenTeam') {
+                // Hide fields for KaizenTeam
                 employeeNameField.style.display = 'none';
                 employeeNumberField.style.display = 'none';
                 departmentField.style.display = 'none';
+                
+                // Remove required attribute and clear values
+                employeeNameInput.required = false;
+                employeeNumberInput.required = false;
+                departmentInput.required = false;
+                employeeNameInput.value = '';
+                employeeNumberInput.value = '';
+                departmentInput.value = '';
+                
+                // Set default values for KaizenTeam
+                employeeNameInput.value = 'Kaizen Team';
+                employeeNumberInput.value = 'KAIZEN';
+                departmentInput.value = 'Kaizen Department';
+                
+                // Hide email field
+                emailField.style.display = 'none';
+                emailInput.required = false;
+                emailInput.value = '';
+                
             } else {
+                // Show fields for other roles
                 employeeNameField.style.display = 'block';
                 employeeNumberField.style.display = 'block';
                 departmentField.style.display = 'block';
+                
+                // Add required attribute back
+                employeeNameInput.required = true;
+                employeeNumberInput.required = true;
+                departmentInput.required = true;
+                
+                // Clear the default values
+                employeeNameInput.value = '';
+                employeeNumberInput.value = '';
+                departmentInput.value = '';
+                
+                // Handle email field for Engineer and Manager roles
+                if (role === 'Engineer' || role === 'Manager') {
+                    emailField.style.display = 'block';
+                    emailInput.required = true;
+                } else {
+                    emailField.style.display = 'none';
+                    emailInput.required = false;
+                    emailInput.value = '';
+                }
+            }
+            
+            // Generate username after role change
+            generateUsername();
+        }
+
+        // Auto-generate username when employee number changes
+        document.getElementById('EmployeeNumber').addEventListener('input', generateUsername);
+        
+        // Handle role change
+        document.getElementById('Role').addEventListener('change', handleRoleChange);
+        
+        // Initialize form state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const role = document.getElementById('Role').value;
+            if (role) {
+                handleRoleChange();
+            }
+        });
+        
+        // Custom form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const role = document.getElementById('Role').value;
+            
+            if (role === 'KaizenTeam') {
+                // For KaizenTeam, ensure hidden fields are not required
+                const employeeNameInput = document.getElementById('EmployeeName');
+                const employeeNumberInput = document.getElementById('EmployeeNumber');
+                const departmentInput = document.getElementById('Department');
+                const emailInput = document.getElementById('Email');
+                
+                employeeNameInput.required = false;
+                employeeNumberInput.required = false;
+                departmentInput.required = false;
+                emailInput.required = false;
+                
+                // Set default values if they're empty
+                if (!employeeNameInput.value) employeeNameInput.value = 'Kaizen Team';
+                if (!employeeNumberInput.value) employeeNumberInput.value = 'KAIZEN';
+                if (!departmentInput.value) departmentInput.value = 'Kaizen Department';
             }
         });
     </script>
