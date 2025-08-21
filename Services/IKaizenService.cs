@@ -19,5 +19,6 @@ namespace KaizenWebApp.Services
         Task<decimal> GetTotalCostSavingsAsync();
         Task<int> GetTotalKaizensCountAsync();
         Task<IEnumerable<string>> GetDepartmentsAsync();
+        Task<IEnumerable<KaizenForm>> GetSimilarKaizensAsync(string suggestionDescription, string? costSavingType, string? otherBenefits, string department, int currentKaizenId);
     }
 }

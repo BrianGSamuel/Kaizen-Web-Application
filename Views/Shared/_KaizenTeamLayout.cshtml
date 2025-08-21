@@ -896,10 +896,14 @@
 
                 <div class="kaizen-nav-item">
                     <a class="kaizen-nav-link" asp-controller="Kaizen" asp-action="AwardTracking">
-                        <i class="fas fa-trophy"></i>
-                        Award Tracking
+                        <i class="fas fa-clipboard-check"></i>
+                        Assign Marks
                     </a>
                 </div>
+
+
+
+
 
                 <div class="kaizen-nav-item">
                     <a class="kaizen-nav-link" asp-controller="Kaizen" asp-action="DepartmentTargets">
@@ -1024,13 +1028,18 @@
                         activeLink = link;
                         console.log('KaizenTeam matched');
                     }
+
+                    else if (currentPath.includes('/Kaizen/DepartmentTargets') && href.includes('DepartmentTargets')) {
+                        activeLink = link;
+                        console.log('DepartmentTargets matched');
+                    }
                     else if (currentPath.includes('/Kaizen/AwardTracking') && href.includes('AwardTracking')) {
                         activeLink = link;
                         console.log('AwardTracking matched');
                     }
-                    else if (currentPath.includes('/Kaizen/DepartmentTargets') && href.includes('DepartmentTargets')) {
+                    else if (currentPath.includes('/Kaizen/Nominations') && href.includes('Nominations')) {
                         activeLink = link;
-                        console.log('DepartmentTargets matched');
+                        console.log('Nominations matched');
                     }
                     else if (currentPath.includes('/Kaizen/AboutSystem') && href.includes('AboutSystem')) {
                         activeLink = link;

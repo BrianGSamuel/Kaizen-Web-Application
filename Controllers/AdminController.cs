@@ -229,7 +229,110 @@ namespace KaizenWebApp.Controllers
             return View(viewModel);
         }
 
-        public IActionResult AwardTracking(string startDate, string endDate, string department, string category, string awardStatus)
+        public IActionResult AwardTracking(string startDate, string endDate, string department, string category)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            // Get base query for approved kaizens
+            var query = _context.KaizenForms
+                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
+
+            // Apply date range filter
+            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+            {
+                query = query.Where(k => k.DateSubmitted >= start);
+            }
+
+            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+            {
+                // Add one day to include the end date
+                end = end.AddDays(1);
+                query = query.Where(k => k.DateSubmitted < end);
+            }
+
+            // Apply department filter
+            if (!string.IsNullOrEmpty(department))
+            {
+                query = query.Where(k => k.Department == department);
+            }
+
+            // Apply category filter
+            if (!string.IsNullOrEmpty(category))
+            {
+                query = query.Where(k => k.Category != null && k.Category.Contains(category));
+            }
+
+            // Get filtered results
+            var approvedKaizens = query.ToList();
+
+            // Calculate scores for each kaizen
+            var kaizensWithScores = new List<object>();
+            foreach (var kaizen in approvedKaizens)
+            {
+                var scores = _context.KaizenMarkingScores.Where(s => s.KaizenId == kaizen.Id).ToList();
+                
+                // Get the total weight of criteria that were actually scored for this kaizen
+                var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
+                var totalWeight = _context.MarkingCriteria
+                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                    .Sum(c => c.Weight);
+                
+                var totalScore = scores.Sum(s => s.Score);
+                var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+
+                kaizensWithScores.Add(new
+                {
+                    Kaizen = kaizen,
+                    Score = totalScore,
+                    TotalWeight = totalWeight,
+                    Percentage = percentage
+                });
+            }
+
+            // Sort by percentage in descending order (highest score first)
+            kaizensWithScores = kaizensWithScores
+                .OrderByDescending(k => ((dynamic)k).Percentage)
+                .ThenByDescending(k => ((dynamic)k).Score)
+                .ThenByDescending(k => ((dynamic)k).Kaizen.DateSubmitted)
+                .ToList();
+
+            // Populate ViewBag with filter options
+            ViewBag.Departments = _context.KaizenForms
+                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && !string.IsNullOrEmpty(k.Department))
+                .Select(k => k.Department)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList();
+
+            // Get all unique categories from approved kaizens
+            var allCategories = new List<string>();
+            var kaizensWithCategories = _context.KaizenForms
+                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && !string.IsNullOrEmpty(k.Category))
+                .Select(k => k.Category)
+                .ToList();
+
+            foreach (var catString in kaizensWithCategories)
+            {
+                if (!string.IsNullOrEmpty(catString))
+                {
+                    var categories = catString.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(c => c.Trim())
+                        .Where(c => !string.IsNullOrEmpty(c));
+                    allCategories.AddRange(categories);
+                }
+            }
+
+            ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
+
+            return View(kaizensWithScores);
+        }
+
+        public IActionResult Nominations(string startDate, string endDate, string department, string category, string awardStatus)
         {
             // Check if user is admin
             var username = User.Identity?.Name;
@@ -283,7 +386,41 @@ namespace KaizenWebApp.Controllers
             }
 
             // Get filtered results
-            var approvedKaizens = query.OrderByDescending(k => k.DateSubmitted).ToList();
+            var approvedKaizens = query.ToList();
+
+            // Calculate percentage for each kaizen and filter only those with scores above 0%
+            var kaizensWithPercentage = new List<(KaizenForm Kaizen, double Percentage)>();
+            
+            foreach (var kaizen in approvedKaizens)
+            {
+                // Get marking scores for this kaizen
+                var scores = _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == kaizen.Id)
+                    .ToList();
+
+                // Get the total weight of criteria that were actually scored for this kaizen
+                var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
+                var totalWeight = _context.MarkingCriteria
+                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                    .Sum(c => c.Weight);
+
+                // Calculate total score and percentage
+                var totalScore = scores.Sum(s => s.Score);
+                var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
+
+                // Only include kaizens that have a score above 0%
+                if (percentage > 0)
+                {
+                    kaizensWithPercentage.Add((kaizen, percentage));
+                }
+            }
+
+            // Sort by percentage: 75%+ first, then 65%+, then the rest
+            var sortedKaizens = kaizensWithPercentage
+                .OrderByDescending(k => k.Percentage)
+                .ThenByDescending(k => k.Kaizen.DateSubmitted)
+                .Select(k => k.Kaizen)
+                .ToList();
 
             // Populate ViewBag with filter options
             ViewBag.Departments = _context.KaizenForms
@@ -313,10 +450,111 @@ namespace KaizenWebApp.Controllers
 
             ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
 
-            return View(approvedKaizens);
+            return View(sortedKaizens);
         }
 
-        public IActionResult AwardDetails(int id)
+        public IActionResult NominationDetails(int id)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var kaizen = _context.KaizenForms.FirstOrDefault(k => k.Id == id);
+            if (kaizen == null)
+            {
+                TempData["ErrorMessage"] = "Kaizen not found.";
+                return RedirectToAction("Nominations");
+            }
+
+            // Calculate percentage for this kaizen
+            var scores = _context.KaizenMarkingScores
+                .Where(s => s.KaizenId == kaizen.Id)
+                .ToList();
+
+            // Get the total weight of criteria that were actually scored for this kaizen
+            var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
+            var totalWeight = _context.MarkingCriteria
+                .Where(c => scoredCriteriaIds.Contains(c.Id))
+                .Sum(c => c.Weight);
+
+            var totalScore = scores.Sum(s => s.Score);
+            var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
+
+            ViewBag.Percentage = percentage;
+            ViewBag.TotalScore = totalScore;
+            ViewBag.TotalWeight = totalWeight;
+
+            return View(kaizen);
+        }
+
+        [HttpPost]
+        public IActionResult AssignNomination(int kaizenId, string awardPlacement, string committeeComments, string committeeSignature)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            Console.WriteLine("=== NOMINATION FORM DATA DEBUG ===");
+            Console.WriteLine($"Kaizen ID: {kaizenId}");
+            Console.WriteLine($"Award Placement: '{awardPlacement}'");
+            Console.WriteLine($"Committee Comments: '{committeeComments}'");
+            Console.WriteLine($"Committee Signature: '{committeeSignature}'");
+
+            // Basic validation
+            if (string.IsNullOrWhiteSpace(awardPlacement))
+            {
+                Console.WriteLine("ERROR: Award placement is empty");
+                TempData["SubmissionErrorMessage"] = "Please select an award placement.";
+                return RedirectToAction("NominationDetails", new { id = kaizenId });
+            }
+
+            if (string.IsNullOrWhiteSpace(committeeSignature))
+            {
+                Console.WriteLine("ERROR: Committee signature is empty");
+                TempData["SubmissionErrorMessage"] = "Please provide a committee signature.";
+                return RedirectToAction("NominationDetails", new { id = kaizenId });
+            }
+
+            // Find the kaizen record
+            var kaizen = _context.KaizenForms.FirstOrDefault(k => k.Id == kaizenId);
+            if (kaizen == null)
+            {
+                Console.WriteLine($"ERROR: Kaizen with ID {kaizenId} not found");
+                TempData["SubmissionErrorMessage"] = "Kaizen not found.";
+                return RedirectToAction("Nominations");
+            }
+
+            // Update the kaizen record using raw SQL to avoid entity tracking issues
+            var updateResult = _context.Database.ExecuteSqlRaw(
+                "UPDATE KaizenForms SET AwardPrice = {0}, CommitteeComments = {1}, CommitteeSignature = {2}, AwardDate = {3} WHERE Id = {4}",
+                awardPlacement,
+                committeeComments ?? "",
+                committeeSignature ?? "",
+                DateTime.Now,
+                kaizenId
+            );
+
+            Console.WriteLine($"Kaizen update result: {updateResult} rows affected");
+            Console.WriteLine($"Updated Kaizen fields: AwardPlacement={awardPlacement}, Comments={committeeComments}, Signature={committeeSignature}");
+
+            // Verify the data was saved by retrieving it using raw SQL
+            var savedKaizen = _context.KaizenForms.FromSqlRaw("SELECT * FROM KaizenForms WHERE Id = {0}", kaizenId).FirstOrDefault();
+            
+            Console.WriteLine($"Verification - Saved Award Placement: {savedKaizen?.AwardPrice}");
+            Console.WriteLine($"Verification - Saved Comments: {savedKaizen?.CommitteeComments}");
+            Console.WriteLine($"Verification - Saved Signature: {savedKaizen?.CommitteeSignature}");
+
+            TempData["SubmissionSuccessMessage"] = $"Nomination assigned successfully! Award: {awardPlacement}";
+            return RedirectToAction("NominationDetails", new { id = kaizenId });
+        }
+
+        public async Task<IActionResult> AwardDetails(int id)
         {
             // Check if user is admin
             var username = User.Identity?.Name;
@@ -331,11 +569,27 @@ namespace KaizenWebApp.Controllers
                 return NotFound();
             }
 
-            return View(kaizen);
+            // Get active marking criteria
+            var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+            
+            // Get existing scores for this kaizen
+            var existingScores = await _context.KaizenMarkingScores
+                .Where(s => s.KaizenId == id)
+                .ToListAsync();
+            
+            // Create a view model to pass both kaizen and marking criteria
+            var viewModel = new AwardDetailsViewModel
+            {
+                Kaizen = kaizen,
+                MarkingCriteria = markingCriteria,
+                ExistingScores = existingScores
+            };
+
+            return View(viewModel);
         }
 
         [HttpPost]
-        public IActionResult AssignAward(int kaizenId, string awardPrice, string committeeComments, string committeeSignature)
+        public IActionResult AssignAward(int kaizenId, string committeeComments = "", string committeeSignature = "")
         {
             // Check if user is admin
             var username = User.Identity?.Name;
@@ -344,22 +598,148 @@ namespace KaizenWebApp.Controllers
                 return RedirectToAction("AccessDenied", "Home");
             }
 
-            var kaizen = _context.KaizenForms.FirstOrDefault(k => k.Id == kaizenId);
-            if (kaizen == null)
+            try
             {
-                return NotFound();
+                // Log all form data for debugging
+                Console.WriteLine("=== FORM DATA DEBUG ===");
+                Console.WriteLine($"Kaizen ID: {kaizenId}");
+                Console.WriteLine($"Committee Comments: '{committeeComments}'");
+                Console.WriteLine($"Committee Signature: '{committeeSignature}'");
+                
+                // Log all form keys
+                Console.WriteLine("=== ALL FORM KEYS ===");
+                foreach (var key in Request.Form.Keys)
+                {
+                    Console.WriteLine($"Form Key: {key} = '{Request.Form[key]}'");
+                }
+
+                
+
+                // Find the kaizen record using raw SQL to avoid entity tracking issues
+                var kaizen = _context.KaizenForms.FromSqlRaw("SELECT * FROM KaizenForms WHERE Id = {0}", kaizenId).FirstOrDefault();
+                if (kaizen == null)
+                {
+                    Console.WriteLine($"ERROR: Kaizen with ID {kaizenId} not found");
+                    return NotFound();
+                }
+
+                Console.WriteLine($"Found Kaizen: {kaizen.KaizenNo}");
+
+                // Update the kaizen record using raw SQL to avoid entity tracking issues
+                var updateResult = _context.Database.ExecuteSqlRaw(
+                    "UPDATE KaizenForms SET CommitteeComments = {0}, CommitteeSignature = {1}, AwardDate = {2} WHERE Id = {3}",
+                    committeeComments ?? "",
+                    committeeSignature ?? "",
+                    DateTime.Now,
+                    kaizenId
+                );
+
+                Console.WriteLine($"Kaizen update result: {updateResult} rows affected");
+                Console.WriteLine($"Updated Kaizen fields: Comments={committeeComments}, Signature={committeeSignature}");
+
+                // Save marking criteria scores using raw SQL
+                var form = Request.Form;
+                var markingCriteria = _context.MarkingCriteria.Where(c => c.IsActive).ToList();
+                var savedScores = new List<string>();
+                
+                Console.WriteLine($"Found {markingCriteria.Count} active marking criteria");
+                
+                foreach (var criteria in markingCriteria)
+                {
+                    var scoreKey = $"criteriaScore_{criteria.Id}";
+                    Console.WriteLine($"Checking for score key: {scoreKey}");
+                    
+                    if (form.ContainsKey(scoreKey))
+                    {
+                        var scoreValue = form[scoreKey].ToString();
+                        Console.WriteLine($"Found score value: '{scoreValue}' for criteria {criteria.CriteriaName}");
+                        
+                        if (int.TryParse(scoreValue, out int score))
+                        {
+                            // Accept any score value (0 or higher)
+                            if (score < 0)
+                            {
+                                score = 0;
+                            }
+
+                            // Check if score already exists for this kaizen and criteria using raw SQL
+                            var existingScore = _context.KaizenMarkingScores
+                                .FromSqlRaw("SELECT * FROM KaizenMarkingScores WHERE KaizenId = {0} AND MarkingCriteriaId = {1}", kaizenId, criteria.Id)
+                                .FirstOrDefault();
+                            
+                            if (existingScore != null)
+                            {
+                                // Update existing score using raw SQL
+                                var updateScoreResult = _context.Database.ExecuteSqlRaw(
+                                    "UPDATE KaizenMarkingScores SET Score = {0}, CreatedAt = {1}, CreatedBy = {2} WHERE KaizenId = {3} AND MarkingCriteriaId = {4}",
+                                    score, DateTime.Now, username, kaizenId, criteria.Id
+                                );
+                                savedScores.Add($"Updated {criteria.CriteriaName}: {score}/{criteria.Weight}");
+                                Console.WriteLine($"Updated existing score for {criteria.CriteriaName}: {score} (result: {updateScoreResult})");
+                            }
+                            else
+                            {
+                                // Create new score using raw SQL
+                                var insertScoreResult = _context.Database.ExecuteSqlRaw(
+                                    "INSERT INTO KaizenMarkingScores (KaizenId, MarkingCriteriaId, Score, CreatedAt, CreatedBy) VALUES ({0}, {1}, {2}, {3}, {4})",
+                                    kaizenId, criteria.Id, score, DateTime.Now, username
+                                );
+                                savedScores.Add($"Added {criteria.CriteriaName}: {score}/{criteria.Weight}");
+                                Console.WriteLine($"Added new score for {criteria.CriteriaName}: {score} (result: {insertScoreResult})");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"ERROR: Could not parse score value '{scoreValue}' as integer, setting to 0");
+                            // Create a score of 0 if parsing fails using raw SQL
+                            var insertScoreResult = _context.Database.ExecuteSqlRaw(
+                                "INSERT INTO KaizenMarkingScores (KaizenId, MarkingCriteriaId, Score, CreatedAt, CreatedBy) VALUES ({0}, {1}, {2}, {3}, {4})",
+                                kaizenId, criteria.Id, 0, DateTime.Now, username
+                            );
+                            savedScores.Add($"Added {criteria.CriteriaName}: 0/{criteria.Weight} (default)");
+                            Console.WriteLine($"Added default score for {criteria.CriteriaName}: 0 (result: {insertScoreResult})");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Score key {scoreKey} not found in form data, creating default score of 0");
+                        // Create a default score of 0 if the key is not found using raw SQL
+                        var insertScoreResult = _context.Database.ExecuteSqlRaw(
+                            "INSERT INTO KaizenMarkingScores (KaizenId, MarkingCriteriaId, Score, CreatedAt, CreatedBy) VALUES ({0}, {1}, {2}, {3}, {4})",
+                            kaizenId, criteria.Id, 0, DateTime.Now, username
+                        );
+                        savedScores.Add($"Added {criteria.CriteriaName}: 0/{criteria.Weight} (default)");
+                        Console.WriteLine($"Added default score for {criteria.CriteriaName}: 0 (result: {insertScoreResult})");
+                    }
+                }
+
+                Console.WriteLine($"Saving {savedScores.Count} scores: {string.Join(", ", savedScores)}");
+
+                // Verify the data was saved by retrieving it using raw SQL
+                var savedKaizen = _context.KaizenForms.FromSqlRaw("SELECT * FROM KaizenForms WHERE Id = {0}", kaizenId).FirstOrDefault();
+                var savedScoresCount = _context.KaizenMarkingScores.FromSqlRaw("SELECT * FROM KaizenMarkingScores WHERE KaizenId = {0}", kaizenId).Count();
+                
+                Console.WriteLine($"Verification - Saved Award Price: {savedKaizen?.AwardPrice}");
+                Console.WriteLine($"Verification - Saved Comments: {savedKaizen?.CommitteeComments}");
+                Console.WriteLine($"Verification - Saved Signature: {savedKaizen?.CommitteeSignature}");
+                Console.WriteLine($"Verification - Saved Scores Count: {savedScoresCount}");
+
+                TempData["SubmissionSuccessMessage"] = $"Marks assigned successfully! Scores saved: {savedScoresCount} criteria.";
+                return RedirectToAction("AwardDetails", new { id = kaizenId });
             }
-
-            kaizen.AwardPrice = awardPrice;
-            kaizen.CommitteeComments = committeeComments;
-            kaizen.CommitteeSignature = committeeSignature;
-            kaizen.AwardDate = DateTime.Now;
-
-            _context.SaveChanges();
-
-            TempData["SubmissionSuccessMessage"] = "Award assigned successfully!";
-            return RedirectToAction("AwardTracking");
+            catch (Exception ex)
+            {
+                // Log the error for debugging
+                Console.WriteLine($"ERROR assigning award for Kaizen ID: {kaizenId}");
+                Console.WriteLine($"Error Message: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                
+                TempData["SubmissionErrorMessage"] = $"An error occurred while assigning the award: {ex.Message}";
+                return RedirectToAction("AwardDetails", new { id = kaizenId });
+            }
         }
+
+
 
         [HttpPost]
         public IActionResult SetDepartmentTarget(string department, int targetCount, int year, int month, string notes = "")
@@ -623,11 +1003,11 @@ namespace KaizenWebApp.Controllers
                 
                 return Json(new { success = true, message = "User deleted successfully." });
             }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException)
             {
                 return Json(new { success = false, message = "Cannot delete user. This user may have related data in the system." });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Json(new { success = false, message = "An error occurred while deleting the user. Please try again." });
             }
@@ -1163,6 +1543,267 @@ namespace KaizenWebApp.Controllers
             }
 
             return RedirectToAction("Settings");
+        }
+
+        // MARKING CRITERIA MANAGEMENT METHODS
+
+        [HttpGet]
+        public async Task<IActionResult> MarkingCriteria()
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var criteria = await _context.MarkingCriteria
+                .OrderBy(c => c.Category)
+                .ThenBy(c => c.CriteriaName)
+                .ToListAsync();
+
+            return View(criteria);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AddMarkingCriteria()
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            // Load existing criteria
+            var existingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+            return View(existingCriteria);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddMarkingCriteria([FromBody] List<MarkingCriteriaViewModel> models)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied" });
+                }
+
+                if (models == null || !models.Any())
+                {
+                    return Json(new { success = false, message = "No criteria provided" });
+                }
+
+                // Validate individual criteria weights are within valid range
+                foreach (var model in models)
+                {
+                    if (model.Weight <= 0 || model.Weight > 100)
+                    {
+                        return Json(new { success = false, message = $"Weight must be between 1 and 100, but got {model.Weight}%" });
+                    }
+                }
+
+                var criteriaList = new List<MarkingCriteria>();
+                foreach (var model in models)
+                {
+                    var criteria = new MarkingCriteria
+                    {
+                        CriteriaName = model.CriteriaName,
+                        Description = model.Description ?? $"Evaluation criteria for {model.CriteriaName}",
+                        MaxScore = model.MaxScore,
+                        Weight = model.Weight,
+                        Category = model.Category ?? "General",
+                        IsActive = model.IsActive,
+                        Notes = model.Notes,
+                        CreatedBy = username,
+                        CreatedAt = DateTime.Now
+                    };
+
+                    criteriaList.Add(criteria);
+                }
+
+                _context.MarkingCriteria.AddRange(criteriaList);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = $"{criteriaList.Count} criteria added successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error saving criteria: {ex.Message}" });
+            }
+        }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> EditMarkingCriteria(int id)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var criteria = await _context.MarkingCriteria.FindAsync(id);
+            if (criteria == null)
+            {
+                return NotFound();
+            }
+
+            var viewModel = new MarkingCriteriaViewModel
+            {
+                Id = criteria.Id,
+                CriteriaName = criteria.CriteriaName,
+                Description = criteria.Description,
+                MaxScore = criteria.MaxScore,
+                Weight = criteria.Weight,
+                Category = criteria.Category,
+                IsActive = criteria.IsActive,
+                Notes = criteria.Notes
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditMarkingCriteria(int id, MarkingCriteriaViewModel model)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            if (id != model.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                var criteria = await _context.MarkingCriteria.FindAsync(id);
+                if (criteria == null)
+                {
+                    return NotFound();
+                }
+
+                criteria.CriteriaName = model.CriteriaName;
+                criteria.Description = model.Description;
+                criteria.MaxScore = model.MaxScore;
+                criteria.Weight = model.Weight;
+                criteria.Category = model.Category;
+                criteria.IsActive = model.IsActive;
+                criteria.Notes = model.Notes;
+                criteria.UpdatedBy = username;
+                criteria.UpdatedAt = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Marking criteria updated successfully.";
+                return RedirectToAction("MarkingCriteria");
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateMarkingCriteria([FromBody] UpdateMarkingCriteriaRequest request)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied" });
+                }
+
+                var criteria = await _context.MarkingCriteria.FindAsync(request.Id);
+                if (criteria == null)
+                {
+                    return Json(new { success = false, message = "Criteria not found" });
+                }
+
+                // Update the criteria
+                criteria.CriteriaName = request.CriteriaName;
+                criteria.Weight = request.Weight;
+                criteria.MaxScore = request.Weight; // 1:1 ratio
+                criteria.Description = $"Evaluation criteria for {request.CriteriaName}";
+                criteria.UpdatedBy = username;
+                criteria.UpdatedAt = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Criteria updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error updating criteria: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteMarkingCriteria([FromBody] DeleteMarkingCriteriaRequest request)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied" });
+                }
+
+                var criteria = await _context.MarkingCriteria.FindAsync(request.Id);
+                if (criteria == null)
+                {
+                    return Json(new { success = false, message = "Criteria not found" });
+                }
+
+                _context.MarkingCriteria.Remove(criteria);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Criteria deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error deleting criteria: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ToggleMarkingCriteriaStatus(int id)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return Json(new { success = false, message = "Access denied" });
+            }
+
+            var criteria = await _context.MarkingCriteria.FindAsync(id);
+            if (criteria == null)
+            {
+                return Json(new { success = false, message = "Criteria not found" });
+            }
+
+            criteria.IsActive = !criteria.IsActive;
+            criteria.UpdatedBy = username;
+            criteria.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { 
+                success = true, 
+                message = $"Criteria {(criteria.IsActive ? "activated" : "deactivated")} successfully",
+                isActive = criteria.IsActive
+            });
         }
     }
 } 

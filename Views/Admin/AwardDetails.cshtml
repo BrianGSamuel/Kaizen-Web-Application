@@ -1,4 +1,4 @@
-@model KaizenWebApp.Models.KaizenForm
+@model KaizenWebApp.ViewModels.AwardDetailsViewModel
 @{
     ViewData["Title"] = "Award Details";
     Layout = "_AdminLayout";
@@ -12,7 +12,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h3 class="admin-card-title">
                             <i class="fas fa-trophy text-warning me-2"></i>
-                            Award Details - @Model.KaizenNo
+                            Award Details - @Model.Kaizen.KaizenNo
                         </h3>
                         <a href="@Url.Action("AwardTracking", "Admin")" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-1"></i>
@@ -21,7 +21,24 @@
                     </div>
                 </div>
 
-                <!-- Messages now handled by toast system -->
+                <!-- Success/Error Messages -->
+                @if (TempData["SubmissionSuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        @TempData["SubmissionSuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                
+                @if (TempData["SubmissionErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        @TempData["SubmissionErrorMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
 
                 <!-- Kaizen Details Section -->
                 <div class="row">
@@ -38,22 +55,22 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="fw-bold">Kaizen Number:</label>
-                                            <p class="text-primary fw-bold">@Model.KaizenNo</p>
+                                            <p class="text-primary fw-bold">@Model.Kaizen.KaizenNo</p>
                                         </div>
                                         <div class="mb-3">
                                             <label class="fw-bold">Date Submitted:</label>
-                                            <p>@Model.DateSubmitted.ToString("MMMM dd, yyyy")</p>
+                                            <p>@Model.Kaizen.DateSubmitted.ToString("MMMM dd, yyyy")</p>
                                         </div>
                                         <div class="mb-3">
                                             <label class="fw-bold">Department:</label>
-                                            <p><span class="badge bg-info">@Model.Department</span></p>
+                                            <p><span class="badge bg-info">@Model.Kaizen.Department</span></p>
                                         </div>
                                         <div class="mb-3">
                                             <label class="fw-bold">Employee:</label>
                                             <div class="d-flex align-items-center">
-                                                @if (!string.IsNullOrEmpty(Model.EmployeePhotoPath))
+                                                @if (!string.IsNullOrEmpty(Model.Kaizen.EmployeePhotoPath))
                                                 {
-                                                    <img src="@Model.EmployeePhotoPath" 
+                                                    <img src="@Model.Kaizen.EmployeePhotoPath" 
                                                          alt="Employee Photo" 
                                                          class="rounded-circle me-2" 
                                                          style="width: 40px; height: 40px; object-fit: cover;">
@@ -66,8 +83,8 @@
                                                     </div>
                                                 }
                                                 <div>
-                                                    <p class="mb-0 fw-bold">@Model.EmployeeName</p>
-                                                    <small class="text-muted">@Model.EmployeeNo</small>
+                                                    <p class="mb-0 fw-bold">@Model.Kaizen.EmployeeName</p>
+                                                    <small class="text-muted">@Model.Kaizen.EmployeeNo</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -75,9 +92,9 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="fw-bold">Cost Saving:</label>
-                                            @if (Model.CostSaving.HasValue && Model.CostSaving > 0)
+                                            @if (Model.Kaizen.CostSaving.HasValue && Model.Kaizen.CostSaving > 0)
                                             {
-                                                <p class="text-success fw-bold">$@Model.CostSaving.Value.ToString("N2")</p>
+                                                <p class="text-success fw-bold">$@Model.Kaizen.CostSaving.Value.ToString("N2")</p>
                                             }
                                             else
                                             {
@@ -86,15 +103,15 @@
                                         </div>
                                         <div class="mb-3">
                                             <label class="fw-bold">Category:</label>
-                                            <p>@Model.Category</p>
+                                            <p>@Model.Kaizen.Category</p>
                                         </div>
                                         <div class="mb-3">
                                             <label class="fw-bold">Implementation Area:</label>
-                                            <p>@Model.ImplementationArea</p>
+                                            <p>@Model.Kaizen.ImplementationArea</p>
                                         </div>
                                         <div class="mb-3">
                                             <label class="fw-bold">Can Implement in Other Fields:</label>
-                                            <p><span class="badge bg-@(Model.CanImplementInOtherFields == "Yes" ? "success" : "secondary")">@Model.CanImplementInOtherFields</span></p>
+                                            <p><span class="badge bg-@(Model.Kaizen.CanImplementInOtherFields == "Yes" ? "success" : "secondary")">@Model.Kaizen.CanImplementInOtherFields</span></p>
                                         </div>
                                     </div>
                                 </div>
@@ -102,39 +119,39 @@
                                 <div class="mb-3">
                                     <label class="fw-bold">Suggestion Description:</label>
                                     <div class="border rounded p-3 bg-light">
-                                        @Model.SuggestionDescription
+                                        @Model.Kaizen.SuggestionDescription
                                     </div>
                                 </div>
 
-                                @if (!string.IsNullOrEmpty(Model.OtherBenefits))
+                                @if (!string.IsNullOrEmpty(Model.Kaizen.OtherBenefits))
                                 {
                                     <div class="mb-3">
                                         <label class="fw-bold">Other Benefits:</label>
                                         <div class="border rounded p-3 bg-light">
-                                            @Model.OtherBenefits
+                                            @Model.Kaizen.OtherBenefits
                                         </div>
                                     </div>
                                 }
 
-                                @if (!string.IsNullOrEmpty(Model.Comments))
+                                @if (!string.IsNullOrEmpty(Model.Kaizen.Comments))
                                 {
                                     <div class="mb-3">
                                         <label class="fw-bold">Comments:</label>
                                         <div class="border rounded p-3 bg-light">
-                                            @Model.Comments
+                                            @Model.Kaizen.Comments
                                         </div>
                                     </div>
                                 }
 
                                 <!-- Before/After Images -->
                                 <div class="row">
-                                    @if (!string.IsNullOrEmpty(Model.BeforeKaizenImagePath))
+                                    @if (!string.IsNullOrEmpty(Model.Kaizen.BeforeKaizenImagePath))
                                     {
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label class="fw-bold">Before Kaizen:</label>
                                                 <div class="text-center">
-                                                    <img src="@Model.BeforeKaizenImagePath" 
+                                                    <img src="@Model.Kaizen.BeforeKaizenImagePath" 
                                                          class="img-fluid rounded border" 
                                                          alt="Before Kaizen" 
                                                          style="max-height: 200px; object-fit: cover;"
@@ -147,13 +164,13 @@
                                             </div>
                                         </div>
                                     }
-                                    @if (!string.IsNullOrEmpty(Model.AfterKaizenImagePath))
+                                    @if (!string.IsNullOrEmpty(Model.Kaizen.AfterKaizenImagePath))
                                     {
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label class="fw-bold">After Kaizen:</label>
                                                 <div class="text-center">
-                                                    <img src="@Model.AfterKaizenImagePath" 
+                                                    <img src="@Model.Kaizen.AfterKaizenImagePath" 
                                                          class="img-fluid rounded border" 
                                                          alt="After Kaizen" 
                                                          style="max-height: 200px; object-fit: cover;"
@@ -171,97 +188,225 @@
                         </div>
                     </div>
 
-                    <!-- Award Assignment Section -->
+                    <!-- Award Information Section -->
                     <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-header bg-warning text-dark">
-                                <h5 class="mb-0">
+                        <!-- For KAIZEN COMMITTEE Use Section -->
+                        <div class="card mb-4">
+                            <div class="card-header" style="background-color: #FFD700; border: none;">
+                                <h5 class="mb-0 text-dark">
                                     <i class="fas fa-trophy me-2"></i>
                                     For KAIZEN COMMITTEE Use
                                 </h5>
                             </div>
-                            <div class="card-body">
-                                @if (!string.IsNullOrEmpty(Model.AwardPrice))
+                            <div class="card-body" style="background-color: #E8F5E8; border: 1px solid #ffffff;">
+                                @if (!string.IsNullOrEmpty(Model.Kaizen.AwardPrice))
                                 {
                                     <!-- Award Already Assigned -->
-                                    <div class="alert alert-success">
-                                        <h6 class="alert-heading">
-                                            <i class="fas fa-check-circle me-2"></i>
-                                            Award Already Assigned
-                                        </h6>
-                                        <p class="mb-2"><strong>Award Price:</strong> @Model.AwardPrice</p>
-                                        <p class="mb-2"><strong>Date:</strong> @Model.AwardDate?.ToString("MMM dd, yyyy")</p>
-                                        @if (!string.IsNullOrEmpty(Model.CommitteeSignature))
+                                    <div class="mb-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <strong>Award Already Assigned</strong>
+                                        </div>
+                                        <p class="mb-1"><strong>Award Price:</strong> @Model.Kaizen.AwardPrice</p>
+                                        <p class="mb-1"><strong>Date:</strong> @Model.Kaizen.AwardDate?.ToString("MMM dd, yyyy")</p>
+                                        @if (!string.IsNullOrEmpty(Model.Kaizen.CommitteeSignature))
                                         {
-                                            <p class="mb-2"><strong>Signature:</strong> @Model.CommitteeSignature</p>
-                                        }
-                                        @if (!string.IsNullOrEmpty(Model.CommitteeComments))
-                                        {
-                                            <div class="mt-3">
-                                                <label class="fw-bold">Comments & Recommendations:</label>
-                                                <div class="border rounded p-2 bg-light">
-                                                    @Model.CommitteeComments
-                                                </div>
-                                            </div>
+                                            <p class="mb-1"><strong>Signature:</strong> @Model.Kaizen.CommitteeSignature</p>
                                         }
                                     </div>
+
+                                    @if (!string.IsNullOrEmpty(Model.Kaizen.CommitteeComments))
+                                    {
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Comments & Recommendations:</label>
+                                            <div class="border rounded p-2 bg-white">
+                                                @Model.Kaizen.CommitteeComments
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Saved Marking Criteria Scores -->
+                                    @if (Model.ExistingScores.Any())
+                                    {
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Saved Marking Criteria Scores:</label>
+                                            <div class="border rounded p-2 bg-white">
+                                                @{
+                                                    int totalSavedScore = 0;
+                                                    int totalSavedWeight = 0;
+                                                }
+                                                @foreach (var score in Model.ExistingScores)
+                                                {
+                                                    var criteria = Model.MarkingCriteria.FirstOrDefault(c => c.Id == score.MarkingCriteriaId);
+                                                    if (criteria != null)
+                                                    {
+                                                        totalSavedScore += score.Score;
+                                                        totalSavedWeight += criteria.Weight;
+                                                        <div class="row mb-1">
+                                                            <div class="col-6">@criteria.CriteriaName:</div>
+                                                            <div class="col-6">@score.Score / @criteria.Weight</div>
+                                                        </div>
+                                                    }
+                                                }
+                                                <hr class="my-2">
+                                                <div class="row">
+                                                    <div class="col-6"><strong>Total Score:</strong></div>
+                                                    <div class="col-6"><strong>@totalSavedScore / @totalSavedWeight</strong></div>
+                                                </div>
+                                                @{
+                                                    var savedPercentage = totalSavedWeight > 0 ? Math.Round((double)totalSavedScore / totalSavedWeight * 100, 1) : 0;
+                                                    var savedPercentageClass = savedPercentage >= 90 ? "text-success" : savedPercentage >= 70 ? "text-warning" : "text-danger";
+                                                }
+                                                <div class="row">
+                                                    <div class="col-6"><strong>Percentage:</strong></div>
+                                                    <div class="col-6"><strong class="@savedPercentageClass">@savedPercentage%</strong></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
                                 }
                                 else
                                 {
-                                    <!-- Award Assignment Form -->
+                                    <!-- Award Assignment Form for Committee -->
                                     <form method="post" action="@Url.Action("AssignAward", "Admin")">
-                                        <input type="hidden" name="kaizenId" value="@Model.Id" />
+                                        <input type="hidden" name="kaizenId" value="@Model.Kaizen.Id" />
                                         
-                                        <div class="mb-3">
-                                            <label class="fw-bold">Comments & recommendations:</label>
-                                            <textarea class="form-control" name="committeeComments" rows="4" 
-                                                      placeholder="Enter committee comments and recommendations"></textarea>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label class="fw-bold">Signature:</label>
-                                            <input type="text" class="form-control" name="committeeSignature" 
-                                                   placeholder="Enter committee member signature" required>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label class="fw-bold">AWARD PRICE:</label>
-                                            <div class="mt-2">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="awardPrice" 
-                                                           id="firstPrice" value="1ST PRICE" required>
-                                                    <label class="form-check-label fw-bold" for="firstPrice">
-                                                        1ST PRICE
-                                                    </label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="awardPrice" 
-                                                           id="secondPrice" value="2ND PRICE" required>
-                                                    <label class="form-check-label fw-bold" for="secondPrice">
-                                                        2ND PRICE
-                                                    </label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="awardPrice" 
-                                                           id="thirdPrice" value="3RD PRICE" required>
-                                                    <label class="form-check-label fw-bold" for="thirdPrice">
-                                                        3RD PRICE
-                                                    </label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="awardPrice" 
-                                                           id="noPrice" value="NO PRICE" required>
-                                                    <label class="form-check-label fw-bold text-muted" for="noPrice">
-                                                        NO PRICE
-                                                    </label>
+                                        <!-- Marking Criteria Section -->
+                                        @{
+                                            var hasExistingScores = Model.ExistingScores.Any();
+                                        }
+                                        @if (Model.MarkingCriteria.Any())
+                                        {
+                                            var totalWeight = 0;
+                                            var totalScore = 0;
+                                            
+                                            <div class="mb-3">
+                                                <label class="fw-bold">MARKING CRITERIA EVALUATION:</label>
+                                                @if (hasExistingScores)
+                                                {
+                                                    <div class="alert alert-info mb-3">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        <strong>Read-Only Mode:</strong> Marks have already been assigned. This evaluation is for review only.
+                                                    </div>
+                                                }
+                                                <div class="border rounded p-3 bg-white">
+                                                    @foreach (var criteria in Model.MarkingCriteria)
+                                                    {
+                                                        totalWeight += criteria.Weight;
+                                                        var existingScore = Model.ExistingScores.FirstOrDefault(s => s.MarkingCriteriaId == criteria.Id);
+                                                        var scoreValue = existingScore?.Score ?? 0;
+                                                        totalScore += scoreValue;
+                                                        
+                                                        <div class="row mb-2 align-items-center">
+                                                            <div class="col-md-6">
+                                                                <label class="form-label mb-1">
+                                                                    <strong>@criteria.CriteriaName</strong>
+                                                                    <span class="badge bg-info ms-2">@criteria.Weight%</span>
+                                                                </label>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="input-group">
+                                                                    <input type="number" 
+                                                                           class="form-control criteria-score @(hasExistingScores ? "bg-light" : "")" 
+                                                                           name="criteriaScore_@criteria.Id"
+                                                                           data-criteria-id="@criteria.Id"
+                                                                           data-max-score="@criteria.Weight"
+                                                                           min="0" 
+                                                                           max="@criteria.Weight" 
+                                                                           value="@scoreValue"
+                                                                           placeholder="Score (0-@criteria.Weight)"
+                                                                           @(hasExistingScores ? "readonly" : "")
+                                                                           onchange="updateTotalScore()">
+                                                                    <span class="input-group-text">/ @criteria.Weight</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    <hr>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <strong>Total Weight: <span id="totalWeight" class="text-primary">@totalWeight%</span></strong>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <strong>Total Score: <span id="totalScore" class="text-success">@totalScore</span> / @totalWeight</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mt-2">
+                                                        @{
+                                                            var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+                                                            var percentageClass = percentage >= 90 ? "text-success" : percentage >= 70 ? "text-warning" : "text-danger";
+                                                        }
+                                                        <strong>Percentage Achieved: <span id="percentageAchieved" class="@percentageClass">@percentage%</span></strong>
+                                                    </div>
                                                 </div>
                                             </div>
+                                        }
+
+                                        <!-- Award Assignment Fields -->
+                                        <div class="mb-3">
+                                            <label for="awardPrice" class="form-label fw-bold">Award Price:</label>
+                                            <select class="form-select" id="awardPrice" name="awardPrice" required>
+                                                <option value="">Select Award</option>
+                                                @if (Model.Kaizen.AwardPrice == "1ST PLACE")
+                                                {
+                                                    <option value="1ST PLACE" selected>1ST PLACE</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="1ST PLACE">1ST PLACE</option>
+                                                }
+                                                @if (Model.Kaizen.AwardPrice == "2ND PLACE")
+                                                {
+                                                    <option value="2ND PLACE" selected>2ND PLACE</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="2ND PLACE">2ND PLACE</option>
+                                                }
+                                                @if (Model.Kaizen.AwardPrice == "3RD PLACE")
+                                                {
+                                                    <option value="3RD PLACE" selected>3RD PLACE</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="3RD PLACE">3RD PLACE</option>
+                                                }
+                                                @if (Model.Kaizen.AwardPrice == "HONORABLE MENTION")
+                                                {
+                                                    <option value="HONORABLE MENTION" selected>HONORABLE MENTION</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="HONORABLE MENTION">HONORABLE MENTION</option>
+                                                }
+                                            </select>
                                         </div>
-                                        
-                                        <button type="submit" class="btn btn-success w-100">
-                                            <i class="fas fa-trophy me-2"></i>
-                                            Assign Award
-                                        </button>
+
+                                        <div class="mb-3">
+                                            <label for="committeeSignature" class="form-label fw-bold">Committee Signature:</label>
+                                            <input type="text" class="form-control" id="committeeSignature" name="committeeSignature" 
+                                                   value="@Model.Kaizen.CommitteeSignature" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="committeeComments" class="form-label fw-bold">Comments & Recommendations:</label>
+                                            <textarea class="form-control" id="committeeComments" name="committeeComments" rows="3">@Model.Kaizen.CommitteeComments</textarea>
+                                        </div>
+
+                                        @if (!hasExistingScores)
+                                        {
+                                            <button type="submit" class="btn btn-success w-100">
+                                                <i class="fas fa-clipboard-check me-2"></i>
+                                                Assign Award
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-lock me-2"></i>
+                                                <strong>Award Already Assigned:</strong> This kaizen has already been evaluated and awarded. No further changes can be made.
+                                            </div>
+                                        }
                                     </form>
                                 }
                             </div>
@@ -277,29 +422,29 @@
                             </div>
                             <div class="card-body">
                                 <div class="mb-2">
-                                    <span class="badge bg-@(Model.EngineerStatus == "Approved" ? "success" : "warning")">
-                                        Engineer: @Model.EngineerStatus
+                                    <span class="badge bg-@(Model.Kaizen.EngineerStatus == "Approved" ? "success" : "warning")">
+                                        Engineer: @Model.Kaizen.EngineerStatus
                                     </span>
-                                    @if (!string.IsNullOrEmpty(Model.EngineerApprovedBy))
+                                    @if (!string.IsNullOrEmpty(Model.Kaizen.EngineerApprovedBy))
                                     {
-                                        <small class="text-muted d-block">by @Model.EngineerApprovedBy</small>
+                                        <small class="text-muted d-block">by @Model.Kaizen.EngineerApprovedBy</small>
                                     }
                                 </div>
                                 <div class="mb-2">
-                                    <span class="badge bg-@(Model.ManagerStatus == "Approved" ? "success" : "warning")">
-                                        Manager: @Model.ManagerStatus
+                                    <span class="badge bg-@(Model.Kaizen.ManagerStatus == "Approved" ? "success" : "warning")">
+                                        Manager: @Model.Kaizen.ManagerStatus
                                     </span>
-                                    @if (!string.IsNullOrEmpty(Model.ManagerApprovedBy))
+                                    @if (!string.IsNullOrEmpty(Model.Kaizen.ManagerApprovedBy))
                                     {
-                                        <small class="text-muted d-block">by @Model.ManagerApprovedBy</small>
+                                        <small class="text-muted d-block">by @Model.Kaizen.ManagerApprovedBy</small>
                                     }
                                 </div>
-                                @if (!string.IsNullOrEmpty(Model.ManagerComments))
+                                @if (!string.IsNullOrEmpty(Model.Kaizen.ManagerComments))
                                 {
                                     <div class="mt-3">
                                         <label class="fw-bold small">Manager Comments:</label>
                                         <div class="border rounded p-2 bg-light small">
-                                            @Model.ManagerComments
+                                            @Model.Kaizen.ManagerComments
                                         </div>
                                     </div>
                                 }
@@ -312,23 +457,132 @@
     </div>
 </div>
 
-@section Scripts {
+
     <script>
         // Form validation
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form');
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    const awardPrice = document.querySelector('input[name="awardPrice"]:checked');
-                    const signature = document.querySelector('input[name="committeeSignature"]').value;
+                    console.log('Form submission started');
                     
-                    if (!awardPrice || !signature.trim()) {
+                    const signature = document.querySelector('input[name="committeeSignature"]').value;
+                    const comments = document.querySelector('textarea[name="committeeComments"]').value;
+                    
+                    console.log('Form data:', {
+                        signature: signature,
+                        comments: comments
+                    });
+                    
+                    // Log all score inputs
+                    const scoreInputs = document.querySelectorAll('.criteria-score');
+                    console.log(`Found ${scoreInputs.length} score inputs`);
+                    scoreInputs.forEach((input, index) => {
+                        console.log(`Score input ${index}: ${input.name} = ${input.value}`);
+                    });
+                    
+                    // Basic validation - check if signature is provided
+                    if (!signature.trim()) {
                         e.preventDefault();
-                        showToast('Please select an award price and provide a signature.', 'error');
+                        console.log('Validation failed: No signature provided');
+                        alert('Please provide a committee signature.');
                         return false;
                     }
+                    
+                    console.log('All validations passed, proceeding with submission');
+                    
+                    // Disable submit button to prevent double submission
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+                    
+                    console.log('Form submission proceeding...');
                 });
             }
+            
+            // Initialize scoring
+            updateTotalScore();
         });
+
+        // Function to show toast messages
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container') || createToastContainer();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            // Remove toast after it's hidden
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+        
+        // Function to create toast container if it doesn't exist
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
+        }
+
+
+
+        // Function to update total score and percentage
+        function updateTotalScore() {
+            const scoreInputs = document.querySelectorAll('.criteria-score');
+            let totalScore = 0;
+            let totalWeight = 0;
+            
+            scoreInputs.forEach(input => {
+                const score = parseInt(input.value) || 0;
+                const maxScore = parseInt(input.dataset.maxScore) || 0;
+                
+                totalScore += score;
+                totalWeight += maxScore;
+                
+                // Validate input only if not readonly
+                if (!input.readOnly && score > maxScore) {
+                    input.value = maxScore;
+                    totalScore = totalScore - score + maxScore;
+                }
+            });
+            
+            // Update display
+            document.getElementById('totalScore').textContent = totalScore;
+            document.getElementById('totalWeight').textContent = totalWeight + '%';
+            
+            // Calculate percentage
+            const percentage = totalWeight > 0 ? Math.round((totalScore / totalWeight) * 100) : 0;
+            document.getElementById('percentageAchieved').textContent = percentage + '%';
+            
+            // Update color based on percentage
+            const percentageElement = document.getElementById('percentageAchieved');
+            if (percentage >= 90) {
+                percentageElement.className = 'text-success';
+            } else if (percentage >= 70) {
+                percentageElement.className = 'text-warning';
+            } else {
+                percentageElement.className = 'text-danger';
+            }
+        }
     </script>
 } 

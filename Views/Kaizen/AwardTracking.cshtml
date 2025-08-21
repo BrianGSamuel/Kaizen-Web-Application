@@ -1,14 +1,26 @@
-KaizenListManager@model List<KaizenWebApp.Models.KaizenForm>
+@model List<object>
 @{
-    ViewData["Title"] = "Award Tracking (Read-Only)";
-    Layout = "~/Views/Shared/_KaizenTeamLayout.cshtml";
+    ViewData["Title"] = "Assign Marks";
+    Layout = "_KaizenTeamLayout";
 }
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="manager-card">
-                
+            <div class="admin-card">
+               
+                <!-- Header Section with Add Marking Criteria Button -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-check text-success me-2"></i>
+                        Assign Marks
+                    </h4>
+                    <a href="@Url.Action("AddMarkingCriteria", "Admin")" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Add Marking Criteria
+                    </a>
+                </div>
+
                 <!-- Search Section -->
                 <div class="card mb-4">
                     <div class="card-header bg-light">
@@ -18,7 +30,7 @@ KaizenListManager@model List<KaizenWebApp.Models.KaizenForm>
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form method="get" action="@Url.Action("AwardTracking", "Kaizen")" id="searchForm">
+                        <form method="get" action="@Url.Action("AwardTracking", "Admin")" id="searchForm">
                             <div class="row">
                                 <div class="col-md-2">
                                     <div class="mb-3">
@@ -60,28 +72,16 @@ KaizenListManager@model List<KaizenWebApp.Models.KaizenForm>
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-2">
-                                    <div class="mb-3">
-                                        <label for="awardStatus" class="form-label fw-bold">Award Status</label>
-                                        <select class="form-select" id="awardStatus" name="awardStatus">
-                                            <option value="">All Award Status</option>
-                                            <option value="1ST PRICE" selected="@(Context.Request.Query["awardStatus"].ToString() == "1ST PRICE")">1ST PRICE</option>
-                                            <option value="2ND PRICE" selected="@(Context.Request.Query["awardStatus"].ToString() == "2ND PRICE")">2ND PRICE</option>
-                                            <option value="3RD PRICE" selected="@(Context.Request.Query["awardStatus"].ToString() == "3RD PRICE")">3RD PRICE</option>
-                                            <option value="NO PRICE" selected="@(Context.Request.Query["awardStatus"].ToString() == "NO PRICE")">NO PRICE</option>
-                                            <option value="Pending" selected="@(Context.Request.Query["awardStatus"].ToString() == "Pending")">Pending</option>
-                                        </select>
-                                    </div>
-                                </div>
+
                             </div>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="d-flex gap-2">
-                                        <button type="submit" class="btn-manager">
+                                        <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-search me-2"></i>
                                             Search
                                         </button>
-                                        <a href="@Url.Action("AwardTracking", "Kaizen")" class="btn btn-outline-secondary">
+                                        <a href="@Url.Action("AwardTracking", "Admin")" class="btn btn-outline-secondary">
                                             <i class="fas fa-times me-2"></i>
                                             Clear Filters
                                         </a>
@@ -92,13 +92,15 @@ KaizenListManager@model List<KaizenWebApp.Models.KaizenForm>
                     </div>
                 </div>
 
+                <!-- Messages now handled by toast system -->
+
                 @if (!Model.Any())
                 {
                     <div class="text-center py-5">
                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">No Approved Kaizens Found</h5>
                         <p class="text-muted">No kaizens match your current search criteria.</p>
-                        <a href="@Url.Action("AwardTracking", "Kaizen")" class="btn btn-primary">
+                        <a href="@Url.Action("AwardTracking", "Admin")" class="btn btn-primary">
                             <i class="fas fa-times me-2"></i>
                             Clear Filters
                         </a>
@@ -111,11 +113,10 @@ KaizenListManager@model List<KaizenWebApp.Models.KaizenForm>
                             <i class="fas fa-list me-2"></i>
                             Showing @Model.Count() approved kaizen(s)
                         </div>
-                        @if (!string.IsNullOrEmpty(Context.Request.Query["startDate"]) || 
+                                                 @if (!string.IsNullOrEmpty(Context.Request.Query["startDate"]) || 
                               !string.IsNullOrEmpty(Context.Request.Query["endDate"]) || 
                               !string.IsNullOrEmpty(Context.Request.Query["department"]) || 
-                              !string.IsNullOrEmpty(Context.Request.Query["category"]) ||
-                              !string.IsNullOrEmpty(Context.Request.Query["awardStatus"]))
+                              !string.IsNullOrEmpty(Context.Request.Query["category"]))
                         {
                             <div class="text-muted small">
                                 <i class="fas fa-filter me-1"></i>
@@ -124,23 +125,29 @@ KaizenListManager@model List<KaizenWebApp.Models.KaizenForm>
                         }
                     </div>
                     <div class="table-responsive">
-                        <table class="table manager-table">
-                            <thead>
+                        <table class="table table-hover">
+                            <thead class="table-dark">
                                 <tr>
-                                    <th>Kaizen No</th>
+                                    <th style="min-width: 120px; max-width: 150px; word-wrap: break-word;">Kaizen No</th>
                                     <th>Employee</th>
                                     <th>Department</th>
                                     <th>Date Submitted</th>
                                     <th>Cost Saving</th>
+                                    <th>Score</th>
                                     <th>Award Status</th>
-                                    <th>Actions</th>
+                                    <th style="min-width: 200px; white-space: nowrap;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var kaizen in Model)
+                                @foreach (dynamic item in Model)
                                 {
+                                    var kaizen = item.Kaizen;
+                                    var score = item.Score;
+                                    var totalWeight = item.TotalWeight;
+                                    var percentage = item.Percentage;
+                                    
                                     <tr>
-                                        <td>
+                                        <td style="min-width: 120px; max-width: 150px; word-wrap: break-word;">
                                             <strong>@kaizen.KaizenNo</strong>
                                         </td>
                                         <td>
@@ -171,50 +178,62 @@ KaizenListManager@model List<KaizenWebApp.Models.KaizenForm>
                                         <td>
                                             <small>@kaizen.DateSubmitted.ToString("MMM dd, yyyy")</small>
                                         </td>
+                                                                                 <td>
+                                             @{
+                                                 var costSaving = kaizen.CostSaving;
+                                                 var hasCostSaving = costSaving != null && costSaving > 0;
+                                             }
+                                             @if (hasCostSaving)
+                                             {
+                                                 <span class="text-success fw-bold">
+                                                     $@costSaving.ToString("N2")
+                                                 </span>
+                                             }
+                                             else
+                                             {
+                                                 <span class="text-muted">No cost saving</span>
+                                             }
+                                         </td>
                                         <td>
-                                            @if (kaizen.CostSaving.HasValue && kaizen.CostSaving > 0)
+                                            @if (totalWeight > 0)
                                             {
-                                                <span class="text-success fw-bold">
-                                                    $@kaizen.CostSaving.Value.ToString("N2")
+                                                var badgeClass = percentage >= 90 ? "bg-success" : 
+                                                               percentage >= 70 ? "bg-warning" : "bg-danger";
+                                                <span class="badge @badgeClass">
+                                                    <i class="fas fa-percentage me-1"></i>
+                                                    @percentage.ToString("F1")%
                                                 </span>
                                             }
                                             else
                                             {
-                                                <span class="text-muted">No cost saving</span>
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-minus me-1"></i>
+                                                    No Score
+                                                </span>
                                             }
                                         </td>
                                         <td>
-                                            @if (!string.IsNullOrEmpty(kaizen.AwardPrice))
+                                            @if (!string.IsNullOrEmpty(kaizen.AwardPrice?.ToString()))
                                             {
-                                                <span class="badge bg-warning text-dark">
+                                                <span class="badge bg-success">
                                                     <i class="fas fa-trophy me-1"></i>
                                                     @kaizen.AwardPrice
                                                 </span>
                                             }
                                             else
                                             {
-                                                <span class="badge bg-secondary">
+                                                <span class="badge bg-warning">
                                                     <i class="fas fa-clock me-1"></i>
                                                     Pending
                                                 </span>
                                             }
                                         </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="@Url.Action("AwardDetails", "Kaizen", new { id = kaizen.Id })" 
-                                                   class="btn btn-sm btn-outline-primary">
+                                        <td style="min-width: 200px; white-space: nowrap;">
+                                            <div class="btn-group" role="group" style="flex-wrap: nowrap;">
+                                                <a href="@Url.Action("TeamMarksDetails", "Kaizen", new { id = kaizen.Id })" 
+                                                   class="btn btn-sm @(percentage > 0 ? "btn-outline-primary" : "btn-primary")">
                                                     <i class="fas fa-eye me-1"></i>
                                                     View Details
-                                                </a>
-                                                <a href="@Url.Action("FormB", "Kaizen", new { id = kaizen.Id })" 
-                                                   class="btn btn-sm btn-outline-success">
-                                                    <i class="fas fa-file-alt me-1"></i>
-                                                    Form B
-                                                </a>
-                                                <a href="@Url.Action("PrintFormB", "Kaizen", new { id = kaizen.Id })" 
-                                                   class="btn btn-sm btn-outline-info" target="_blank">
-                                                    <i class="fas fa-print me-1"></i>
-                                                    Print
                                                 </a>
                                             </div>
                                         </td>
@@ -227,4 +246,49 @@ KaizenListManager@model List<KaizenWebApp.Models.KaizenForm>
             </div>
         </div>
     </div>
-</div> 
+</div>
+
+
+
+ @section Scripts {
+     <script>
+
+        // Search functionality enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchForm = document.getElementById('searchForm');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+
+            // Set default date range to last 30 days if no dates are selected
+            if (!startDateInput.value && !endDateInput.value) {
+                const today = new Date();
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+                
+                startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+                endDateInput.value = today.toISOString().split('T')[0];
+            }
+
+            // Validate date range
+            searchForm.addEventListener('submit', function(e) {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+                
+                if (startDateInput.value && endDateInput.value && startDate > endDate) {
+                    e.preventDefault();
+                    showToast('Start date cannot be after end date.', 'error');
+                    return false;
+                }
+            });
+
+                                                   // Auto-submit form when filters change (optional)
+              const filterInputs = document.querySelectorAll('#department, #category');
+              filterInputs.forEach(input => {
+                  input.addEventListener('change', function() {
+                      // Uncomment the line below if you want auto-submit on filter change
+                      // searchForm.submit();
+                  });
+              });
+        });
+    </script>
+}

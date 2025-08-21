@@ -13,5 +13,7 @@ namespace KaizenWebApp.Data
         public DbSet<DepartmentTarget> DepartmentTargets { get; set; }
         public DbSet<SystemMaintenance> SystemMaintenance { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<MarkingCriteria> MarkingCriteria { get; set; }
+        public DbSet<KaizenMarkingScore> KaizenMarkingScores { get; set; }
     }
 }

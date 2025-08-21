@@ -1,0 +1,271 @@
+@model KaizenWebApp.Models.KaizenForm
+@{
+    ViewData["Title"] = "Nomination Details";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="admin-card">
+                <!-- Header Section -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-star text-warning me-2"></i>
+                        Nomination Details
+                    </h4>
+                    <a href="@Url.Action("Nominations", "Admin")" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Back to Nominations
+                    </a>
+                </div>
+
+                <!-- Success/Error Messages -->
+                @if (TempData["SubmissionSuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        @TempData["SubmissionSuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @if (TempData["SubmissionErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        @TempData["SubmissionErrorMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <!-- Kaizen Details Section -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-lightbulb me-2"></i>
+                                    Kaizen Suggestion Details
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Kaizen No:</label>
+                                            <p class="mb-0">@Model.KaizenNo</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Employee Name:</label>
+                                            <p class="mb-0">@Model.EmployeeName</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Employee No:</label>
+                                            <p class="mb-0">@Model.EmployeeNo</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Department:</label>
+                                            <p class="mb-0">@Model.Department</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Date Submitted:</label>
+                                            <p class="mb-0">@Model.DateSubmitted.ToString("MMM dd, yyyy")</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Category:</label>
+                                            <p class="mb-0">@Model.Category</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Cost Saving:</label>
+                                            @if (Model.CostSaving.HasValue && Model.CostSaving > 0)
+                                            {
+                                                <p class="mb-0 text-success fw-bold">$@Model.CostSaving.Value.ToString("N2")</p>
+                                            }
+                                            else
+                                            {
+                                                <p class="mb-0 text-muted">No cost saving</p>
+                                            }
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Current Score:</label>
+                                            @{
+                                                var percentage = ViewBag.Percentage as double? ?? 0;
+                                                var badgeClass = percentage >= 75 ? "bg-success" : 
+                                                               percentage >= 65 ? "bg-warning" : "bg-secondary";
+                                            }
+                                            <span class="badge @badgeClass">
+                                                <i class="fas fa-chart-line me-1"></i>
+                                                @percentage.ToString("F1")%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="fw-bold">Suggestion Description:</label>
+                                    <p class="mb-0">@Model.SuggestionDescription</p>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(Model.OtherBenefits))
+                                {
+                                    <div class="mb-3">
+                                        <label class="fw-bold">Other Benefits:</label>
+                                        <p class="mb-0">@Model.OtherBenefits</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-user me-2"></i>
+                                    Employee Information
+                                </h5>
+                            </div>
+                            <div class="card-body text-center">
+                                @if (!string.IsNullOrEmpty(Model.EmployeePhotoPath))
+                                {
+                                    <img src="@Model.EmployeePhotoPath" 
+                                         alt="Employee Photo" 
+                                         class="rounded-circle mb-3" 
+                                         style="width: 100px; height: 100px; object-fit: cover;">
+                                }
+                                else
+                                {
+                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" 
+                                         style="width: 100px; height: 100px;">
+                                        <i class="fas fa-user text-white" style="font-size: 40px;"></i>
+                                    </div>
+                                }
+                                <h5 class="mb-1">@Model.EmployeeName</h5>
+                                <p class="text-muted mb-2">@Model.EmployeeNo</p>
+                                <span class="badge bg-info">@Model.Department</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- For KAIZEN COMMITTEE Use Section -->
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users me-2"></i>
+                            For KAIZEN COMMITTEE Use
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (string.IsNullOrEmpty(Model.AwardPrice))
+                        {
+                            <form method="post" action="@Url.Action("AssignNomination", "Admin")" id="nominationForm">
+                                <input type="hidden" name="kaizenId" value="@Model.Id" />
+                                
+                                <!-- AWARD PLACEMENT Section -->
+                                <div class="mb-4">
+                                    <label class="fw-bold">AWARD PLACEMENT:</label>
+                                    <div class="mt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="awardPlacement" 
+                                                   id="firstPlace" value="1ST PLACE" required>
+                                            <label class="form-check-label fw-bold text-success" for="firstPlace">
+                                                1ST PLACE
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="awardPlacement" 
+                                                   id="secondPlace" value="2ND PLACE" required>
+                                            <label class="form-check-label fw-bold text-primary" for="secondPlace">
+                                                2ND PLACE
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="awardPlacement" 
+                                                   id="thirdPlace" value="3RD PLACE" required>
+                                            <label class="form-check-label fw-bold text-warning" for="thirdPlace">
+                                                3RD PLACE
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="awardPlacement" 
+                                                   id="noPlace" value="NO PLACE" required>
+                                            <label class="form-check-label fw-bold text-muted" for="noPlace">
+                                                NO PLACE
+                                            </label>
+                                        </div>
+                                    </div>
+                                                                 </div>
+
+                                 <!-- Committee Comments Section -->
+                                 <div class="mb-4">
+                                     <label for="committeeComments" class="form-label fw-bold">COMMITTEE COMMENTS:</label>
+                                     <textarea class="form-control" id="committeeComments" name="committeeComments" 
+                                               rows="4" placeholder="Enter committee comments and recommendations"></textarea>
+                                 </div>
+
+                                 <!-- Committee Signature Section -->
+                                 <div class="mb-4">
+                                     <label for="committeeSignature" class="form-label fw-bold">COMMITTEE SIGNATURE:</label>
+                                     <input type="text" class="form-control" id="committeeSignature" name="committeeSignature" 
+                                            placeholder="Enter committee member signature" required>
+                                 </div>
+
+                                 <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-star me-2"></i>
+                                    Assign Nomination
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-trophy me-2"></i>
+                                    Award Already Assigned
+                                </h6>
+                                <p class="mb-2"><strong>Award Placement:</strong> @Model.AwardPrice</p>
+                                @if (!string.IsNullOrEmpty(Model.CommitteeComments))
+                                {
+                                    <p class="mb-2"><strong>Committee Comments:</strong> @Model.CommitteeComments</p>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.CommitteeSignature))
+                                {
+                                    <p class="mb-0"><strong>Committee Signature:</strong> @Model.CommitteeSignature</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+                 // Form validation
+         document.getElementById('nominationForm')?.addEventListener('submit', function(e) {
+             var awardPlacement = document.querySelector('input[name="awardPlacement"]:checked');
+             var signature = document.getElementById('committeeSignature').value;
+             
+             if (!awardPlacement || !signature.trim()) {
+                 e.preventDefault();
+                 alert('Please select an award placement and provide a committee signature.');
+                 return false;
+             }
+            
+            // Show confirmation before submitting
+            const confirmMessage = `Are you sure you want to assign ${awardPlacement.value} to this kaizen?`;
+            if (!confirm(confirmMessage)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+}
+
+

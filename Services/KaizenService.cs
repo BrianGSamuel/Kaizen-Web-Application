@@ -184,5 +184,105 @@ namespace KaizenWebApp.Services
                 .OrderBy(d => d)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<KaizenForm>> GetSimilarKaizensAsync(string suggestionDescription, string? costSavingType, string? otherBenefits, string department, int currentKaizenId)
+        {
+            try
+            {
+                _logger.LogInformation("Finding similar kaizens for department: {Department}, current kaizen ID: {CurrentKaizenId}", department, currentKaizenId);
+                
+                // Get all kaizens from the same department (excluding the current one)
+                var similarKaizens = await _context.KaizenForms
+                    .Where(k => k.Department == department && k.Id != currentKaizenId)
+                    .ToListAsync();
+
+                _logger.LogInformation("Found {Count} total kaizens in department {Department}", similarKaizens.Count, department);
+
+                var results = new List<KaizenForm>();
+                var descriptionWords = suggestionDescription?.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+                var benefitsWords = otherBenefits?.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+
+                foreach (var kaizen in similarKaizens)
+                {
+                    int similarityScore = 0;
+
+                    // Check description similarity
+                    if (!string.IsNullOrEmpty(kaizen.SuggestionDescription))
+                    {
+                        var kaizenDescriptionWords = kaizen.SuggestionDescription.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        var commonDescriptionWords = descriptionWords.Intersect(kaizenDescriptionWords, StringComparer.OrdinalIgnoreCase).Count();
+                        similarityScore += commonDescriptionWords * 2; // Description similarity has higher weight
+                    }
+
+                    // Check benefits similarity
+                    if (!string.IsNullOrEmpty(kaizen.OtherBenefits) && !string.IsNullOrEmpty(otherBenefits))
+                    {
+                        var kaizenBenefitsWords = kaizen.OtherBenefits.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        var commonBenefitsWords = benefitsWords.Intersect(kaizenBenefitsWords, StringComparer.OrdinalIgnoreCase).Count();
+                        similarityScore += commonBenefitsWords;
+                    }
+
+                    // Check cost saving type similarity
+                    if (!string.IsNullOrEmpty(kaizen.CostSavingType) && !string.IsNullOrEmpty(costSavingType))
+                    {
+                        if (kaizen.CostSavingType.Equals(costSavingType, StringComparison.OrdinalIgnoreCase))
+                        {
+                            similarityScore += 3; // Cost saving type match has high weight
+                        }
+                    }
+
+                    // Check if both have cost savings
+                    if (kaizen.CostSaving.HasValue && kaizen.CostSaving > 0)
+                    {
+                        similarityScore += 1;
+                    }
+
+                    // Only include kaizens with a minimum similarity score
+                    if (similarityScore >= 2)
+                    {
+                        results.Add(kaizen);
+                    }
+                }
+
+                // Return top 5 most similar kaizens, ordered by similarity score
+                var finalResults = results
+                    .OrderByDescending(k => {
+                        var kDescWords = k.SuggestionDescription?.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+                        var kBenefitsWords = k.OtherBenefits?.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+                        
+                        int score = 0;
+                        var commonDescWords = descriptionWords.Intersect(kDescWords, StringComparer.OrdinalIgnoreCase).Count();
+                        score += commonDescWords * 2;
+                        
+                        var commonBenefitsWords = benefitsWords.Intersect(kBenefitsWords, StringComparer.OrdinalIgnoreCase).Count();
+                        score += commonBenefitsWords;
+                        
+                        if (!string.IsNullOrEmpty(k.CostSavingType) && !string.IsNullOrEmpty(costSavingType))
+                        {
+                            if (k.CostSavingType.Equals(costSavingType, StringComparison.OrdinalIgnoreCase))
+                            {
+                                score += 3;
+                            }
+                        }
+                        
+                        if (k.CostSaving.HasValue && k.CostSaving > 0)
+                        {
+                            score += 1;
+                        }
+                        
+                        return score;
+                    })
+                    .Take(5)
+                    .ToList();
+
+                _logger.LogInformation("Returning {Count} similar kaizens for department {Department}", finalResults.Count, department);
+                return finalResults;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error finding similar kaizens for department {Department}", department);
+                return new List<KaizenForm>();
+            }
+        }
     }
 }

@@ -1,14 +1,23 @@
 @model List<KaizenWebApp.Models.KaizenForm>
+@using KaizenWebApp.Models
 @{
-    ViewData["Title"] = "Award Tracking Overview";
-    Layout = "~/Views/Shared/_KaizenTeamLayout.cshtml";
+    ViewData["Title"] = "Nominations";
+    Layout = "_AdminLayout";
 }
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="manager-card">
-                
+            <div class="admin-card">
+               
+                <!-- Header Section -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-star text-warning me-2"></i>
+                        Nominations
+                    </h4>
+                </div>
+
                 <!-- Search Section -->
                 <div class="card mb-4">
                     <div class="card-header bg-light">
@@ -18,7 +27,7 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form method="get" action="@Url.Action("AwardTracking", "Kaizen")" id="searchForm">
+                        <form method="get" action="@Url.Action("Nominations", "Admin")" id="searchForm">
                             <div class="row">
                                 <div class="col-md-2">
                                     <div class="mb-3">
@@ -77,11 +86,11 @@
                             <div class="row">
                                 <div class="col-12">
                                     <div class="d-flex gap-2">
-                                        <button type="submit" class="btn-manager">
+                                        <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-search me-2"></i>
                                             Search
                                         </button>
-                                        <a href="@Url.Action("AwardTracking", "Kaizen")" class="btn btn-outline-secondary">
+                                        <a href="@Url.Action("Nominations", "Admin")" class="btn btn-outline-secondary">
                                             <i class="fas fa-times me-2"></i>
                                             Clear Filters
                                         </a>
@@ -92,13 +101,15 @@
                     </div>
                 </div>
 
+                <!-- Messages now handled by toast system -->
+
                 @if (!Model.Any())
                 {
                     <div class="text-center py-5">
                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No Approved Kaizens Found</h5>
+                        <h5 class="text-muted">No Kaizens Found</h5>
                         <p class="text-muted">No kaizens match your current search criteria.</p>
-                        <a href="@Url.Action("AwardTracking", "Kaizen")" class="btn btn-primary">
+                        <a href="@Url.Action("Nominations", "Admin")" class="btn btn-primary">
                             <i class="fas fa-times me-2"></i>
                             Clear Filters
                         </a>
@@ -109,13 +120,13 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div class="text-muted">
                             <i class="fas fa-list me-2"></i>
-                            Showing @Model.Count() approved kaizen(s)
+                            Showing @Model.Count() kaizen(s)
                         </div>
                         @if (!string.IsNullOrEmpty(Context.Request.Query["startDate"]) || 
-                              !string.IsNullOrEmpty(Context.Request.Query["endDate"]) || 
-                              !string.IsNullOrEmpty(Context.Request.Query["department"]) || 
-                              !string.IsNullOrEmpty(Context.Request.Query["category"]) ||
-                              !string.IsNullOrEmpty(Context.Request.Query["awardStatus"]))
+                            !string.IsNullOrEmpty(Context.Request.Query["endDate"]) || 
+                            !string.IsNullOrEmpty(Context.Request.Query["department"]) || 
+                            !string.IsNullOrEmpty(Context.Request.Query["category"]) ||
+                            !string.IsNullOrEmpty(Context.Request.Query["awardStatus"]))
                         {
                             <div class="text-muted small">
                                 <i class="fas fa-filter me-1"></i>
@@ -124,23 +135,24 @@
                         }
                     </div>
                     <div class="table-responsive">
-                        <table class="table manager-table">
-                            <thead>
+                        <table class="table table-hover">
+                            <thead class="table-dark">
                                 <tr>
-                                    <th>Kaizen No</th>
+                                    <th style="min-width: 120px; max-width: 150px; word-wrap: break-word;">Kaizen No</th>
                                     <th>Employee</th>
                                     <th>Department</th>
                                     <th>Date Submitted</th>
                                     <th>Cost Saving</th>
+                                    <th>Score (%)</th>
                                     <th>Award Status</th>
-                                    <th>Actions</th>
+                                    <th style="min-width: 200px; white-space: nowrap;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var kaizen in Model)
                                 {
                                     <tr>
-                                        <td>
+                                        <td style="min-width: 120px; max-width: 150px; word-wrap: break-word;">
                                             <strong>@kaizen.KaizenNo</strong>
                                         </td>
                                         <td>
@@ -184,6 +196,40 @@
                                             }
                                         </td>
                                         <td>
+                                            @{
+                                                // Calculate percentage for this kaizen using the same logic as AwardTracking
+                                                var scores = Context.RequestServices.GetService<AppDbContext>()?.KaizenMarkingScores
+                                                    .Where(s => s.KaizenId == kaizen.Id)
+                                                    .ToList() ?? new List<KaizenMarkingScore>();
+                                                
+                                                // Get the total weight of criteria that were actually scored for this kaizen
+                                                var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
+                                                var totalWeight = Context.RequestServices.GetService<AppDbContext>()?.MarkingCriteria
+                                                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                                                    .Sum(c => c.Weight) ?? 0;
+                                                
+                                                var totalScore = scores.Sum(s => s.Score);
+                                                var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
+                                                
+                                                var badgeClass = percentage >= 90 ? "bg-success" : 
+                                                               percentage >= 70 ? "bg-warning" : "bg-danger";
+                                            }
+                                            @if (totalWeight > 0)
+                                            {
+                                                <span class="badge @badgeClass">
+                                                    <i class="fas fa-percentage me-1"></i>
+                                                    @percentage.ToString("F1")%
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-minus me-1"></i>
+                                                    No Score
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
                                             @if (!string.IsNullOrEmpty(kaizen.AwardPrice))
                                             {
                                                 <span class="badge bg-warning text-dark">
@@ -199,10 +245,10 @@
                                                 </span>
                                             }
                                         </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="@Url.Action("AwardDetails", "Kaizen", new { id = kaizen.Id })" 
-                                                   class="btn btn-sm btn-outline-primary">
+                                        <td style="min-width: 200px; white-space: nowrap;">
+                                            <div class="btn-group" role="group" style="flex-wrap: nowrap;">
+                                                <a href="@Url.Action("NominationDetails", "Admin", new { id = kaizen.Id })" 
+                                                   class="btn btn-sm @(string.IsNullOrEmpty(kaizen.AwardPrice) ? "btn-primary" : "btn-outline-primary")">
                                                     <i class="fas fa-eye me-1"></i>
                                                     View Details
                                                 </a>
@@ -218,3 +264,45 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Search functionality enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchForm = document.getElementById('searchForm');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+
+            // Set default date range to last 30 days if no dates are selected
+            if (!startDateInput.value && !endDateInput.value) {
+                const today = new Date();
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+                
+                startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+                endDateInput.value = today.toISOString().split('T')[0];
+            }
+
+            // Validate date range
+            searchForm.addEventListener('submit', function(e) {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+                
+                if (startDateInput.value && endDateInput.value && startDate > endDate) {
+                    e.preventDefault();
+                    showToast('Start date cannot be after end date.', 'error');
+                    return false;
+                }
+            });
+
+            // Auto-submit form when filters change (optional)
+            const filterInputs = document.querySelectorAll('#department, #category, #awardStatus');
+            filterInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    // Uncomment the line below if you want auto-submit on filter change
+                    // searchForm.submit();
+                });
+            });
+        });
+    </script>
+}

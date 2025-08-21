@@ -1,6 +1,6 @@
 @model KaizenWebApp.ViewModels.AwardDetailsViewModel
 @{
-    ViewData["Title"] = "Award Details (Read-Only)";
+    ViewData["Title"] = "Team Marks Details";
     Layout = "_KaizenTeamLayout";
 }
 
@@ -12,7 +12,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h3 class="admin-card-title">
                             <i class="fas fa-trophy text-warning me-2"></i>
-                            Award Details - @Model.Kaizen.KaizenNo
+                            Team Marks Details - @Model.Kaizen.KaizenNo
                         </h3>
                         <a href="@Url.Action("AwardTracking", "Kaizen")" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-1"></i>
@@ -24,7 +24,7 @@
                 <!-- Read-Only Notice -->
                 <div class="alert alert-info mb-4">
                     <i class="fas fa-eye me-2"></i>
-                    <strong>Read-Only View:</strong> This page displays award details in read-only mode for the Kaizen team.
+                    <strong>Team View:</strong> This page displays award details and marking criteria for the Kaizen team.
                 </div>
 
                 <!-- Kaizen Details Section -->
@@ -177,127 +177,134 @@
 
                     <!-- Award Information Section -->
                     <div class="col-md-4">
-                        <!-- Marking Criteria Scores -->
+                        <!-- For KAIZEN COMMITTEE Use Section -->
                         <div class="card mb-4">
-                            <div class="card-header bg-success text-white">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-clipboard-check me-2"></i>
-                                    Marking Criteria Evaluation
+                            <div class="card-header" style="background-color: #FFD700; border: none;">
+                                <h5 class="mb-0 text-dark">
+                                    <i class="fas fa-trophy me-2"></i>
+                                    For KAIZEN COMMITTEE Use
                                 </h5>
                             </div>
-                            <div class="card-body">
-                                @if (Model.MarkingCriteria.Any())
+                            <div class="card-body" style="background-color: #E8F5E8; border: 1px solid #ffffff;">
+                                @if (!string.IsNullOrEmpty(Model.Kaizen.AwardPrice))
                                 {
-                                    var totalWeight = 0;
-                                    var totalScore = 0;
-                                    
-                                    <div class="border rounded p-3 bg-light">
-                                        @foreach (var criteria in Model.MarkingCriteria)
+                                    <!-- Award Already Assigned -->
+                                    <div class="mb-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <strong>Award Already Assigned</strong>
+                                        </div>
+                                        <p class="mb-1"><strong>Award Price:</strong> @Model.Kaizen.AwardPrice</p>
+                                        <p class="mb-1"><strong>Date:</strong> @Model.Kaizen.AwardDate?.ToString("MMM dd, yyyy")</p>
+                                        @if (!string.IsNullOrEmpty(Model.Kaizen.CommitteeSignature))
                                         {
-                                            totalWeight += criteria.Weight;
-                                            var existingScore = Model.ExistingScores.FirstOrDefault(s => s.MarkingCriteriaId == criteria.Id);
-                                            var scoreValue = existingScore?.Score ?? 0;
-                                            totalScore += scoreValue;
-                                            
-                                            <div class="row mb-2 align-items-center">
-                                                <div class="col-md-8">
-                                                    <label class="form-label mb-1">
-                                                        <strong>@criteria.CriteriaName</strong>
-                                                        <span class="badge bg-info ms-2">@criteria.Weight%</span>
-                                                    </label>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <div class="input-group">
-                                                        <input type="number" 
-                                                               class="form-control criteria-score bg-light" 
-                                                               value="@scoreValue"
-                                                               readonly
-                                                               disabled>
-                                                        <span class="input-group-text">/ @criteria.Weight</span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <p class="mb-1"><strong>Signature:</strong> @Model.Kaizen.CommitteeSignature</p>
                                         }
-                                        <hr>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <strong>Total Weight: <span id="totalWeight" class="text-primary">@totalWeight%</span></strong>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <strong>Total Score: <span id="totalScore" class="text-success">@totalScore</span> / @totalWeight</strong>
-                                            </div>
-                                        </div>
-                                        <div class="mt-2">
-                                            @{
-                                                var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
-                                                var percentageClass = percentage >= 90 ? "text-success" : percentage >= 70 ? "text-warning" : "text-danger";
-                                            }
-                                            <strong>Percentage Achieved: <span id="percentageAchieved" class="@percentageClass">@percentage%</span></strong>
-                                        </div>
                                     </div>
+
+                                    @if (!string.IsNullOrEmpty(Model.Kaizen.CommitteeComments))
+                                    {
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Comments & Recommendations:</label>
+                                            <div class="border rounded p-2 bg-white">
+                                                @Model.Kaizen.CommitteeComments
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Saved Marking Criteria Scores -->
+                                    @if (Model.ExistingScores.Any())
+                                    {
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Saved Marking Criteria Scores:</label>
+                                            <div class="border rounded p-2 bg-white">
+                                                @{
+                                                    int totalSavedScore = 0;
+                                                    int totalSavedWeight = 0;
+                                                }
+                                                @foreach (var score in Model.ExistingScores)
+                                                {
+                                                    var criteria = Model.MarkingCriteria.FirstOrDefault(c => c.Id == score.MarkingCriteriaId);
+                                                    if (criteria != null)
+                                                    {
+                                                        totalSavedScore += score.Score;
+                                                        totalSavedWeight += criteria.Weight;
+                                                        <div class="row mb-1">
+                                                            <div class="col-6">@criteria.CriteriaName:</div>
+                                                            <div class="col-6">@score.Score / @criteria.Weight</div>
+                                                        </div>
+                                                    }
+                                                }
+                                                <hr class="my-2">
+                                                <div class="row">
+                                                    <div class="col-6"><strong>Total Score:</strong></div>
+                                                    <div class="col-6"><strong>@totalSavedScore / @totalSavedWeight</strong></div>
+                                                </div>
+                                                @{
+                                                    var savedPercentage = totalSavedWeight > 0 ? Math.Round((double)totalSavedScore / totalSavedWeight * 100, 1) : 0;
+                                                    var savedPercentageClass = savedPercentage >= 90 ? "text-success" : savedPercentage >= 70 ? "text-warning" : "text-danger";
+                                                }
+                                                <div class="row">
+                                                    <div class="col-6"><strong>Percentage:</strong></div>
+                                                    <div class="col-6"><strong class="@savedPercentageClass">@savedPercentage%</strong></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
                                 }
                                 else
                                 {
-                                    <div class="alert alert-warning">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        <strong>No Marking Criteria:</strong> No marking criteria have been defined for this evaluation.
+                                    <!-- No Award Assigned -->
+                                    <div class="mb-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-clock text-warning me-2"></i>
+                                            <strong>No Award Assigned</strong>
+                                        </div>
+                                        <p class="text-muted">This kaizen has not been awarded yet.</p>
                                     </div>
+
+                                    <!-- Saved Marking Criteria Scores (if any) -->
+                                    @if (Model.ExistingScores.Any())
+                                    {
+                                        <div class="mb-3">
+                                            <label class="fw-bold">Saved Marking Criteria Scores:</label>
+                                            <div class="border rounded p-2 bg-white">
+                                                @{
+                                                    int totalSavedScore = 0;
+                                                    int totalSavedWeight = 0;
+                                                }
+                                                @foreach (var score in Model.ExistingScores)
+                                                {
+                                                    var criteria = Model.MarkingCriteria.FirstOrDefault(c => c.Id == score.MarkingCriteriaId);
+                                                    if (criteria != null)
+                                                    {
+                                                        totalSavedScore += score.Score;
+                                                        totalSavedWeight += criteria.Weight;
+                                                        <div class="row mb-1">
+                                                            <div class="col-6">@criteria.CriteriaName:</div>
+                                                            <div class="col-6">@score.Score / @criteria.Weight</div>
+                                                        </div>
+                                                    }
+                                                }
+                                                <hr class="my-2">
+                                                <div class="row">
+                                                    <div class="col-6"><strong>Total Score:</strong></div>
+                                                    <div class="col-6"><strong>@totalSavedScore / @totalSavedWeight</strong></div>
+                                                </div>
+                                                @{
+                                                    var savedPercentage = totalSavedWeight > 0 ? Math.Round((double)totalSavedScore / totalSavedWeight * 100, 1) : 0;
+                                                    var savedPercentageClass = savedPercentage >= 90 ? "text-success" : savedPercentage >= 70 ? "text-warning" : "text-danger";
+                                                }
+                                                <div class="row">
+                                                    <div class="col-6"><strong>Percentage:</strong></div>
+                                                    <div class="col-6"><strong class="@savedPercentageClass">@savedPercentage%</strong></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
                                 }
                             </div>
                         </div>
-
-                        <!-- Award Information -->
-                        @if (!string.IsNullOrEmpty(Model.Kaizen.AwardPrice))
-                        {
-                            <div class="card mb-4">
-                                <div class="card-header bg-warning text-dark">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-trophy me-2"></i>
-                                        Award Information
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="alert alert-success">
-                                        <h6 class="alert-heading">
-                                            <i class="fas fa-check-circle me-2"></i>
-                                            Award Assigned
-                                        </h6>
-                                        <p class="mb-2"><strong>Award Price:</strong> @Model.Kaizen.AwardPrice</p>
-                                        <p class="mb-2"><strong>Date:</strong> @Model.Kaizen.AwardDate?.ToString("MMM dd, yyyy")</p>
-                                        @if (!string.IsNullOrEmpty(Model.Kaizen.CommitteeSignature))
-                                        {
-                                            <p class="mb-2"><strong>Signature:</strong> @Model.Kaizen.CommitteeSignature</p>
-                                        }
-                                        @if (!string.IsNullOrEmpty(Model.Kaizen.CommitteeComments))
-                                        {
-                                            <div class="mt-3">
-                                                <label class="fw-bold">Committee Comments:</label>
-                                                <div class="border rounded p-2 bg-light">
-                                                    @Model.Kaizen.CommitteeComments
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="card mb-4">
-                                <div class="card-header bg-secondary text-white">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-clock me-2"></i>
-                                        Award Status
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="alert alert-info">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        <strong>Pending Award:</strong> This kaizen has been evaluated but no award has been assigned yet.
-                                    </div>
-                                </div>
-                            </div>
-                        }
 
                         <!-- Approval Status -->
                         <div class="card">
@@ -346,10 +353,9 @@
 
 @section Scripts {
     <script>
-        // Read-only view - no interactive functionality needed
+        // Team marks details view - read-only functionality
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Award Details page loaded in read-only mode for Kaizen team');
+            console.log('Team Marks Details page loaded for Kaizen team');
         });
     </script>
 }
-

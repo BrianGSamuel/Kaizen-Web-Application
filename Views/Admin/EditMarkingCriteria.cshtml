@@ -1,0 +1,117 @@
+@model KaizenWebApp.ViewModels.MarkingCriteriaViewModel
+@{
+    ViewData["Title"] = "Edit Marking Criteria";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="admin-card">
+                
+                <!-- Header Section -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        Edit Marking Criteria
+                    </h4>
+                    <a href="@Url.Action("MarkingCriteria", "Admin")" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Back to List
+                    </a>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <form asp-action="EditMarkingCriteria" method="post">
+                            <input asp-for="Id" type="hidden" />
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="CriteriaName" class="form-label fw-bold">Criteria Name</label>
+                                        <input asp-for="CriteriaName" class="form-control" placeholder="Enter criteria name">
+                                        <span asp-validation-for="CriteriaName" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="Category" class="form-label fw-bold">Category</label>
+                                        <select asp-for="Category" class="form-select">
+                                            <option value="">Select Category</option>
+                                            <option value="Innovation">Innovation</option>
+                                            <option value="Cost Saving">Cost Saving</option>
+                                            <option value="Implementation">Implementation</option>
+                                            <option value="Quality">Quality</option>
+                                            <option value="Safety">Safety</option>
+                                            <option value="Efficiency">Efficiency</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <span asp-validation-for="Category" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Description" class="form-label fw-bold">Description</label>
+                                <textarea asp-for="Description" class="form-control" rows="3" 
+                                          placeholder="Describe the criteria and how it should be evaluated"></textarea>
+                                <span asp-validation-for="Description" class="text-danger"></span>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="MaxScore" class="form-label fw-bold">Maximum Score</label>
+                                        <input asp-for="MaxScore" class="form-control" type="number" min="1" max="100" 
+                                               placeholder="Enter maximum score (1-100)">
+                                        <span asp-validation-for="MaxScore" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="Weight" class="form-label fw-bold">Weight (%)</label>
+                                        <input asp-for="Weight" class="form-control" type="number" min="1" max="100" 
+                                               placeholder="Enter weight percentage (1-100)">
+                                        <span asp-validation-for="Weight" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Notes" class="form-label fw-bold">Notes (Optional)</label>
+                                <textarea asp-for="Notes" class="form-control" rows="2" 
+                                          placeholder="Additional notes or instructions"></textarea>
+                                <span asp-validation-for="Notes" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox">
+                                    <label asp-for="IsActive" class="form-check-label fw-bold">
+                                        Active (Available for use in evaluations)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    Update Criteria
+                                </button>
+                                <a href="@Url.Action("MarkingCriteria", "Admin")" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

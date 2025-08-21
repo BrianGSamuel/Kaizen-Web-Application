@@ -23,7 +23,7 @@
     }
 
     .kaizen-header {
-        background: #2c3e50;
+        background: #1e40af;
         color: white;
         padding: 2rem;
         border-radius: 8px;
@@ -72,11 +72,11 @@
         border-radius: 6px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
-        border-left: 4px solid #6c757d;
+        border-left: 4px solid #1e40af;
     }
 
     .info-section h5 {
-        color: #2c3e50;
+        color: #1e40af;
         margin-bottom: 1rem;
         font-weight: 600;
         font-size: 1.1rem;
@@ -86,7 +86,7 @@
     }
 
     .info-section h5 i {
-        background: #6c757d;
+        background: #1e40af;
         color: white;
         padding: 0.4rem;
         border-radius: 4px;
@@ -136,7 +136,7 @@
         height: 70px;
         border-radius: 50%;
         object-fit: cover;
-        border: 3px solid #6c757d;
+        border: 3px solid #1e40af;
         margin-right: 1rem;
     }
 
@@ -144,7 +144,7 @@
         width: 70px;
         height: 70px;
         border-radius: 50%;
-        background: #6c757d;
+        background: #1e40af;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -212,50 +212,52 @@
         border-top: 1px solid #dee2e6;
     }
 
-    .btn-kaizen {
-        padding: 0.75rem 1.5rem;
-        border-radius: 4px;
+    .btn-supervisor {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        border: none;
+        color: white;
         font-weight: 600;
+        padding: 10px 25px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        transition: all 0.2s ease;
-        border: 1px solid #dee2e6;
-        cursor: pointer;
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 
-    .btn-kaizen:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    .btn-supervisor:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(30, 64, 175, 0.4);
+        color: white;
         text-decoration: none;
     }
 
-    .btn-edit {
-        background: #2c3e50;
-        color: white;
-        border-color: #2c3e50;
+    .btn-supervisor-outline {
+        border: 2px solid #1e40af;
+        color: #1e40af;
+        background: transparent;
+        font-weight: 600;
+        padding: 8px 23px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
-    .btn-executive {
-        background: #6c757d;
+    .btn-supervisor-outline:hover {
+        background: #1e40af;
         color: white;
-        border-color: #6c757d;
-    }
-
-    .btn-back {
-        background: #f8f9fa;
-        color: #6c757d;
-        border-color: #dee2e6;
-    }
-
-    .btn-approval {
-        background: #495057;
-        color: white;
-        border-color: #495057;
+        transform: translateY(-2px);
+        text-decoration: none;
     }
 
     .no-data {
@@ -280,421 +282,255 @@
         margin: 0;
     }
 
-    /* Modal Styles */
-    .modal-content {
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    }
-
-    .modal-header {
-        background: #2c3e50;
-        color: white;
-        border-radius: 8px 8px 0 0;
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .modal-title {
+    .status-badge {
+        padding: 0.2rem 0.4rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
         font-weight: 600;
-        font-size: 1.1rem;
+        display: inline-block;
+        min-width: fit-content;
     }
 
-    .modal-body {
-        padding: 1.5rem;
-    }
-
-    .form-label {
-        font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-    }
-
-    .form-control {
-        border-radius: 4px;
-        border: 1px solid #dee2e6;
-        padding: 0.5rem 0.75rem;
-        transition: border-color 0.2s ease;
-    }
-
-    .form-control:focus {
-        border-color: #6c757d;
-        box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
-    }
-
-    .btn {
-        border-radius: 4px;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        transition: all 0.2s ease;
-        border: 1px solid #dee2e6;
-    }
-
-    .btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn-primary {
-        background: #2c3e50;
-        border-color: #2c3e50;
-        color: white;
-    }
-
-    .btn-secondary {
-        background: #6c757d;
-        border-color: #6c757d;
-        color: white;
-    }
-
-    .btn-success {
-        background: #495057;
-        border-color: #495057;
-        color: white;
-    }
-
-    .btn-danger {
-        background: #6c757d;
-        border-color: #6c757d;
-        color: white;
-    }
-
-    .btn-warning {
-        background: #495057;
-        border-color: #495057;
-        color: white;
-    }
-
-    /* Responsive Design */
-    @@media (max-width: 768px) {
-        .kaizen-details-container {
-            padding: 1.5rem;
-            margin: 1rem;
-        }
-        
-        .kaizen-header {
-            padding: 1.5rem;
-        }
-        
-        .kaizen-no {
-            font-size: 2rem;
-        }
-        
-        .info-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .action-buttons {
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-        
-        .btn-kaizen {
-            justify-content: center;
-            width: 100%;
-        }
-
-        .employee-card {
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .employee-photo,
-        .employee-photo-placeholder {
-            margin-right: 0;
-            margin-bottom: 1rem;
-        }
-    }
-
-    @@media (max-width: 576px) {
-        .kaizen-header {
-            padding: 1rem;
-        }
-        
-        .kaizen-no {
-            font-size: 1.75rem;
-        }
-        
-        .cost-saving-amount {
-            font-size: 2rem;
-        }
-    }
+    .status-completed { background-color: #d4edda; color: #155724; }
+    .status-on-track { background-color: #d1ecf1; color: #0c5460; }
+    .status-behind { background-color: #fff3cd; color: #856404; }
+    .status-at-risk { background-color: #f8d7da; color: #721c24; }
 </style>
 
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="kaizen-details-container">
-                
-                <!-- Kaizen Header -->
-                <div class="kaizen-header">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="kaizen-no">@Model.KaizenNo</div>
-                            <div class="kaizen-status @(Model.EngineerStatus == "Approved" ? "status-approved" : Model.EngineerStatus == "Rejected" ? "status-rejected" : "status-pending")">
-                                <i class="fas fa-@(Model.EngineerStatus == "Approved" ? "check" : Model.EngineerStatus == "Rejected" ? "times" : "clock") me-2"></i>
-                                Engineer Status: @(Model.EngineerStatus ?? "Pending")
-                            </div>
-                            <p class="mb-0 opacity-75">Inter-Department Kaizen Suggestion Details</p>
-                        </div>
-                        <div class="text-end">
-                            <small class="opacity-75">Submitted on</small><br>
-                            <strong>@Model.DateSubmitted.ToString("MMMM dd, yyyy")</strong>
-                        </div>
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="kaizen-details-container">
+        <!-- Kaizen Header -->
+        <div class="kaizen-header">
+            <div class="kaizen-no">@Model.KaizenNo</div>
+            <div class="kaizen-status status-approved">
+                <i class="fas fa-check-circle me-2"></i>
+                Engineer Approved - Inter-Department Suggestion
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <small>Submitted: @Model.DateSubmitted.ToString("MMMM dd, yyyy")</small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small>Last Updated: @Model.DateSubmitted.ToString("MMMM dd, yyyy")</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Information -->
+        <div class="info-section">
+            <h5>
+                <i class="fas fa-user"></i>
+                Employee Information
+            </h5>
+            <div class="employee-card">
+                @if (!string.IsNullOrEmpty(Model.EmployeePhotoPath))
+                {
+                    <img src="@Model.EmployeePhotoPath" alt="Employee Photo" class="employee-photo" />
+                }
+                else
+                {
+                    <div class="employee-photo-placeholder">
+                        <i class="fas fa-user"></i>
+                    </div>
+                }
+                <div class="employee-info">
+                    <h6>@Model.EmployeeName</h6>
+                    <p><strong>Employee No:</strong> @Model.EmployeeNo</p>
+                    <p><strong>Department:</strong> @Model.Department</p>
+                    <p><strong>Plant:</strong> @Model.Plant</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="info-section">
+            <h5>
+                <i class="fas fa-info-circle"></i>
+                Basic Information
+            </h5>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Category</div>
+                    <div class="info-value">@Model.Category</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Implementation Area</div>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.ImplementationArea) ? "Not specified" : Model.ImplementationArea)</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Can Implement in Other Fields</div>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.CanImplementInOtherFields) ? "Not specified" : Model.CanImplementInOtherFields)</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Date Implemented</div>
+                    <div class="info-value">@(Model.DateImplemented?.ToString("MMMM dd, yyyy") ?? "Not implemented yet")</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suggestion Description -->
+        <div class="info-section">
+            <h5>
+                <i class="fas fa-lightbulb"></i>
+                Suggestion Description
+            </h5>
+            <div class="info-item">
+                <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; min-height: 100px;">
+                    @Model.SuggestionDescription
+                </div>
+            </div>
+        </div>
+
+        <!-- Expected Benefits -->
+        <div class="info-section">
+            <h5>
+                <i class="fas fa-chart-line"></i>
+                Expected Benefits
+            </h5>
+            <div class="info-grid">
+                @if (!string.IsNullOrEmpty(Model.OtherBenefits))
+                {
+                    <div class="info-item">
+                        <div class="info-label">Other Benefits</div>
+                        <div class="info-value">@Model.OtherBenefits</div>
+                    </div>
+                }
+                <div class="info-item">
+                    <div class="info-label">Cost Saving Type</div>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.CostSavingType) ? "Not specified" : Model.CostSavingType)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Savings -->
+        @if (Model.CostSaving.HasValue && Model.CostSaving > 0)
+        {
+            <div class="cost-saving-card">
+                <div class="cost-saving-amount">$@Model.CostSaving.Value.ToString("N2")</div>
+                <div class="info-label">Estimated Cost Savings</div>
+            </div>
+        }
+
+
+
+        <!-- Approval Status -->
+        <div class="info-section">
+            <h5>
+                <i class="fas fa-clipboard-check"></i>
+                Approval Status
+            </h5>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Engineer Status</div>
+                    <div class="info-value">
+                        @{
+                            var engineerStatus = Model.EngineerStatus ?? "Pending";
+                            var engineerStatusClass = engineerStatus switch
+                            {
+                                "Approved" => "badge bg-success",
+                                "Rejected" => "badge bg-danger",
+                                _ => "badge bg-warning text-dark"
+                            };
+                        }
+                        <span class="@engineerStatusClass">
+                            <i class="fas fa-@(engineerStatus == "Approved" ? "check" : engineerStatus == "Rejected" ? "times" : "clock") me-1"></i>
+                            @engineerStatus
+                        </span>
                     </div>
                 </div>
+                <div class="info-item">
+                    <div class="info-label">Manager Status</div>
+                    <div class="info-value">
+                        @{
+                            var managerStatus = Model.ManagerStatus ?? "Pending";
+                            var managerStatusClass = managerStatus switch
+                            {
+                                "Approved" => "badge bg-success",
+                                "Rejected" => "badge bg-danger",
+                                _ => "badge bg-warning text-dark"
+                            };
+                        }
+                        <span class="@managerStatusClass">
+                            <i class="fas fa-@(managerStatus == "Approved" ? "check" : managerStatus == "Rejected" ? "times" : "clock") me-1"></i>
+                            @managerStatus
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                <!-- Employee Information -->
-                <div class="info-section">
-                    <h5><i class="fas fa-user me-2"></i>Employee Information</h5>
-                    <div class="employee-card">
-                        @if (!string.IsNullOrEmpty(Model.EmployeePhotoPath))
+        <!-- Comments -->
+        @if (!string.IsNullOrEmpty(Model.Comments))
+        {
+            <div class="info-section">
+                <h5>
+                    <i class="fas fa-comments"></i>
+                    Comments
+                </h5>
+                <div class="info-item">
+                    <div class="info-value">@Model.Comments</div>
+                </div>
+            </div>
+        }
+
+        <!-- Images Section -->
+        <div class="info-section">
+            <h5><i class="fas fa-images me-2"></i>Before & After Images</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="image-section">
+                        <h6 class="text-center mb-3">Before Kaizen</h6>
+                        @if (!string.IsNullOrEmpty(Model.BeforeKaizenImagePath))
                         {
-                            <img src="@Model.EmployeePhotoPath" alt="Employee Photo" class="employee-photo" />
+                            <div class="image-container">
+                                <img src="@Model.BeforeKaizenImagePath" alt="Before Kaizen" class="kaizen-image" />
+                            </div>
                         }
                         else
                         {
-                            <div class="employee-photo-placeholder">
-                                <i class="fas fa-user"></i>
+                            <div class="no-data">
+                                <i class="fas fa-image"></i>
+                                <p>No before image available</p>
                             </div>
                         }
-                        <div class="employee-info">
-                            <h6>@Model.EmployeeName</h6>
-                            <p><i class="fas fa-id-badge me-1"></i>@Model.EmployeeNo</p>
-                            <p><i class="fas fa-building me-1"></i>@Model.Department</p>
-                            @if (!string.IsNullOrEmpty(Model.Plant))
-                            {
-                                <p><i class="fas fa-industry me-1"></i>@Model.Plant</p>
-                            }
-                        </div>
                     </div>
                 </div>
-
-                <!-- Kaizen Details -->
-                <div class="info-section">
-                    <h5><i class="fas fa-lightbulb me-2"></i>Suggestion Details</h5>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">Category</div>
-                            <div class="info-value">@Model.Category</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Date Implemented</div>
-                            <div class="info-value">
-                                @(Model.DateImplemented?.ToString("MMMM dd, yyyy") ?? "Not implemented yet")
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <div class="info-label">Suggestion Description</div>
-                        <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; min-height: 100px;">
-                            @Model.SuggestionDescription
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cost Saving Information -->
-                @if (Model.CostSaving.HasValue && Model.CostSaving > 0)
-                {
-                    <div class="cost-saving-card">
-                        <h5><i class="fas fa-coins me-2"></i>Cost Saving Information</h5>
-                        <div class="cost-saving-amount">$@Model.CostSaving.Value.ToString("N2")</div>
-                        <p class="mb-0">Annual cost saving</p>
-                        @if (Model.DollarRate.HasValue)
+                <div class="col-md-6">
+                    <div class="image-section">
+                        <h6 class="text-center mb-3">After Kaizen</h6>
+                        @if (!string.IsNullOrEmpty(Model.AfterKaizenImagePath))
                         {
-                            <small>Dollar Rate: $@Model.DollarRate.Value.ToString("N2")</small>
+                            <div class="image-container">
+                                <img src="@Model.AfterKaizenImagePath" alt="After Kaizen" class="kaizen-image" />
+                            </div>
                         }
-                    </div>
-                }
-
-                <!-- Other Benefits -->
-                @if (!string.IsNullOrEmpty(Model.OtherBenefits))
-                {
-                    <div class="info-section">
-                        <h5><i class="fas fa-star me-2"></i>Other Benefits</h5>
-                        <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef;">
-                            @Model.OtherBenefits
-                        </div>
-                    </div>
-                }
-
-                <!-- Images Section -->
-                <div class="info-section">
-                    <h5><i class="fas fa-images me-2"></i>Before & After Images</h5>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="image-section">
-                                <h6 class="text-center mb-3">Before Kaizen</h6>
-                                @if (!string.IsNullOrEmpty(Model.BeforeKaizenImagePath))
-                                {
-                                    <div class="image-container">
-                                        <img src="@Model.BeforeKaizenImagePath" alt="Before Kaizen" class="kaizen-image" />
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="no-data">
-                                        <i class="fas fa-image"></i>
-                                        <p>No before image available</p>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="image-section">
-                                <h6 class="text-center mb-3">After Kaizen</h6>
-                                @if (!string.IsNullOrEmpty(Model.AfterKaizenImagePath))
-                                {
-                                    <div class="image-container">
-                                        <img src="@Model.AfterKaizenImagePath" alt="After Kaizen" class="kaizen-image" />
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="no-data">
-                                        <i class="fas fa-image"></i>
-                                        <p>No after image available</p>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Executive/Engineer Review Section -->
-                @if (!string.IsNullOrEmpty(Model.Comments) || !string.IsNullOrEmpty(Model.EngineerApprovedBy))
-                {
-                    <div class="info-section">
-                        <h5><i class="fas fa-user-tie me-2"></i>Engineer Review</h5>
-                        <div class="info-grid">
-                            @if (!string.IsNullOrEmpty(Model.EngineerApprovedBy))
-                            {
-                                <div class="info-item">
-                                    <div class="info-label">Reviewed By</div>
-                                    <div class="info-value">@Model.EngineerApprovedBy</div>
-                                </div>
-                            }
-                            @if (!string.IsNullOrEmpty(Model.CanImplementInOtherFields))
-                            {
-                                <div class="info-item">
-                                    <div class="info-label">Can be implemented in other fields</div>
-                                    <div class="info-value">@Model.CanImplementInOtherFields</div>
-                                </div>
-                            }
-                            @if (!string.IsNullOrEmpty(Model.ImplementationArea))
-                            {
-                                <div class="info-item">
-                                    <div class="info-label">Implementation Area</div>
-                                    <div class="info-value">@Model.ImplementationArea</div>
-                                </div>
-                            }
-                        </div>
-                        @if (!string.IsNullOrEmpty(Model.Comments))
+                        else
                         {
-                            <div class="mt-3">
-                                <div class="info-label">Comments & Recommendations</div>
-                                <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; min-height: 100px;">
-                                    @Model.Comments
-                                </div>
+                            <div class="no-data">
+                                <i class="fas fa-image"></i>
+                                <p>No after image available</p>
                             </div>
                         }
                     </div>
-                }
-
-                <!-- Manager Review Section -->
-                @if (!string.IsNullOrEmpty(Model.ManagerComments) || !string.IsNullOrEmpty(Model.ManagerApprovedBy))
-                {
-                    <div class="info-section">
-                        <h5><i class="fas fa-user-cog me-2"></i>Manager Review</h5>
-                        <div class="info-grid">
-                            @if (!string.IsNullOrEmpty(Model.ManagerApprovedBy))
-                            {
-                                <div class="info-item">
-                                    <div class="info-label">Reviewed By</div>
-                                    <div class="info-value">@Model.ManagerApprovedBy</div>
-                                </div>
-                            }
-                            @if (!string.IsNullOrEmpty(Model.ManagerStatus))
-                            {
-                                <div class="info-item">
-                                    <div class="info-label">Manager Status</div>
-                                    <div class="info-value">
-                                        <span class="badge @(Model.ManagerStatus == "Approved" ? "bg-success" : Model.ManagerStatus == "Rejected" ? "bg-danger" : "bg-warning text-dark")">
-                                            <i class="fas fa-@(Model.ManagerStatus == "Approved" ? "check" : Model.ManagerStatus == "Rejected" ? "times" : "clock") me-1"></i>
-                                            @Model.ManagerStatus
-                                        </span>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                        @if (!string.IsNullOrEmpty(Model.ManagerComments))
-                        {
-                            <div class="mt-3">
-                                <div class="info-label">Manager Comments & Recommendations</div>
-                                <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; min-height: 100px;">
-                                    @Model.ManagerComments
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
-
-                <!-- Inter-Department Status Section -->
-                @if (!string.IsNullOrEmpty(Model.InterDeptStatus) || !string.IsNullOrEmpty(Model.InterDeptApprovedBy))
-                {
-                    <div class="info-section">
-                        <h5><i class="fas fa-exchange-alt me-2"></i>Inter-Department Status</h5>
-                        <div class="info-grid">
-                            @if (!string.IsNullOrEmpty(Model.InterDeptStatus))
-                            {
-                                <div class="info-item">
-                                    <div class="info-label">Inter-Department Status</div>
-                                    <div class="info-value">
-                                        <span class="badge @(Model.InterDeptStatus == "Approved" ? "bg-success" : Model.InterDeptStatus == "Rejected" ? "bg-danger" : "bg-warning text-dark")">
-                                            <i class="fas fa-@(Model.InterDeptStatus == "Approved" ? "check" : Model.InterDeptStatus == "Rejected" ? "times" : "clock") me-1"></i>
-                                            @Model.InterDeptStatus
-                                        </span>
-                                    </div>
-                                </div>
-                            }
-                            @if (!string.IsNullOrEmpty(Model.InterDeptApprovedBy))
-                            {
-                                <div class="info-item">
-                                    <div class="info-label">Approved By</div>
-                                    <div class="info-value">@Model.InterDeptApprovedBy</div>
-                                </div>
-                            }
-                        </div>
-                        @if (!string.IsNullOrEmpty(Model.InterDeptApprovedDepartments))
-                        {
-                            <div class="mt-3">
-                                <div class="info-label">Approved Departments</div>
-                                <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef;">
-                                    @Model.InterDeptApprovedDepartments
-                                </div>
-                            </div>
-                        }
-                        @if (!string.IsNullOrEmpty(Model.InterDeptRejectedDepartments))
-                        {
-                            <div class="mt-3">
-                                <div class="info-label">Rejected Departments</div>
-                                <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef;">
-                                    @Model.InterDeptRejectedDepartments
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
-
-                <!-- Action Buttons -->
-                <div class="action-buttons">
-                    <a href="@Url.Action("SupervisorInterDeptSuggestions", "Kaizen")" class="btn-kaizen btn-back">
-                        <i class="fas fa-arrow-left"></i>
-                        Back to Inter-Department Suggestions
-                    </a>
                 </div>
             </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="@Url.Action("SupervisorInterDeptSuggestions", "Kaizen")" class="btn-supervisor-outline">
+                <i class="fas fa-arrow-left"></i>
+                Back to Inter-Department Suggestions
+            </a>
         </div>
     </div>
 </div>

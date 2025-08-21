@@ -239,7 +239,7 @@ namespace KaizenWebApp.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RegisterUser(RegisterViewModel model)
+        public IActionResult RegisterUser(RegisterViewModel model)
         {
             // Check if user is supervisor
             var username = User.Identity?.Name;

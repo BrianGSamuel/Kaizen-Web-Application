@@ -22,13 +22,15 @@ namespace KaizenWebApp.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly IFileService _fileService;
         private readonly IEmailService _emailService;
+        private readonly IKaizenService _kaizenService;
 
-        public KaizenController(AppDbContext context, IWebHostEnvironment env, IFileService fileService, IEmailService emailService)
+        public KaizenController(AppDbContext context, IWebHostEnvironment env, IFileService fileService, IEmailService emailService, IKaizenService kaizenService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _env = env ?? throw new ArgumentNullException(nameof(env));
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
             _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+            _kaizenService = kaizenService ?? throw new ArgumentNullException(nameof(kaizenService));
         }
 
         // Method to check if request is direct URL access and end session if so
@@ -42,7 +44,7 @@ namespace KaizenWebApp.Controllers
             }
 
             // Skip this check for logout-related requests
-            var referrer = Request.Headers["Referer"].ToString();
+            var referrer = Request.Headers.Referer.ToString();
             if (referrer.Contains("Logout") || referrer.Contains("logout"))
             {
                 return false;
@@ -1566,7 +1568,7 @@ namespace KaizenWebApp.Controllers
             }
 
             // Get current year (last 2 digits)
-            var year = DateTime.Now.Year.ToString().Substring(2); // e.g., "25" for 2025
+            var year = DateTime.Now.Year.ToString()[2..]; // e.g., "25" for 2025
 
             // Get current quarter (3 months per quarter)
             var month = DateTime.Now.Month;
@@ -1720,14 +1722,26 @@ namespace KaizenWebApp.Controllers
                 var websiteUrl = $"{Request.Scheme}://{Request.Host}";
                 Console.WriteLine($"Website URL: {websiteUrl}");
 
-                // Send email
-                var emailSent = await _emailService.SendKaizenNotificationAsync(
+                // Find similar kaizen suggestions for the engineer's department
+                var similarKaizens = await _kaizenService.GetSimilarKaizensAsync(
+                    kaizenForm.SuggestionDescription,
+                    kaizenForm.CostSavingType,
+                    kaizenForm.OtherBenefits,
+                    kaizenForm.Department ?? "",
+                    kaizenForm.Id
+                );
+
+                Console.WriteLine($"Found {similarKaizens.Count()} similar kaizen suggestions");
+
+                // Send enhanced email with similar suggestions
+                var emailSent = await _emailService.SendKaizenNotificationWithSimilarSuggestionsAsync(
                     engineer.Email ?? "",
                     kaizenForm.KaizenNo,
                     kaizenForm.EmployeeName,
                     kaizenForm.Department ?? "",
                     kaizenForm.SuggestionDescription,
-                    websiteUrl
+                    websiteUrl,
+                    similarKaizens
                 );
 
                 if (emailSent)
@@ -1873,14 +1887,26 @@ namespace KaizenWebApp.Controllers
                     {
                         Console.WriteLine($"Sending email to: {engineer.EmployeeName} ({engineer.Email}) in {targetDepartment}");
                         
-                        var emailSent = await _emailService.SendInterDepartmentNotificationAsync(
+                        // Find similar kaizen suggestions for the target department
+                        var similarKaizens = await _kaizenService.GetSimilarKaizensAsync(
+                            kaizenForm.SuggestionDescription,
+                            kaizenForm.CostSavingType,
+                            kaizenForm.OtherBenefits,
+                            targetDepartment,
+                            kaizenForm.Id
+                        );
+
+                        Console.WriteLine($"Found {similarKaizens.Count()} similar kaizen suggestions for {targetDepartment}");
+                        
+                        var emailSent = await _emailService.SendInterDepartmentNotificationWithSimilarSuggestionsAsync(
                             engineer.Email ?? "",
                             kaizenForm.KaizenNo,
                             kaizenForm.EmployeeName,
                             kaizenForm.Department ?? "",
                             targetDepartment,
                             kaizenForm.SuggestionDescription,
-                            websiteUrl
+                            websiteUrl,
+                            similarKaizens
                         );
 
                         if (emailSent)
@@ -3604,6 +3630,27 @@ namespace KaizenWebApp.Controllers
                 
                 await _context.SaveChangesAsync();
 
+                // Only send manager email notification if engineer approved the kaizen
+                if (request.EngineerStatus == "Approved")
+                {
+                    Console.WriteLine($"=== ENGINEER APPROVED - SENDING MANAGER EMAIL ===");
+                    Console.WriteLine($"Kaizen No: {kaizen.KaizenNo}");
+                    Console.WriteLine($"Engineer: {request.EngineerApprovedBy}");
+                    
+                    await SendManagerEmailNotification(kaizen, request.EngineerApprovedBy);
+                    
+                    Console.WriteLine($"=== END ENGINEER APPROVED - MANAGER EMAIL ===");
+                }
+                else
+                {
+                    Console.WriteLine($"=== ENGINEER REJECTED - NO MANAGER EMAIL ===");
+                    Console.WriteLine($"Kaizen No: {kaizen.KaizenNo}");
+                    Console.WriteLine($"Engineer: {request.EngineerApprovedBy}");
+                    Console.WriteLine($"Status: {request.EngineerStatus}");
+                    Console.WriteLine($"Skipping manager email notification");
+                    Console.WriteLine($"=== END ENGINEER REJECTED - NO MANAGER EMAIL ===");
+                }
+
                 return Json(new { success = true, message = $"Engineer status updated to {request.EngineerStatus} successfully!" });
             }
             catch (Exception ex)
@@ -3690,7 +3737,7 @@ namespace KaizenWebApp.Controllers
 
                 return View(formBViewModel);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return View("Error");
             }
@@ -3779,7 +3826,7 @@ namespace KaizenWebApp.Controllers
                     DateSubmitted = kaizen.DateSubmitted
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return View("Error");
             }
@@ -4306,8 +4353,8 @@ namespace KaizenWebApp.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Send email notification to manager in the same department
-                await SendManagerEmailNotification(kaizen, approvedBy?.Trim());
+                // Note: Manager email notification is now handled in UpdateEngineerStatus method
+                // Only when engineer status is "Approved"
 
                         // Send email notifications to engineers in specified departments for inter-department implementation
         if (!string.IsNullOrEmpty(implementationArea?.Trim()) && 
@@ -4413,7 +4460,7 @@ namespace KaizenWebApp.Controllers
 
         [HttpGet]
         public async Task<IActionResult> KaizenTeam(string searchString, string department, string status, 
-            string startDate, string endDate, string category, string engineerStatus, string managerStatus, 
+            string startDate, string endDate, string category, 
             string costSavingRange, string employeeName, string employeeNo, string kaizenNo, string quarter)
         {
             // Check for direct URL access and end session if detected
@@ -4647,7 +4694,7 @@ namespace KaizenWebApp.Controllers
         // GET: /Kaizen/SearchTeam (AJAX endpoint for KaizenTeam search)
         [HttpGet]
         public async Task<IActionResult> SearchTeam(string searchString, string department, string status, 
-            string startDate, string endDate, string category, string engineerStatus, string managerStatus, 
+            string startDate, string endDate, string category, 
             string costSavingRange, string employeeName, string employeeNo, string kaizenNo, string quarter)
         {
             // Check for direct URL access and end session if detected
@@ -5710,123 +5757,7 @@ namespace KaizenWebApp.Controllers
             }
         }
 
-        // GET: /Kaizen/AwardTracking - Read-only award tracking for kaizen team
-        [HttpGet]
-        public async Task<IActionResult> AwardTracking(string startDate, string endDate, string department, string category, string awardStatus)
-        {
-            // Check for direct URL access and end session if detected
-            if (await CheckAndEndSessionIfDirectAccess())
-            {
-                return RedirectToAction("Login", "Account");
-            }
 
-            // Only allow users with "kaizenteam" in their username
-            if (!IsKaizenTeamRole())
-            {
-                // Redirect based on user role
-                if (IsUserRole())
-                {
-                    return RedirectToAction("Kaizenform");
-                }
-                else if (IsManagerRole())
-                {
-                    return RedirectToAction("KaizenListManager");
-                }
-                else if (IsEngineerRole())
-                {
-                    return RedirectToAction("EngineerDashboard");
-                }
-                else
-                {
-                    return RedirectToAction("AccessDenied", "Home");
-                }
-            }
-
-            try
-            {
-                // Get base query for approved kaizens
-                var query = _context.KaizenForms
-                    .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
-
-                // Apply date range filter
-                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
-                {
-                    query = query.Where(k => k.DateSubmitted >= start);
-                }
-
-                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
-                {
-                    // Add one day to include the end date
-                    end = end.AddDays(1);
-                    query = query.Where(k => k.DateSubmitted < end);
-                }
-
-                // Apply department filter
-                if (!string.IsNullOrEmpty(department))
-                {
-                    query = query.Where(k => k.Department == department);
-                }
-
-                // Apply category filter
-                if (!string.IsNullOrEmpty(category))
-                {
-                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
-                }
-
-                // Apply award status filter
-                if (!string.IsNullOrEmpty(awardStatus))
-                {
-                    if (awardStatus == "Pending")
-                    {
-                        // Filter for kaizens that don't have an award price assigned
-                        query = query.Where(k => string.IsNullOrEmpty(k.AwardPrice));
-                    }
-                    else
-                    {
-                        // Filter for kaizens with the specific award price
-                        query = query.Where(k => k.AwardPrice == awardStatus);
-                    }
-                }
-
-                // Get filtered results
-                var approvedKaizens = query.OrderByDescending(k => k.DateSubmitted).ToList();
-
-                // Populate ViewBag with filter options
-                ViewBag.Departments = _context.KaizenForms
-                    .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && !string.IsNullOrEmpty(k.Department))
-                    .Select(k => k.Department)
-                    .Distinct()
-                    .OrderBy(d => d)
-                    .ToList();
-
-                // Get all unique categories from approved kaizens
-                var allCategories = new List<string>();
-                var kaizensWithCategories = _context.KaizenForms
-                    .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && !string.IsNullOrEmpty(k.Category))
-                    .Select(k => k.Category)
-                    .ToList();
-
-                foreach (var catString in kaizensWithCategories)
-                {
-                    if (!string.IsNullOrEmpty(catString))
-                    {
-                        var categories = catString.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                            .Select(c => c.Trim())
-                            .Where(c => !string.IsNullOrEmpty(c));
-                        allCategories.AddRange(categories);
-                    }
-                }
-
-                ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
-
-                return View("AwardTrackingView", approvedKaizens);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in AwardTracking: {ex.Message}");
-                return RedirectToAction("Error", "Home");
-            }
-        }
 
         // GET: /Kaizen/AwardTrackingManager - Award tracking for managers (department-specific)
         [HttpGet]
@@ -5966,7 +5897,7 @@ namespace KaizenWebApp.Controllers
             }
         }
 
-        // GET: /Kaizen/AwardDetails - Award details for Kaizen Team
+        // GET: /Kaizen/AwardDetails - Award details for Kaizen Team (Read-Only)
         [HttpGet]
         public async Task<IActionResult> AwardDetails(int id)
         {
@@ -5990,7 +5921,23 @@ namespace KaizenWebApp.Controllers
                     return NotFound();
                 }
 
-                return View("AwardDetails", kaizen);
+                // Get active marking criteria
+                var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+                
+                // Get existing scores for this kaizen
+                var existingScores = await _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == id)
+                    .ToListAsync();
+                
+                // Create a view model to pass both kaizen and marking criteria
+                var viewModel = new AwardDetailsViewModel
+                {
+                    Kaizen = kaizen,
+                    MarkingCriteria = markingCriteria,
+                    ExistingScores = existingScores
+                };
+
+                return View("AwardDetails", viewModel);
             }
             catch (Exception ex)
             {
@@ -6239,7 +6186,7 @@ namespace KaizenWebApp.Controllers
         // GET: /Kaizen/ExportToExcel
         [HttpGet]
         public async Task<IActionResult> ExportToExcel(string searchString, string department, string status,
-            string startDate, string endDate, string category, string engineerStatus, string managerStatus,
+            string startDate, string endDate, string category,
             string costSavingRange, string employeeName, string employeeNo, string kaizenNo, string quarter)
         {
             // Check for direct URL access and end session if detected
@@ -6722,14 +6669,23 @@ namespace KaizenWebApp.Controllers
                 var websiteUrl = $"{Request.Scheme}://{Request.Host}";
                 Console.WriteLine($"Website URL: {websiteUrl}");
 
-                // Send test email
-                var emailSent = await _emailService.SendKaizenNotificationAsync(
+                // Send test email with similar suggestions
+                var similarKaizens = await _kaizenService.GetSimilarKaizensAsync(
+                    "This is a test kaizen suggestion to verify email functionality.",
+                    "HasCostSaving",
+                    "Test benefits for email functionality verification.",
+                    userDepartment,
+                    0 // Use 0 as current kaizen ID for test
+                );
+
+                var emailSent = await _emailService.SendKaizenNotificationWithSimilarSuggestionsAsync(
                     engineer.Email ?? "",
                     "TEST-KAIZEN-001",
                     "Test Employee",
                     userDepartment,
                     "This is a test kaizen suggestion to verify email functionality.",
-                    websiteUrl
+                    websiteUrl,
+                    similarKaizens
                 );
 
                 if (emailSent)
@@ -6859,6 +6815,308 @@ namespace KaizenWebApp.Controllers
             {
                 Console.WriteLine($"Error in InterDeptApproval: {ex.Message}");
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        // Award Tracking action for Kaizen Team
+        public IActionResult AwardTracking(string startDate, string endDate, string department, string category, string awardStatus)
+        {
+            // Check if user is kaizen team
+            if (!IsKaizenTeamRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            // Get base query for approved kaizens
+            var query = _context.KaizenForms
+                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
+
+            // Apply date range filter
+            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+            {
+                query = query.Where(k => k.DateSubmitted >= start);
+            }
+
+            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+            {
+                // Add one day to include the end date
+                end = end.AddDays(1);
+                query = query.Where(k => k.DateSubmitted < end);
+            }
+
+            // Apply department filter
+            if (!string.IsNullOrEmpty(department))
+            {
+                query = query.Where(k => k.Department == department);
+            }
+
+            // Apply category filter
+            if (!string.IsNullOrEmpty(category))
+            {
+                query = query.Where(k => k.Category != null && k.Category.Contains(category));
+            }
+
+            // Apply award status filter
+            if (!string.IsNullOrEmpty(awardStatus))
+            {
+                if (awardStatus == "Pending")
+                {
+                    // Filter for kaizens that don't have an award price assigned
+                    query = query.Where(k => string.IsNullOrEmpty(k.AwardPrice));
+                }
+                else if (awardStatus == "Assigned")
+                {
+                    // Filter for kaizens that have an award price assigned
+                    query = query.Where(k => !string.IsNullOrEmpty(k.AwardPrice));
+                }
+            }
+
+            // Get filtered results
+            var approvedKaizens = query.ToList();
+
+            // Calculate scores for each kaizen
+            var kaizensWithScores = new List<object>();
+            foreach (var kaizen in approvedKaizens)
+            {
+                var scores = _context.KaizenMarkingScores.Where(s => s.KaizenId == kaizen.Id).ToList();
+                
+                // Get the total weight of criteria that were actually scored for this kaizen
+                var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
+                var totalWeight = _context.MarkingCriteria
+                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                    .Sum(c => c.Weight);
+                
+                var totalScore = scores.Sum(s => s.Score);
+                var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+
+                kaizensWithScores.Add(new
+                {
+                    Kaizen = kaizen,
+                    Score = totalScore,
+                    TotalWeight = totalWeight,
+                    Percentage = percentage
+                });
+            }
+
+            // Sort by percentage in descending order (highest score first)
+            kaizensWithScores = kaizensWithScores
+                .OrderByDescending(k => ((dynamic)k).Percentage)
+                .ThenByDescending(k => ((dynamic)k).Score)
+                .ThenByDescending(k => ((dynamic)k).Kaizen.DateSubmitted)
+                .ToList();
+
+            // Populate ViewBag with filter options
+            ViewBag.Departments = _context.KaizenForms
+                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && !string.IsNullOrEmpty(k.Department))
+                .Select(k => k.Department)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList();
+
+            // Get all unique categories from approved kaizens
+            var allCategories = new List<string>();
+            var kaizensWithCategories = _context.KaizenForms
+                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && !string.IsNullOrEmpty(k.Category))
+                .Select(k => k.Category)
+                .ToList();
+
+            foreach (var catString in kaizensWithCategories)
+            {
+                if (!string.IsNullOrEmpty(catString))
+                {
+                    var categories = catString.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(c => c.Trim())
+                        .Where(c => !string.IsNullOrEmpty(c));
+                    allCategories.AddRange(categories);
+                }
+            }
+
+            ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
+
+            return View(kaizensWithScores);
+        }
+
+        // Nominations action for Kaizen Team
+        public IActionResult Nominations(string startDate, string endDate, string department, string category, string nominationStatus)
+        {
+            // Check if user is kaizen team
+            if (!IsKaizenTeamRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            // Get base query for approved kaizens
+            var query = _context.KaizenForms
+                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
+
+            // Apply date range filter
+            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+            {
+                query = query.Where(k => k.DateSubmitted >= start);
+            }
+
+            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+            {
+                // Add one day to include the end date
+                end = end.AddDays(1);
+                query = query.Where(k => k.DateSubmitted < end);
+            }
+
+            // Apply department filter
+            if (!string.IsNullOrEmpty(department))
+            {
+                query = query.Where(k => k.Department == department);
+            }
+
+            // Apply category filter
+            if (!string.IsNullOrEmpty(category))
+            {
+                query = query.Where(k => k.Category != null && k.Category.Contains(category));
+            }
+
+            // Apply nomination status filter
+            if (!string.IsNullOrEmpty(nominationStatus))
+            {
+                if (nominationStatus == "Pending")
+                {
+                    // Filter for kaizens that don't have an award price assigned
+                    query = query.Where(k => string.IsNullOrEmpty(k.AwardPrice));
+                }
+                else if (nominationStatus == "Nominated")
+                {
+                    // Filter for kaizens that have an award price assigned
+                    query = query.Where(k => !string.IsNullOrEmpty(k.AwardPrice));
+                }
+            }
+
+            // Get filtered results
+            var approvedKaizens = query.ToList();
+
+            // Calculate percentage for each kaizen and filter only those with scores above 0%
+            var kaizensWithPercentage = new List<(KaizenForm Kaizen, double Percentage)>();
+            
+            foreach (var kaizen in approvedKaizens)
+            {
+                // Get marking scores for this kaizen
+                var scores = _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == kaizen.Id)
+                    .ToList();
+
+                // Get total weight from marking criteria
+                var totalWeight = _context.MarkingCriteria
+                    .Where(c => c.IsActive)
+                    .Sum(c => c.Weight);
+
+                // Calculate total score and percentage
+                var totalScore = scores.Sum(s => s.Score);
+                var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
+
+                // Only include kaizens that have a score above 0%
+                if (percentage > 0)
+                {
+                    kaizensWithPercentage.Add((kaizen, percentage));
+                }
+            }
+
+            // Sort by percentage: 75%+ first, then 65%+, then the rest
+            var sortedKaizens = kaizensWithPercentage
+                .OrderByDescending(k => k.Percentage)
+                .ThenByDescending(k => k.Kaizen.DateSubmitted)
+                .Select(k => k.Kaizen)
+                .ToList();
+
+            // Set percentage in ViewBag for the view
+            if (sortedKaizens.Any())
+            {
+                var firstKaizen = sortedKaizens.First();
+                var scores = _context.KaizenMarkingScores.Where(s => s.KaizenId == firstKaizen.Id).ToList();
+                var totalWeight = _context.MarkingCriteria.Where(c => c.IsActive).Sum(c => c.Weight);
+                var totalScore = scores.Sum(s => s.Score);
+                var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
+                ViewBag.Percentage = percentage;
+            }
+
+            return View(sortedKaizens);
+        }
+
+        // Nomination Details action for Kaizen Team
+        public async Task<IActionResult> NominationDetails(int id)
+        {
+            // Check if user is kaizen team
+            if (!IsKaizenTeamRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var kaizen = await _context.KaizenForms.FindAsync(id);
+            if (kaizen == null)
+            {
+                return NotFound();
+            }
+
+            // Calculate percentage for this kaizen
+            var scores = await _context.KaizenMarkingScores
+                .Where(s => s.KaizenId == id)
+                .ToListAsync();
+
+            var totalWeight = await _context.MarkingCriteria
+                .Where(c => c.IsActive)
+                .SumAsync(c => c.Weight);
+
+            var totalScore = scores.Sum(s => s.Score);
+            var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
+
+            ViewBag.Percentage = percentage;
+
+            return View(kaizen);
+        }
+
+        // GET: /Kaizen/TeamMarksDetails - Team marks details for Kaizen Team (Read-Only)
+        [HttpGet]
+        public async Task<IActionResult> TeamMarksDetails(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow Kaizen Team
+            if (!IsKaizenTeamRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                var kaizen = _context.KaizenForms.FirstOrDefault(k => k.Id == id);
+                if (kaizen == null)
+                {
+                    return NotFound();
+                }
+
+                // Get active marking criteria
+                var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+                
+                // Get existing scores for this kaizen
+                var existingScores = await _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == id)
+                    .ToListAsync();
+                
+                // Create a view model to pass both kaizen and marking criteria
+                var viewModel = new AwardDetailsViewModel
+                {
+                    Kaizen = kaizen,
+                    MarkingCriteria = markingCriteria,
+                    ExistingScores = existingScores
+                };
+
+                return View("TeamMarksDetails", viewModel);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in TeamMarksDetails: {ex.Message}");
+                return RedirectToAction("Error", "Home");
             }
         }
     }
