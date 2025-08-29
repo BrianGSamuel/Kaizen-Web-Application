@@ -5,35 +5,346 @@
     Layout = "~/Views/Shared/_AccountLayout.cshtml";
 }
 
-<div class="logo-container">
-    <img src="~/images/flintec-logo.png" alt="Flintec Logo" class="company-logo" />
-</div>
+<style>
+    :root {
+        --primary-blue: #1e40af;
+        --secondary-blue: #3b82f6;
+        --hover-blue: #1d4ed8;
+        --text-dark: #1f2937;
+        --text-muted: #6b7280;
+        --bg-light: #ffffff;
+        --border-color: #e5e7eb;
+    }
 
-<div class="account-container">
-    <div class="account-box">
-        <h2 class="text-center mb-4">Kaizen Login</h2>
-        <form asp-action="Login" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
-                <label asp-for="Username" class="form-label"></label>
-                <input asp-for="Username" class="form-control" />
-                <span asp-validation-for="Username" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Password" class="form-label"></label>
-                <input asp-for="Password" class="form-control" />
-                <span asp-validation-for="Password" class="text-danger"></span>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-image: url('../images/login-bg.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        min-height: 100vh;
+        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
+        position: relative;
+    }
+
+
+
+    /* Login Container */
+    .login-container {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    /* Login Content */
+    .login-content {
+        width: 100%;
+        max-width: 650px;
+    }
+
+    /* Professional Login Card */
+    .login-card {
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 50px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Professional Login Header */
+    .login-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .logo-section {
+        margin-bottom: 20px;
+    }
+
+    .login-logo {
+        height: 60px;
+        width: auto;
+        max-width: 200px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .login-subtitle {
+        font-size: 1rem;
+        color: var(--text-muted);
+        font-weight: 400;
+    }
+
+    /* Professional Form Styles */
+    .login-form {
+        margin-bottom: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+        position: relative;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-label i {
+        margin-right: 8px;
+        color: var(--primary-blue);
+    }
+
+    .input-group {
+        position: relative;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        font-size: 1rem;
+        background: rgba(255, 255, 255, 0.9);
+        transition: all 0.3s ease;
+        outline: none;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-blue);
+        box-shadow: none;
+        background: rgba(255, 255, 255, 1);
+        outline: none;
+    }
+
+    .form-control::placeholder {
+        color: var(--text-muted);
+        font-weight: 400;
+    }
+
+    .validation-message {
+        display: block;
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-top: 5px;
+        font-weight: 500;
+    }
+
+    /* Professional Login Button */
+    .login-btn {
+        width: 100%;
+        padding: 15px 30px;
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(30, 64, 175, 0.3);
+        background: linear-gradient(135deg, var(--hover-blue) 0%, var(--primary-blue) 100%);
+        color: white;
+    }
+
+    .login-btn:active {
+        transform: translateY(0);
+    }
+
+    .btn-text {
+        transition: transform 0.3s ease;
+    }
+
+    .btn-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .login-btn:hover .btn-icon {
+        transform: translateX(5px);
+    }
+
+    /* Alert Styles */
+    .alert {
+        border-radius: 10px;
+        border: none;
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        font-weight: 500;
+    }
+
+    .alert-danger {
+        background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+        color: #c53030;
+        border-left: 4px solid #dc3545;
+    }
+
+    /* Login Footer */
+    .login-footer {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .footer-text {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .footer-text i {
+        color: var(--primary-blue);
+        font-size: 1rem;
+    }
+
+
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .login-container {
+            padding: 15px;
+        }
+        
+        .login-content {
+            max-width: 100%;
+        }
+        
+        .login-card {
+            padding: 30px 25px;
+            border-radius: 12px;
+        }
+        
+        .form-control {
+            padding: 12px 16px;
+        }
+        
+        .login-btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .login-card {
+            padding: 25px 20px;
+        }
+        
+        .login-logo {
+            height: 45px;
+        }
+        
+        .form-control {
+            padding: 10px 14px;
+            font-size: 0.95rem;
+        }
+        
+        .login-btn {
+            padding: 10px 20px;
+            font-size: 0.95rem;
+        }
+    }
+
+    /* Loading State */
+    .login-btn.loading {
+        pointer-events: none;
+    }
+
+    .login-btn.loading .btn-text {
+        opacity: 0;
+    }
+
+    .login-btn.loading .btn-icon {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Focus States for Accessibility */
+    .login-btn:focus {
+        outline: 2px solid var(--primary-blue);
+        outline-offset: 2px;
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-content">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-section">
+                    <img src="~/images/flintec-logo.png" alt="Flintec Logo" class="login-logo" />
+                </div>
+                <p class="login-subtitle">Sign in to your Kaizen account</p>
             </div>
 
-            <div class="form-check mb-3">
-                <label class="form-check-label">
-                    <input asp-for="RememberMe" class="form-check-input" />
-                    @Html.DisplayNameFor(a => a.RememberMe)
-                </label>
+            <form asp-action="Login" method="post" class="login-form">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                
+                <div class="form-group">
+                    <label asp-for="Username" class="form-label">
+                        <i class="fas fa-user"></i>
+                        Username
+                    </label>
+                    <div class="input-group">
+                        <input asp-for="Username" class="form-control" placeholder="Enter your username" />
+                    </div>
+                    <span asp-validation-for="Username" class="validation-message"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Password" class="form-label">
+                        <i class="fas fa-lock"></i>
+                        Password
+                    </label>
+                    <div class="input-group">
+                        <input asp-for="Password" class="form-control" placeholder="Enter your password" />
+                    </div>
+                    <span asp-validation-for="Password" class="validation-message"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary login-btn">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-icon">
+                        <i class="fas fa-arrow-right"></i>
+                    </span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p class="footer-text">
+                    <i class="fas fa-shield-alt"></i>
+                    Your data is protected with enterprise-grade security
+                </p>
             </div>
-            <input type="submit" value="Login" class="btn btn-danger w-100 p-2" />
-            
-        </form>
+        </div>
     </div>
 </div>
 

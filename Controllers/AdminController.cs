@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System;
 using System.Collections.Generic; // Added for List
+using System.Text; // Added for StringBuilder
+using System.IO; // Added for File operations
 
 namespace KaizenWebApp.Controllers
 {
@@ -1804,6 +1806,690 @@ namespace KaizenWebApp.Controllers
                 message = $"Criteria {(criteria.IsActive ? "activated" : "deactivated")} successfully",
                 isActive = criteria.IsActive
             });
+        }
+
+        // Category Management Methods
+        public async Task<IActionResult> CategoryManagement()
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var categories = await _context.Categories
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            var viewModel = new CategoryListViewModel
+            {
+                Categories = categories.Select(c => new CategoryViewModel
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    IsActive = c.IsActive,
+                    CreatedAt = c.CreatedAt,
+                    UpdatedAt = c.UpdatedAt
+                }).ToList()
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddCategory(CategoryViewModel model)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied" });
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage));
+                    return Json(new { success = false, message = errors });
+                }
+
+                // Check if category name already exists
+                var existingCategory = await _context.Categories
+                    .FirstOrDefaultAsync(c => c.Name.ToLower() == model.Name.ToLower());
+                
+                if (existingCategory != null)
+                {
+                    return Json(new { success = false, message = "A category with this name already exists" });
+                }
+
+                            var category = new Category
+            {
+                Name = model.Name.Trim(),
+                IsActive = model.IsActive,
+                CreatedAt = DateTime.Now
+            };
+
+                _context.Categories.Add(category);
+                await _context.SaveChangesAsync();
+
+                return Json(new { 
+                    success = true, 
+                    message = "Category added successfully",
+                    category = new
+                    {
+                        id = category.Id,
+                        name = category.Name,
+                        isActive = category.IsActive,
+                        createdAt = category.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
+                        updatedAt = category.UpdatedAt?.ToString("yyyy-MM-dd HH:mm")
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error adding category: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateCategory(CategoryViewModel model)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied" });
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage));
+                    return Json(new { success = false, message = errors });
+                }
+
+                var category = await _context.Categories.FindAsync(model.Id);
+                if (category == null)
+                {
+                    return Json(new { success = false, message = "Category not found" });
+                }
+
+                // Check if category name already exists (excluding current category)
+                var existingCategory = await _context.Categories
+                    .FirstOrDefaultAsync(c => c.Name.ToLower() == model.Name.ToLower() && c.Id != model.Id);
+                
+                if (existingCategory != null)
+                {
+                    return Json(new { success = false, message = "A category with this name already exists" });
+                }
+
+                category.Name = model.Name.Trim();
+                category.IsActive = model.IsActive;
+                category.UpdatedAt = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { 
+                    success = true, 
+                    message = "Category updated successfully",
+                    category = new
+                    {
+                        id = category.Id,
+                        name = category.Name,
+                        isActive = category.IsActive,
+                        createdAt = category.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
+                        updatedAt = category.UpdatedAt?.ToString("yyyy-MM-dd HH:mm")
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error updating category: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied" });
+                }
+
+                var category = await _context.Categories.FindAsync(id);
+                if (category == null)
+                {
+                    return Json(new { success = false, message = "Category not found" });
+                }
+
+                // Check if category is being used by any kaizen forms
+                var kaizenCount = await _context.KaizenForms
+                    .CountAsync(k => k.Category == category.Name);
+                
+                if (kaizenCount > 0)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = $"Cannot delete category. It is being used by {kaizenCount} kaizen form(s)." 
+                    });
+                }
+
+                _context.Categories.Remove(category);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Category deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error deleting category: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ToggleCategoryStatus(int id)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied" });
+                }
+
+                var category = await _context.Categories.FindAsync(id);
+                if (category == null)
+                {
+                    return Json(new { success = false, message = "Category not found" });
+                }
+
+                category.IsActive = !category.IsActive;
+                category.UpdatedAt = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { 
+                    success = true, 
+                    message = $"Category {(category.IsActive ? "activated" : "deactivated")} successfully",
+                    isActive = category.IsActive
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error toggling category status: {ex.Message}" });
+            }
+        }
+
+        // GET: /Admin/ExportAwardTrackingToExcel
+        [HttpGet]
+        public async Task<IActionResult> ExportAwardTrackingToExcel(string startDate, string endDate, string department, string category)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                // Get base query for approved kaizens (same logic as AwardTracking action)
+                var query = _context.KaizenForms
+                    .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
+
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                }
+
+                // Apply department filter
+                if (!string.IsNullOrEmpty(department))
+                {
+                    query = query.Where(k => k.Department == department);
+                }
+
+                // Apply category filter
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                }
+
+                // Get filtered results
+                var approvedKaizens = await query.ToListAsync();
+
+                // Calculate scores for each kaizen
+                var kaizensWithScores = new List<object>();
+                foreach (var kaizen in approvedKaizens)
+                {
+                    var scores = _context.KaizenMarkingScores.Where(s => s.KaizenId == kaizen.Id).ToList();
+                    
+                    // Get the total weight of criteria that were actually scored for this kaizen
+                    var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
+                    var totalWeight = _context.MarkingCriteria
+                        .Where(c => scoredCriteriaIds.Contains(c.Id))
+                        .Sum(c => c.Weight);
+                    
+                    var totalScore = scores.Sum(s => s.Score);
+                    var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+
+                    kaizensWithScores.Add(new
+                    {
+                        Kaizen = kaizen,
+                        Score = totalScore,
+                        TotalWeight = totalWeight,
+                        Percentage = percentage
+                    });
+                }
+
+                // Sort by percentage in descending order (highest score first)
+                kaizensWithScores = kaizensWithScores
+                    .OrderByDescending(k => ((dynamic)k).Percentage)
+                    .ThenByDescending(k => ((dynamic)k).Score)
+                    .ThenByDescending(k => ((dynamic)k).Kaizen.DateSubmitted)
+                    .ToList();
+
+                // Create CSV content
+                var csv = new StringBuilder();
+                
+                // Add headers
+                csv.AppendLine("KAIZEN NO,EMPLOYEE NO,EMPLOYEE NAME,DEPARTMENT,DATE SUBMITTED,CATEGORY,COST SAVING PER YEAR ($),SCORE,PERCENTAGE,AWARD STATUS,AWARD PRICE");
+
+                // Add data rows
+                foreach (dynamic item in kaizensWithScores)
+                {
+                    var kaizen = item.Kaizen;
+                    var score = item.Score;
+                    var totalWeight = item.TotalWeight;
+                    var percentage = item.Percentage;
+                    
+                    var awardStatus = !string.IsNullOrEmpty(kaizen.AwardPrice?.ToString()) ? "Awarded" : "Pending";
+
+                    // Escape CSV values and create row
+                    var row = new List<string>
+                    {
+                        EscapeCsvValue(kaizen.KaizenNo),
+                        EscapeCsvValue(kaizen.EmployeeNo),
+                        EscapeCsvValue(kaizen.EmployeeName),
+                        EscapeCsvValue(kaizen.Department),
+                        EscapeCsvValue(kaizen.DateSubmitted.ToString("yyyy-MM-dd")),
+                        EscapeCsvValue(kaizen.Category ?? ""),
+                        EscapeCsvValue(kaizen.CostSaving.HasValue ? kaizen.CostSaving.Value.ToString("N2") : ""),
+                        EscapeCsvValue(score.ToString()),
+                        EscapeCsvValue(percentage.ToString("F1")),
+                        EscapeCsvValue(awardStatus),
+                        EscapeCsvValue(kaizen.AwardPrice ?? "")
+                    };
+
+                    csv.AppendLine(string.Join(",", row));
+                }
+
+                // Generate descriptive filename
+                var filterDescription = new List<string>();
+                if (!string.IsNullOrEmpty(department)) filterDescription.Add(department);
+                if (!string.IsNullOrEmpty(category)) filterDescription.Add(category);
+                if (!string.IsNullOrEmpty(startDate)) filterDescription.Add($"From_{startDate}");
+                if (!string.IsNullOrEmpty(endDate)) filterDescription.Add($"To_{endDate}");
+                
+                var filterSuffix = filterDescription.Any() ? $"_{string.Join("_", filterDescription)}" : "";
+                var fileName = $"Award_Tracking_Export{filterSuffix}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+
+                // Return the CSV file
+                var content = Encoding.UTF8.GetBytes(csv.ToString());
+                return File(content, "text/csv", fileName);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ExportAwardTrackingToExcel: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // Helper method to escape CSV values
+        private string EscapeCsvValue(string? value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return "";
+            
+            // If the value contains comma, quote, or newline, wrap it in quotes and escape internal quotes
+            if (value.Contains(",") || value.Contains("\"") || value.Contains("\n") || value.Contains("\r"))
+            {
+                return "\"" + value.Replace("\"", "\"\"") + "\"";
+            }
+            
+            return value;
+        }
+
+        // Gallery Management
+        public IActionResult GalleryAndFAQ()
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var galleries = _context.Gallery.Where(g => g != null && !string.IsNullOrEmpty(g.Title)).OrderBy(g => g.DisplayOrder).ThenBy(g => g.UploadDate).ToList();
+            
+            // Log for debugging
+            Console.WriteLine($"Gallery Management: Found {galleries?.Count ?? 0} galleries");
+            
+            ViewBag.Galleries = galleries;
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddGalleryImage(IFormFile image, string title, string description, int displayOrder = 0)
+        {
+            try
+            {
+                if (image == null || image.Length == 0)
+                {
+                    TempData["ErrorMessage"] = "Please select an image to upload.";
+                    return RedirectToAction("GalleryAndFAQ");
+                }
+
+                // Validate file type
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var fileExtension = Path.GetExtension(image.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    TempData["ErrorMessage"] = "Only JPG, PNG, GIF, and WebP images are allowed.";
+                    return RedirectToAction("GalleryAndFAQ");
+                }
+
+                // Validate file size (max 10MB)
+                if (image.Length > 10 * 1024 * 1024)
+                {
+                    TempData["ErrorMessage"] = "Image size must be less than 10MB.";
+                    return RedirectToAction("GalleryAndFAQ");
+                }
+
+                // Create uploads directory if it doesn't exist
+                var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "gallery");
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+
+                // Generate unique filename
+                var fileName = $"{Guid.NewGuid()}{fileExtension}";
+                var filePath = Path.Combine(uploadsDir, fileName);
+
+                // Save the file
+                                    using (var stream = new System.IO.FileStream(filePath, System.IO.FileMode.Create))
+                {
+                    await image.CopyToAsync(stream);
+                }
+
+                // Save to database
+                var gallery = new Gallery
+                {
+                    Title = title,
+                    Description = description,
+                    ImagePath = $"/uploads/gallery/{fileName}",
+                    DisplayOrder = displayOrder,
+                    UploadDate = DateTime.Now,
+                    IsActive = true
+                };
+
+                _context.Gallery.Add(gallery);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Image uploaded successfully!";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error uploading image: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while uploading the image.";
+            }
+
+            return RedirectToAction("GalleryAndFAQ");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddFAQ(string question, string answer, string category = "", int displayOrder = 0)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(question) || string.IsNullOrWhiteSpace(answer))
+                {
+                    TempData["ErrorMessage"] = "Question and answer are required.";
+                    return RedirectToAction("GalleryAndFAQ");
+                }
+
+                var faq = new FAQ
+                {
+                    Question = question.Trim(),
+                    Answer = answer.Trim(),
+                    Category = category?.Trim(),
+                    DisplayOrder = displayOrder,
+                    IsActive = true,
+                    CreatedDate = DateTime.Now
+                };
+
+                _context.FAQs.Add(faq);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "FAQ added successfully!";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding FAQ: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while adding the FAQ.";
+            }
+
+            return RedirectToAction("GalleryAndFAQ");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateGalleryImage(int id, string title, string description, int displayOrder, bool isActive)
+        {
+            try
+            {
+                var gallery = await _context.Gallery.FindAsync(id);
+                if (gallery == null)
+                {
+                    TempData["ErrorMessage"] = "Image not found.";
+                    return RedirectToAction("GalleryAndFAQ");
+                }
+
+                gallery.Title = title;
+                gallery.Description = description;
+                gallery.DisplayOrder = displayOrder;
+                gallery.IsActive = isActive;
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Image updated successfully!";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating image: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while updating the image.";
+            }
+
+            return RedirectToAction("GalleryAndFAQ");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateFAQ(int id, string question, string answer, string category, int displayOrder, bool isActive)
+        {
+            try
+            {
+                var faq = await _context.FAQs.FindAsync(id);
+                if (faq == null)
+                {
+                    TempData["ErrorMessage"] = "FAQ not found.";
+                    return RedirectToAction("GalleryAndFAQ");
+                }
+
+                faq.Question = question;
+                faq.Answer = answer;
+                faq.Category = category;
+                faq.DisplayOrder = displayOrder;
+                faq.IsActive = isActive;
+                faq.UpdatedDate = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "FAQ updated successfully!";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating FAQ: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while updating the FAQ.";
+            }
+
+            return RedirectToAction("GalleryAndFAQ");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteGalleryImage(int id)
+        {
+            try
+            {
+                var gallery = await _context.Gallery.FindAsync(id);
+                if (gallery == null)
+                {
+                    TempData["ErrorMessage"] = "Image not found.";
+                    return RedirectToAction("GalleryAndFAQ");
+                }
+
+                // Delete physical file
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", gallery.ImagePath.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+
+                _context.Gallery.Remove(gallery);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Image deleted successfully!";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting image: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while deleting the image.";
+            }
+
+            return RedirectToAction("GalleryAndFAQ");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteFAQ(int id)
+        {
+            try
+            {
+                var faq = await _context.FAQs.FindAsync(id);
+                if (faq == null)
+                {
+                    TempData["ErrorMessage"] = "FAQ not found.";
+                    return RedirectToAction("GalleryAndFAQ");
+                }
+
+                _context.FAQs.Remove(faq);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "FAQ deleted successfully!";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting FAQ: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while deleting the FAQ.";
+            }
+
+            return RedirectToAction("GalleryAndFAQ");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UploadMultipleImages(IFormFileCollection images, string title, string description, int displayOrder = 0)
+        {
+            try
+            {
+                if (images == null || images.Count == 0)
+                {
+                    TempData["ErrorMessage"] = "Please select images to upload.";
+                    return RedirectToAction("GalleryAndFAQ");
+                }
+
+                var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "gallery");
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var uploadedCount = 0;
+
+                foreach (var image in images)
+                {
+                    if (image.Length == 0) continue;
+
+                    var fileExtension = Path.GetExtension(image.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(fileExtension) || image.Length > 10 * 1024 * 1024)
+                        continue;
+
+                    var fileName = $"{Guid.NewGuid()}{fileExtension}";
+                    var filePath = Path.Combine(uploadsDir, fileName);
+
+                    using (var stream = new System.IO.FileStream(filePath, System.IO.FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    var gallery = new Gallery
+                    {
+                        Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(image.FileName) : title,
+                        Description = description,
+                        ImagePath = $"/uploads/gallery/{fileName}",
+                        DisplayOrder = displayOrder + uploadedCount,
+                        UploadDate = DateTime.Now,
+                        IsActive = true
+                    };
+
+                    _context.Gallery.Add(gallery);
+                    uploadedCount++;
+                }
+
+                await _context.SaveChangesAsync();
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = true, message = $"{uploadedCount} images uploaded successfully!" });
+                }
+                TempData["SuccessMessage"] = $"{uploadedCount} images uploaded successfully!";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error uploading multiple images: {ex.Message}");
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "An error occurred while uploading images." });
+                }
+                TempData["ErrorMessage"] = "An error occurred while uploading images.";
+            }
+
+            return RedirectToAction("GalleryAndFAQ");
         }
     }
 } 

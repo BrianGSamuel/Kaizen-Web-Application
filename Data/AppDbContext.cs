@@ -15,5 +15,8 @@ namespace KaizenWebApp.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<MarkingCriteria> MarkingCriteria { get; set; }
         public DbSet<KaizenMarkingScore> KaizenMarkingScores { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Gallery> Gallery { get; set; }
+        public DbSet<FAQ> FAQs { get; set; }
     }
 }

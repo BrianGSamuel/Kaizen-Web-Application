@@ -2490,6 +2490,62 @@ namespace KaizenWebApp.Controllers
             }
         }
 
+        // GET: /Kaizen/SupervisorKaizenDetails - For supervisors to view regular kaizen details from their department
+        [HttpGet]
+        public async Task<IActionResult> SupervisorKaizenDetails(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow supervisors
+            if (!IsSupervisorRole())
+            {
+                return RedirectToAction("Kaizenform");
+            }
+
+            try
+            {
+                Console.WriteLine($"=== SUPERVISORKAIZENDETAILS DEBUG ===");
+                Console.WriteLine($"SupervisorKaizenDetails called by: {User?.Identity?.Name} for kaizen ID: {id}");
+
+                var kaizen = await _context.KaizenForms
+                    .FirstOrDefaultAsync(k => k.Id == id);
+
+                if (kaizen == null)
+                {
+                    Console.WriteLine($"Kaizen with ID {id} not found");
+                    TempData["ErrorMessage"] = "Kaizen not found.";
+                    return RedirectToAction("SupervisorKaizenList");
+                }
+
+                // Get current user's department
+                var userDepartment = await GetCurrentUserDepartment();
+                Console.WriteLine($"Current user department: {userDepartment}");
+
+                // Verify that this kaizen is from the supervisor's department
+                if (!string.IsNullOrEmpty(userDepartment) && kaizen.Department != userDepartment)
+                {
+                    Console.WriteLine($"Kaizen {id} is not from supervisor's department {userDepartment}");
+                    TempData["ErrorMessage"] = "You don't have permission to view this kaizen.";
+                    return RedirectToAction("SupervisorKaizenList");
+                }
+
+                Console.WriteLine($"Successfully retrieved kaizen {id} for supervisor view");
+                Console.WriteLine($"=== END SUPERVISORKAIZENDETAILS DEBUG ===");
+
+                return View("~/Views/Kaizen/SupervisorKaizenDetails.cshtml", kaizen);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in SupervisorKaizenDetails: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while retrieving the kaizen details.";
+                return RedirectToAction("SupervisorKaizenList");
+            }
+        }
+
         // GET: /Kaizen/KaizenListEngineer - For users with "engineer" in their username
         [HttpGet]
         public async Task<IActionResult> KaizenListEngineer(string searchString, string startDate, string endDate, string category, string engineerStatus, string managerStatus)
@@ -4906,6 +4962,26 @@ namespace KaizenWebApp.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"SearchTeam error: {ex.Message}");
+                return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+        // GET: /Kaizen/GetCategories - Get all active categories for dropdowns
+        [HttpGet]
+        public async Task<IActionResult> GetCategories()
+        {
+            try
+            {
+                var categories = await _context.Categories
+                    .Where(c => c.IsActive)
+                    .OrderBy(c => c.Name)
+                    .Select(c => new { id = c.Id, name = c.Name })
+                    .ToListAsync();
+
+                return Json(new { success = true, categories = categories });
+            }
+            catch (Exception ex)
+            {
                 return Json(new { success = false, message = $"An error occurred: {ex.Message}" });
             }
         }

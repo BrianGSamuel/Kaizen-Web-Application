@@ -1,0 +1,344 @@
+@model KaizenWebApp.ViewModels.CategoryListViewModel
+@{
+    ViewData["Title"] = "Category Management";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3 class="admin-card-title">
+                    <i class="fas fa-tags me-2"></i>Category Management
+                </h3>
+                <p class="text-muted mb-0">Manage kaizen categories for better organization</p>
+            </div>
+
+            <!-- Add New Category Form -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plus me-2"></i>Add New Category
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="addCategoryForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="NewCategory.Name" class="form-label">Category Name *</label>
+                                    <input asp-for="NewCategory.Name" class="form-control" placeholder="Enter category name" required />
+                                    <span asp-validation-for="NewCategory.Name" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Status</label>
+                                    <div class="form-check form-switch mt-2">
+                                        <input asp-for="NewCategory.IsActive" class="form-check-input" type="checkbox" checked />
+                                        <label class="form-check-label" for="NewCategory_IsActive">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-admin">
+                                            <i class="fas fa-plus me-2"></i>Add Category
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+            <!-- Categories List -->
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Existing Categories
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="categoriesList">
+                        @if (Model.Categories.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Category Name</th>
+                                            <th>Status</th>
+                                            <th>Created Date</th>
+                                            <th>Last Updated</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var category in Model.Categories)
+                                        {
+                                            <tr data-category-id="@category.Id">
+                                                <td>
+                                                    <strong>@category.Name</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @(category.IsActive ? "bg-success" : "bg-danger")">
+                                                        @(category.IsActive ? "Active" : "Inactive")
+                                                    </span>
+                                                </td>
+                                                <td>@category.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                                <td>
+                                                    @if (category.UpdatedAt.HasValue)
+                                                    {
+                                                        @category.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Never</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                                                                                 <button type="button" class="btn btn-sm btn-outline-primary edit-category" 
+                                                                 data-category-id="@category.Id" 
+                                                                 data-category-name="@category.Name"
+                                                                 data-category-active="@category.IsActive.ToString().ToLower()">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-warning toggle-status" 
+                                                                data-category-id="@category.Id" 
+                                                                data-category-active="@category.IsActive.ToString().ToLower()">
+                                                            <i class="fas @(category.IsActive ? "fa-eye-slash" : "fa-eye")"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger delete-category" 
+                                                                data-category-id="@category.Id" 
+                                                                data-category-name="@category.Name">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No categories found</h5>
+                                <p class="text-muted">Start by adding your first category using the form above.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCategoryModalLabel">
+                    <i class="fas fa-edit me-2"></i>Edit Category
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editCategoryForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editCategoryId" />
+                    <div class="mb-3">
+                        <label for="editCategoryName" class="form-label">Category Name *</label>
+                        <input type="text" class="form-control" id="editCategoryName" required />
+                        <div class="invalid-feedback" id="editCategoryNameError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="editCategoryActive" checked />
+                            <label class="form-check-label" for="editCategoryActive">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-admin">
+                        <i class="fas fa-save me-2"></i>Update Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="categoryToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong class="me-auto" id="toastTitle">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            This is a toast message.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add Category Form Submission
+            $('#addCategoryForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    Name: $('#NewCategory_Name').val().trim(),
+                    IsActive: $('#NewCategory_IsActive').is(':checked')
+                };
+
+                $.ajax({
+                    url: '/Admin/AddCategory',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('Success', response.message, 'success');
+                            $('#addCategoryForm')[0].reset();
+                            location.reload(); // Reload to show new category
+                        } else {
+                            showToast('Error', response.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        showToast('Error', 'An error occurred while adding the category.', 'error');
+                    }
+                });
+            });
+
+            // Edit Category Button Click
+            $('.edit-category').on('click', function() {
+                const categoryId = $(this).data('category-id');
+                const categoryName = $(this).data('category-name');
+                const categoryActive = $(this).data('category-active') === 'true';
+
+                $('#editCategoryId').val(categoryId);
+                $('#editCategoryName').val(categoryName);
+                $('#editCategoryActive').prop('checked', categoryActive);
+
+                $('#editCategoryModal').modal('show');
+            });
+
+            // Edit Category Form Submission
+            $('#editCategoryForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    Id: $('#editCategoryId').val(),
+                    Name: $('#editCategoryName').val().trim(),
+                    IsActive: $('#editCategoryActive').is(':checked')
+                };
+
+                $.ajax({
+                    url: '/Admin/UpdateCategory',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('Success', response.message, 'success');
+                            $('#editCategoryModal').modal('hide');
+                            location.reload(); // Reload to show updated category
+                        } else {
+                            showToast('Error', response.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        showToast('Error', 'An error occurred while updating the category.', 'error');
+                    }
+                });
+            });
+
+            // Toggle Category Status
+            $('.toggle-status').on('click', function() {
+                const categoryId = $(this).data('category-id');
+                const button = $(this);
+
+                $.ajax({
+                    url: '/Admin/ToggleCategoryStatus',
+                    type: 'POST',
+                    data: { id: categoryId },
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('Success', response.message, 'success');
+                            location.reload(); // Reload to show updated status
+                        } else {
+                            showToast('Error', response.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        showToast('Error', 'An error occurred while toggling the category status.', 'error');
+                    }
+                });
+            });
+
+            // Delete Category
+            $('.delete-category').on('click', function() {
+                const categoryId = $(this).data('category-id');
+                const categoryName = $(this).data('category-name');
+
+                if (confirm(`Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`)) {
+                    $.ajax({
+                        url: '/Admin/DeleteCategory',
+                        type: 'POST',
+                        data: { id: categoryId },
+                        success: function(response) {
+                            if (response.success) {
+                                showToast('Success', response.message, 'success');
+                                location.reload(); // Reload to show updated list
+                            } else {
+                                showToast('Error', response.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            showToast('Error', 'An error occurred while deleting the category.', 'error');
+                        }
+                    });
+                }
+            });
+
+            // Toast notification function
+            function showToast(title, message, type) {
+                const toast = $('#categoryToast');
+                const toastTitle = $('#toastTitle');
+                const toastMessage = $('#toastMessage');
+
+                toastTitle.text(title);
+                toastMessage.text(message);
+
+                // Update toast styling based on type
+                toast.removeClass('bg-success bg-danger bg-warning bg-info');
+                if (type === 'success') {
+                    toast.addClass('bg-success text-white');
+                } else if (type === 'error') {
+                    toast.addClass('bg-danger text-white');
+                } else if (type === 'warning') {
+                    toast.addClass('bg-warning');
+                } else {
+                    toast.addClass('bg-info text-white');
+                }
+
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+            }
+        });
+    </script>
+}

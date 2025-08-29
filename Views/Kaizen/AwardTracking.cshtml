@@ -4,25 +4,123 @@
     Layout = "_KaizenTeamLayout";
 }
 
+<style>
+    @@media print {
+        .search-section {
+            display: none !important;
+        }
+        
+        .btn {
+            display: none !important;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: #000 !important;
+        }
+        
+        .table-dark {
+            background-color: #343a40 !important;
+            color: #fff !important;
+        }
+        
+        .table-dark th {
+            background-color: #343a40 !important;
+            color: #fff !important;
+        }
+        
+        .badge {
+            border: 1px solid #000 !important;
+        }
+        
+        .bg-success {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+        }
+        
+        .bg-danger {
+            background-color: #f8d7da !important;
+            color: #721c24 !important;
+        }
+        
+        .bg-warning {
+            background-color: #fff3cd !important;
+            color: #856404 !important;
+        }
+        
+        .bg-primary {
+            background-color: #cce7ff !important;
+            color: #004085 !important;
+        }
+        
+        /* Additional print optimizations */
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        .container-fluid {
+            width: 100% !important;
+            max-width: none !important;
+        }
+        
+        .card {
+            border: 1px solid #000 !important;
+            box-shadow: none !important;
+        }
+        
+        .table {
+            font-size: 12px !important;
+        }
+        
+        .table th,
+        .table td {
+            padding: 8px 4px !important;
+            border: 1px solid #000 !important;
+        }
+        
+        /* Ensure text is readable in print */
+        .text-muted {
+            color: #6c757d !important;
+        }
+        
+        .text-success {
+            color: #155724 !important;
+        }
+        
+        /* Hide unnecessary elements */
+        .kaizen-sidebar,
+        .kaizen-header,
+        .kaizen-toggle {
+            display: none !important;
+        }
+        
+        .kaizen-main {
+            margin-left: 0 !important;
+            padding: 0 !important;
+        }
+        
+        .kaizen-content {
+            padding: 0 !important;
+        }
+    }
+</style>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="admin-card">
                
-                <!-- Header Section with Add Marking Criteria Button -->
+                <!-- Header Section -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="mb-0">
                         <i class="fas fa-clipboard-check text-success me-2"></i>
                         Assign Marks
                     </h4>
-                    <a href="@Url.Action("AddMarkingCriteria", "Admin")" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>
-                        Add Marking Criteria
-                    </a>
                 </div>
 
                 <!-- Search Section -->
-                <div class="card mb-4">
+                <div class="card mb-4 search-section">
                     <div class="card-header bg-light">
                         <h5 class="mb-0">
                             <i class="fas fa-search me-2"></i>
@@ -113,16 +211,24 @@
                             <i class="fas fa-list me-2"></i>
                             Showing @Model.Count() approved kaizen(s)
                         </div>
-                                                 @if (!string.IsNullOrEmpty(Context.Request.Query["startDate"]) || 
+                        <div class="d-flex gap-2 align-items-center">
+                            @if (!string.IsNullOrEmpty(Context.Request.Query["startDate"]) || 
                               !string.IsNullOrEmpty(Context.Request.Query["endDate"]) || 
                               !string.IsNullOrEmpty(Context.Request.Query["department"]) || 
                               !string.IsNullOrEmpty(Context.Request.Query["category"]))
-                        {
-                            <div class="text-muted small">
-                                <i class="fas fa-filter me-1"></i>
-                                Filters applied
-                            </div>
-                        }
+                            {
+                                <div class="text-muted small me-3">
+                                    <i class="fas fa-filter me-1"></i>
+                                    Filters applied
+                                </div>
+                            }
+                            <button type="button" class="btn btn-success btn-sm" onclick="exportToExcel()" title="Export to Excel format">
+                                <i class="fas fa-file-excel me-1"></i>Export Excel
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="printResults()">
+                                <i class="fas fa-print me-1"></i>Print
+                            </button>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -281,14 +387,53 @@
                 }
             });
 
-                                                   // Auto-submit form when filters change (optional)
-              const filterInputs = document.querySelectorAll('#department, #category');
-              filterInputs.forEach(input => {
-                  input.addEventListener('change', function() {
-                      // Uncomment the line below if you want auto-submit on filter change
-                      // searchForm.submit();
-                  });
-              });
+            // Auto-submit form when filters change (optional)
+            const filterInputs = document.querySelectorAll('#department, #category');
+            filterInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    // Uncomment the line below if you want auto-submit on filter change
+                    // searchForm.submit();
+                });
+            });
         });
+
+        function exportToExcel() {
+            // Show loading indicator
+            const exportBtn = event.target;
+            const originalText = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
+            exportBtn.disabled = true;
+            
+            var form = document.getElementById('searchForm');
+            var formData = new FormData(form);
+            var params = new URLSearchParams();
+            
+            // Add form data to params
+            for (var pair of formData.entries()) {
+                if (pair[1]) { // Only add non-empty values
+                    params.append(pair[0], pair[1]);
+                }
+            }
+            
+            var url = '/Admin/ExportAwardTrackingToExcel?' + params.toString();
+            
+            // Create a temporary link to trigger download
+            var link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Reset button after a short delay
+            setTimeout(() => {
+                exportBtn.innerHTML = originalText;
+                exportBtn.disabled = false;
+            }, 2000);
+        }
+
+        function printResults() {
+            window.print();
+        }
     </script>
 }

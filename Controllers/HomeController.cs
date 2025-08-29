@@ -299,6 +299,66 @@ namespace KaizenWebApp.Controllers
             return View();
         }
 
+        [AllowAnonymous]
+        public async Task<IActionResult> LandingPage()
+        {
+            try
+            {
+                // Get real system statistics
+                var totalUsers = await _context.Users.CountAsync();
+                var totalKaizens = await _context.KaizenForms.CountAsync();
+                
+                // Calculate total cost savings from approved kaizens (both manager and engineer approved)
+                var totalCostSaving = await _context.KaizenForms
+                    .Where(k => k.CostSaving.HasValue && 
+                               k.EngineerStatus == "Approved" && 
+                               k.ManagerStatus == "Approved")
+                    .SumAsync(k => k.CostSaving.Value);
+
+                // Get unique departments count
+                var uniqueDepartments = await _context.KaizenForms
+                    .Where(k => !string.IsNullOrEmpty(k.Department))
+                    .Select(k => k.Department)
+                    .Distinct()
+                    .CountAsync();
+
+                // Get active gallery images
+                var galleryImages = await _context.Gallery
+                    .Where(g => g.IsActive)
+                    .OrderBy(g => g.DisplayOrder)
+                    .ThenBy(g => g.UploadDate)
+                    .ToListAsync();
+
+                // Get active FAQs
+                var faqs = await _context.FAQs
+                    .Where(f => f.IsActive)
+                    .OrderBy(f => f.DisplayOrder)
+                    .ThenBy(f => f.CreatedDate)
+                    .ToListAsync();
+
+                ViewBag.TotalUsers = totalUsers;
+                ViewBag.TotalKaizens = totalKaizens;
+                ViewBag.TotalCostSaving = totalCostSaving;
+                ViewBag.UniqueDepartments = uniqueDepartments;
+                ViewBag.GalleryImages = galleryImages;
+                ViewBag.FAQs = faqs;
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving landing page statistics");
+                // Return default values if there's an error
+                ViewBag.TotalUsers = 0;
+                ViewBag.TotalKaizens = 0;
+                ViewBag.TotalCostSaving = 0;
+                ViewBag.UniqueDepartments = 0;
+                ViewBag.GalleryImages = new List<Gallery>();
+                ViewBag.FAQs = new List<FAQ>();
+                return View();
+            }
+        }
+
         public IActionResult Index()
         {
             // Redirect to appropriate dashboard based on user role

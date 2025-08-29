@@ -569,39 +569,11 @@
                                 <label for="enhancedEditCategory" class="form-label">
                                     <i class="fas fa-folder me-2"></i>Recommended Categories
                                 </label>
-                                <div class="mt-2">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryCostSaving" value="Cost reduction" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryCostSaving">Major Cost reduction by innovation</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryProductivity" value="Productivity Improvement" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryProductivity">Productivity Improvement</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryOHS" value="OHS Improvement" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryOHS">OHS Improvement</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryQuality" value="Quality Improvements" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryQuality">Quality Improvements</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryEnvironment" value="Environmental friendly" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryEnvironment">Environmental friendly Innovation</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_category5S" value="5S Improvement" disabled>
-                                    <label class="form-check-label" for="enhanced_category5S">5S Improvement</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryErgonomics" value="Ergonomics Improvements" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryErgonomics">Ergonomics Improvements</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input category-checkbox" type="checkbox" name="Category" id="enhanced_categoryEnergySaving" value="Energy Saving Improvement" disabled>
-                                    <label class="form-check-label" for="enhanced_categoryEnergySaving">Energy Saving Improvement</label>
-                                </div>
+                                <div class="mt-2" id="dynamicCategoriesContainer">
+                                    <!-- Categories will be loaded dynamically from database -->
+                                    <div class="text-center">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading categories...
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -857,10 +829,43 @@
             });
     }
 
+    // Load categories from database
+    function loadCategories() {
+        fetch('/Kaizen/GetCategories')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const container = document.getElementById('dynamicCategoriesContainer');
+                    container.innerHTML = '';
+                    
+                    data.categories.forEach(category => {
+                        const categoryDiv = document.createElement('div');
+                        categoryDiv.className = 'form-check form-check-inline';
+                        categoryDiv.innerHTML = `
+                            <input class="form-check-input category-checkbox" type="checkbox" name="Category" 
+                                   id="enhanced_category_${category.id}" value="${category.name}" disabled>
+                            <label class="form-check-label" for="enhanced_category_${category.id}">${category.name}</label>
+                        `;
+                        container.appendChild(categoryDiv);
+                    });
+                } else {
+                    console.error('Failed to load categories:', data.message);
+                    const container = document.getElementById('dynamicCategoriesContainer');
+                    container.innerHTML = '<div class="text-danger">Failed to load categories</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading categories:', error);
+                const container = document.getElementById('dynamicCategoriesContainer');
+                container.innerHTML = '<div class="text-danger">Error loading categories</div>';
+            });
+    }
+
     // Search functionality enhancements
     document.addEventListener('DOMContentLoaded', function() {
         // Load departments when page loads
         loadDepartments();
+        loadCategories();
         const searchForm = document.getElementById('searchForm');
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
