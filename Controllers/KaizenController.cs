@@ -255,11 +255,13 @@ namespace KaizenWebApp.Controllers
                     viewModel.EmployeeNo = userByEmployeeNumber.EmployeeNumber ?? "";
                     viewModel.Department = userByEmployeeNumber.DepartmentName;
                     viewModel.Plant = userByEmployeeNumber.Plant;
+                    viewModel.EmployeePhotoPath = userByEmployeeNumber.EmployeePhotoPath ?? "";
                     
                     Console.WriteLine($"Auto-populated Employee Name: {viewModel.EmployeeName}");
                     Console.WriteLine($"Auto-populated Employee Number: {viewModel.EmployeeNo}");
                     Console.WriteLine($"Auto-populated Department: {viewModel.Department}");
                     Console.WriteLine($"Auto-populated Plant: {viewModel.Plant}");
+                    Console.WriteLine($"Auto-populated Employee Photo Path: {viewModel.EmployeePhotoPath}");
                 }
                 else
                 {
@@ -272,10 +274,12 @@ namespace KaizenWebApp.Controllers
                         viewModel.EmployeeNo = currentUser.EmployeeNumber ?? "";
                         viewModel.Department = currentUser.DepartmentName;
                         viewModel.Plant = currentUser.Plant;
+                        viewModel.EmployeePhotoPath = currentUser.EmployeePhotoPath ?? "";
                         Console.WriteLine($"Fallback - Auto-populated Employee Name: {viewModel.EmployeeName}");
                         Console.WriteLine($"Fallback - Auto-populated Employee Number: {viewModel.EmployeeNo}");
                         Console.WriteLine($"Fallback - Auto-populated Department: {viewModel.Department}");
                         Console.WriteLine($"Fallback - Auto-populated Plant: {viewModel.Plant}");
+                        Console.WriteLine($"Fallback - Auto-populated Employee Photo Path: {viewModel.EmployeePhotoPath}");
                     }
                 }
 
@@ -427,12 +431,7 @@ namespace KaizenWebApp.Controllers
                     hasImageError = true;
                 }
 
-                if (viewModel.EmployeePhoto != null && !await IsValidImageAsync(viewModel.EmployeePhoto))
-                {
-                    ModelState.AddModelError("EmployeePhoto", "Invalid image format. Only PNG, JPG, JPEG, WebP files up to 5MB are allowed.");
-                    errorStep = 2; // Step 2 contains EmployeePhoto
-                    hasImageError = true;
-                }
+
 
                 // If there are image validation errors, return to the appropriate step
                 if (hasImageError)
@@ -500,35 +499,20 @@ namespace KaizenWebApp.Controllers
                     }
                 }
 
-                // Handle EmployeePhoto - user must upload their photo
+                // Handle EmployeePhoto - use existing photo from user profile only
                 Console.WriteLine($"=== EMPLOYEE PHOTO DEBUG ===");
-                Console.WriteLine($"viewModel.EmployeePhoto: {(viewModel.EmployeePhoto != null ? "NOT NULL" : "NULL")}");
-                Console.WriteLine($"viewModel.EmployeePhoto.Length: {(viewModel.EmployeePhoto?.Length ?? 0)}");
+                Console.WriteLine($"viewModel.EmployeePhotoPath: '{viewModel.EmployeePhotoPath}'");
                 
-                if (viewModel.EmployeePhoto == null || viewModel.EmployeePhoto.Length == 0)
+                if (!string.IsNullOrEmpty(viewModel.EmployeePhotoPath))
                 {
-                    ModelState.AddModelError("EmployeePhoto", "Employee photo is required. Please upload your photo.");
-                    return View("~/Views/Home/Kaizenform.cshtml", viewModel);
-                }
-                
-                // Validate the uploaded image
-                if (!await _fileService.IsValidImageAsync(viewModel.EmployeePhoto))
-                {
-                    ModelState.AddModelError("EmployeePhoto", "Please upload a valid image file (PNG, JPG, JPEG, WebP) with size less than 5MB.");
-                    return View("~/Views/Home/Kaizenform.cshtml", viewModel);
-                }
-                
-                // Save the uploaded employee photo
-                Console.WriteLine("Processing uploaded employee photo file");
-                string employeePhotoPath = await _fileService.SaveImageAsync(viewModel.EmployeePhoto, "uploads");
-                if (!string.IsNullOrEmpty(employeePhotoPath))
-                {
-                    model.EmployeePhotoPath = employeePhotoPath;
-                    Console.WriteLine($"Saved employee photo to: {model.EmployeePhotoPath}");
+                    // Use existing photo from user profile
+                    model.EmployeePhotoPath = viewModel.EmployeePhotoPath;
+                    Console.WriteLine($"Using existing employee photo: {model.EmployeePhotoPath}");
                 }
                 else
                 {
-                    ModelState.AddModelError("EmployeePhoto", "Failed to upload employee photo. Please try again.");
+                    // No photo available
+                    ModelState.AddModelError("EmployeePhoto", "Employee photo is required. Please ensure you have a photo uploaded to your profile.");
                     return View("~/Views/Home/Kaizenform.cshtml", viewModel);
                 }
                 
@@ -6572,7 +6556,8 @@ namespace KaizenWebApp.Controllers
                     employeeName = user.EmployeeName ?? "",
                     employeeNumber = user.EmployeeNumber ?? "",
                     role = roleDisplay,
-                    plant = user.Plant ?? ""
+                    plant = user.Plant ?? "",
+                    employeePhotoPath = user.EmployeePhotoPath ?? ""
                 }
             };
 

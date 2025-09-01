@@ -593,15 +593,34 @@
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label asp-for="EmployeePhoto" class="form-label">@Localizer["EmployeePhoto"]</label>
-                                <input asp-for="EmployeePhoto" type="file" class="form-control" accept="image/png,image/jpg,image/jpeg,image/webp" onchange="previewImage(this, 'employeePhotoPreview')" />
-                                <span asp-validation-for="EmployeePhoto" class="text-danger"></span>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>Upload your employee photo (PNG, JPG, JPEG, WebP up to 5MB)
-                                </small>
-                                <div class="mt-2">
-                                    <img id="employeePhotoPreview" src="" alt="Employee Photo Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px; display: none;" />
-                                </div>
+                                <label class="form-label">@Localizer["EmployeePhoto"]</label>
+                                @if (!string.IsNullOrEmpty(Model.EmployeePhotoPath))
+                                {
+                                    <div class="text-center">
+                                        <img src="@Model.EmployeePhotoPath" alt="Employee Photo" class="img-thumbnail employee-photo-display" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #3b82f6; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+                                        <small class="form-text text-muted d-block mt-2">
+                                            <i class="fas fa-check-circle me-1 text-success"></i>Employee photo available in system
+                                        </small>
+                                    </div>
+                                    
+                                    <!-- Hidden field to ensure EmployeePhotoPath is submitted with the form -->
+                                    <input type="hidden" asp-for="EmployeePhotoPath" value="@Model.EmployeePhotoPath" />
+                                }
+                                else
+                                {
+                                    <div class="text-center">
+                                        <i class="fas fa-user fa-3x text-muted"></i>
+                                        <small class="form-text text-muted d-block mt-2">
+                                            <i class="fas fa-exclamation-triangle me-1 text-warning"></i>No employee photo found in system
+                                        </small>
+                                        <small class="form-text text-muted d-block mt-1">
+                                            <i class="fas fa-info-circle me-1"></i>Please upload a photo to your profile first
+                                        </small>
+                                    </div>
+                                }
+                                
+
+
                             </div>
                         </div>
 

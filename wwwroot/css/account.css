@@ -407,3 +407,130 @@ body {
         color: #a0aec0;
     }
 }
+
+/* Employee Photo Upload Styling */
+.employee-photo-upload {
+    position: relative;
+}
+
+.employee-photo-upload .form-control[type="file"] {
+    padding: 8px 12px;
+    border: 2px dashed #d1d5db;
+    background-color: #f9fafb;
+    transition: all 0.3s ease;
+}
+
+.employee-photo-upload .form-control[type="file"]:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.employee-photo-upload .form-control[type="file"]:focus {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.employee-photo-upload .form-control[type="file"]::-webkit-file-upload-button {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    margin-right: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.employee-photo-upload .form-control[type="file"]::-webkit-file-upload-button:hover {
+    background-color: #2563eb;
+}
+
+.employee-photo-upload .form-control[type="file"]::file-selector-button {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    margin-right: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.employee-photo-upload .form-control[type="file"]::file-selector-button:hover {
+    background-color: #2563eb;
+}
+
+
+
+.employee-photo-upload .form-text {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-top: 5px;
+}
+
+/* Dark mode support for photo upload */
+@media (prefers-color-scheme: dark) {
+    .employee-photo-upload .form-control[type="file"] {
+        background-color: rgba(45, 55, 72, 0.9);
+        border-color: #4a5568;
+        color: #f7fafc;
+    }
+    
+    .employee-photo-upload .form-control[type="file"]:hover {
+        background-color: rgba(45, 55, 72, 1);
+        border-color: #3b82f6;
+    }
+    
+    .employee-photo-upload .form-control[type="file"]:focus {
+        background-color: rgba(45, 55, 72, 1);
+        border-color: #3b82f6;
+    }
+    
+    .employee-photo-upload .form-text {
+        color: #a0aec0;
+    }
+}
+
+/* Employee Photo Circle in Modal */
+.employee-photo-circle {
+    width: 80px !important;
+    height: 80px !important;
+    max-width: 80px !important;
+    max-height: 80px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 3px solid #3b82f6 !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+    display: block !important;
+    margin: 0 auto !important;
+}
+
+/* Employee Photo Display in Kaizen Form */
+.employee-photo-display {
+    transition: transform 0.3s ease;
+}
+
+.employee-photo-display:hover {
+    transform: scale(1.05);
+}
+
+/* Modal content containment */
+#userModal .modal-body {
+    overflow: hidden !important;
+    max-height: 70vh !important;
+}
+
+#userModal .modal-body img {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* Ensure the photo container is properly sized */
+#userModal .text-center.mb-3 {
+    height: 100px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}

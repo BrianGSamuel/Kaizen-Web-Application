@@ -14,7 +14,7 @@
                     </h4>
                 </div>
                 <div class="supervisor-card-body">
-                    <form action="/Account/RegisterUser" method="post" class="needs-validation" novalidate id="registerUserForm">
+                    <form action="/Account/RegisterUser" method="post" class="needs-validation" novalidate id="registerUserForm" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
                         
                         <div class="alert alert-info">
@@ -104,6 +104,19 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3 employee-photo-upload">
+                                    <label asp-for="EmployeePhoto" class="form-label">Employee Photo</label>
+                                    <input asp-for="EmployeePhoto" type="file" class="form-control" accept="image/*" id="EmployeePhoto" />
+                                    <span asp-validation-for="EmployeePhoto" class="text-danger"></span>
+                                    <small class="form-text text-muted">Upload a photo of the employee (JPG, PNG, JPEG, WEBP). Maximum size: 5MB.</small>
+                                    
+
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <a asp-controller="Kaizen" asp-action="SupervisorUserManagement" class="btn btn-secondary me-md-2">
                                 <i class="fas fa-times me-1"></i>Cancel
@@ -135,6 +148,8 @@
 
         // Auto-generate username when employee number changes
         document.getElementById('EmployeeNumber').addEventListener('input', generateUsername);
+        
+
         
         // Initialize username on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -182,6 +197,26 @@
                 e.preventDefault();
                 alert('Password and Confirm Password must match.');
                 return false;
+            }
+            
+            // Validate image file if uploaded
+            const employeePhotoInput = document.getElementById('EmployeePhoto');
+            if (employeePhotoInput.files.length > 0) {
+                const file = employeePhotoInput.files[0];
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                
+                if (file.size > maxSize) {
+                    e.preventDefault();
+                    alert('Image file size must be less than 5MB.');
+                    return false;
+                }
+                
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                if (!allowedTypes.includes(file.type)) {
+                    e.preventDefault();
+                    alert('Please upload a valid image file (JPG, PNG, JPEG, WEBP).');
+                    return false;
+                }
             }
             
             console.log('Form validation passed, submitting...');

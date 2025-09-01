@@ -42,5 +42,8 @@ namespace KaizenWebApp.ViewModels
         [Display(Name = "Email")]
         [EmailAddress(ErrorMessage = "Invalid email address")]
         public string Email { get; set; }
+
+        [Display(Name = "Employee Photo")]
+        public IFormFile? EmployeePhoto { get; set; }
     }
 }

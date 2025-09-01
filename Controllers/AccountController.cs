@@ -1,6 +1,7 @@
 ﻿using KaizenWebApp.Data;
 using KaizenWebApp.Models;
 using KaizenWebApp.ViewModels;
+using KaizenWebApp.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -14,10 +15,12 @@ namespace KaizenWebApp.Controllers
     public class AccountController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly IFileService _fileService;
 
-        public AccountController(AppDbContext context)
+        public AccountController(AppDbContext context, IFileService fileService)
         {
             _context = context;
+            _fileService = fileService;
         }
 
         // Method to check if request is direct URL access and end session if so
@@ -239,7 +242,7 @@ namespace KaizenWebApp.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public IActionResult RegisterUser(RegisterViewModel model)
+        public async Task<IActionResult> RegisterUser(RegisterViewModel model)
         {
             // Check if user is supervisor
             var username = User.Identity?.Name;
@@ -305,6 +308,32 @@ namespace KaizenWebApp.Controllers
                 return View("RegisterUser", model);
             }
 
+            // Handle employee photo upload
+            string? employeePhotoPath = null;
+            if (model.EmployeePhoto != null && model.EmployeePhoto.Length > 0)
+            {
+                // Validate file type and size
+                if (!await _fileService.IsValidImageAsync(model.EmployeePhoto))
+                {
+                    ModelState.AddModelError("EmployeePhoto", "Please upload a valid image file (JPG, PNG, JPEG, WEBP).");
+                    return View("RegisterUser", model);
+                }
+
+                if (model.EmployeePhoto.Length > 5 * 1024 * 1024) // 5MB limit
+                {
+                    ModelState.AddModelError("EmployeePhoto", "Image file size must be less than 5MB.");
+                    return View("RegisterUser", model);
+                }
+
+                // Save the image
+                employeePhotoPath = await _fileService.SaveImageAsync(model.EmployeePhoto, "employee-photos");
+                if (string.IsNullOrEmpty(employeePhotoPath))
+                {
+                    ModelState.AddModelError("EmployeePhoto", "Failed to save the image. Please try again.");
+                    return View("RegisterUser", model);
+                }
+            }
+
             var newUser = new Users
             {
                 UserName = model.Username,
@@ -314,7 +343,8 @@ namespace KaizenWebApp.Controllers
                 Plant = model.Plant,
                 Password = model.Password, // ⚠ Store securely using hashing in production
                 Role = model.Role,
-                Email = null // Regular users don't need email
+                Email = null, // Regular users don't need email
+                EmployeePhotoPath = employeePhotoPath
             };
 
             Console.WriteLine($"Creating user - Username: {newUser.UserName}, Department: {newUser.DepartmentName}, Plant: {newUser.Plant}, Role: {newUser.Role}");
