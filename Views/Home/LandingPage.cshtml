@@ -1114,20 +1114,24 @@
             <div class="stats-container">
                 <div class="stats-grid">
                     <div class="stats-cards">
+                        <!-- Debug: ViewBag.TotalUsers = @ViewBag.TotalUsers -->
+                        <!-- Debug: ViewBag.TotalKaizens = @ViewBag.TotalKaizens -->
+                        <!-- Debug: ViewBag.TotalCostSaving = @ViewBag.TotalCostSaving -->
+                        <!-- Debug: ViewBag.UniqueDepartments = @ViewBag.UniqueDepartments -->
                         <div class="stat-card animate-fade-in-up animate-delay-1">
-                            <div class="stat-number">@ViewBag.TotalUsers+</div>
+                            <div class="stat-number">@(ViewBag.TotalUsers ?? 0)+</div>
                             <div class="stat-label">Users</div>
                         </div>
                         <div class="stat-card animate-fade-in-up animate-delay-2">
-                            <div class="stat-number">@ViewBag.TotalKaizens+</div>
+                            <div class="stat-number">@(ViewBag.TotalKaizens ?? 0)+</div>
                             <div class="stat-label">Improvements</div>
                         </div>
                         <div class="stat-card animate-fade-in-up animate-delay-3">
-                            <div class="stat-number">$@ViewBag.TotalCostSaving.ToString("N0")+</div>
+                            <div class="stat-number">$@(ViewBag.TotalCostSaving?.ToString("N0") ?? "0")+</div>
                             <div class="stat-label">Cost Savings</div>
                         </div>
                         <div class="stat-card animate-fade-in-up animate-delay-1">
-                            <div class="stat-number">@ViewBag.UniqueDepartments+</div>
+                            <div class="stat-number">@(ViewBag.UniqueDepartments ?? 0)+</div>
                             <div class="stat-label">Departments</div>
                         </div>
                     </div>

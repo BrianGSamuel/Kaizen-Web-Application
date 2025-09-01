@@ -163,7 +163,7 @@
 <div class="container">
     <!-- Filter Section -->
     <div class="filter-section">
-        <form method="get" class="row align-items-end">
+        <form method="get" class="row justify-content-center align-items-end">
             <div class="col-md-3">
                 <label for="year" class="form-label">Year</label>
                 <select name="year" id="year" class="form-select" onchange="this.form.submit()">
@@ -201,34 +201,24 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="statusFilter" class="form-label">Risk Status</label>
-                <select name="statusFilter" id="statusFilter" class="form-select">
+                <label for="departmentSearch" class="form-label">Department Search</label>
+                <select name="departmentSearch" id="departmentSearch" class="form-select" onchange="this.form.submit()">
                     <option value="">All Departments</option>
                     @{
-                        var selectedStatusFilter = Context.Request.Query["statusFilter"].ToString();
+                        var selectedDepartmentSearch = Context.Request.Query["departmentSearch"].ToString();
                     }
-                    @if (selectedStatusFilter == "At Risk")
+                    @foreach (var dept in Model.DepartmentTargets.Select(d => d.Department).Distinct().OrderBy(d => d))
                     {
-                        <option value="At Risk" selected>At Risk</option>
-                    }
-                    else
-                    {
-                        <option value="At Risk">At Risk</option>
-                    }
-                    @if (selectedStatusFilter == "Safe")
-                    {
-                        <option value="Safe" selected>Safe</option>
-                    }
-                    else
-                    {
-                        <option value="Safe">Safe</option>
+                        if (dept == selectedDepartmentSearch)
+                        {
+                            <option value="@dept" selected>@dept</option>
+                        }
+                        else
+                        {
+                            <option value="@dept">@dept</option>
+                        }
                     }
                 </select>
-            </div>
-            <div class="col-md-3 text-end">
-                <button type="submit" class="btn btn-target">
-                    <i class="fas fa-filter me-2"></i>Apply Filter
-                </button>
             </div>
         </form>
     </div>

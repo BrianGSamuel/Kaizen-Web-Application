@@ -1,4 +1,5 @@
-﻿@using KaizenWebApp.ViewModels;
+﻿
+@using KaizenWebApp.ViewModels;
 @model LoginViewModel;
 @{
     ViewData["Title"] = "Kaizen Login";
@@ -27,6 +28,16 @@
         overflow-x: hidden;
         margin: 0;
         padding: 0;
+        
+
+
+
+
+
+
+
+
+        
         position: relative;
     }
 
@@ -352,4 +363,29 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
     }
+    
+    <script>
+        $(document).ready(function() {
+            // Add loading state to login button
+            $('.login-form').on('submit', function() {
+                var $btn = $('.login-btn');
+                $btn.addClass('loading');
+                $btn.find('.btn-text').text('Signing In...');
+                $btn.find('.btn-icon i').removeClass('fa-arrow-right').addClass('fa-spinner fa-spin');
+            });
+            
+            // Check database status on page load (for debugging)
+            $.get('/Account/DatabaseStatus', function(data) {
+                if (data.success) {
+                    console.log('Database Status:', data.message);
+                    console.log('Total Users:', data.userCount);
+                    console.log('Available Users:', data.users);
+                } else {
+                    console.error('Database Error:', data.error);
+                }
+            }).fail(function() {
+                console.error('Failed to check database status');
+            });
+        });
+    </script>
 }

@@ -118,7 +118,7 @@ namespace KaizenWebApp.Controllers
             return View(users);
         }
 
-        public IActionResult DepartmentTargets(int? year, int? month, string statusFilter)
+        public IActionResult DepartmentTargets(int? year, int? month, string departmentSearch)
         {
             // Check if user is admin
             var username = User.Identity?.Name;
@@ -171,21 +171,12 @@ namespace KaizenWebApp.Controllers
                 });
             }
 
-            // Filter by status if provided
-            if (!string.IsNullOrEmpty(statusFilter))
+            // Filter by department if provided
+            if (!string.IsNullOrEmpty(departmentSearch))
             {
-                if (statusFilter == "At Risk")
-                {
-                    viewModel.DepartmentTargets = viewModel.DepartmentTargets
-                        .Where(dt => dt.Status == "At Risk")
-                        .ToList();
-                }
-                else if (statusFilter == "Safe")
-                {
-                    viewModel.DepartmentTargets = viewModel.DepartmentTargets
-                        .Where(dt => dt.Status != "At Risk")
-                        .ToList();
-                }
+                viewModel.DepartmentTargets = viewModel.DepartmentTargets
+                    .Where(dt => dt.Department.Equals(departmentSearch, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
             }
 
             // Calculate totals

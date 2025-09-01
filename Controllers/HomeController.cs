@@ -304,16 +304,24 @@ namespace KaizenWebApp.Controllers
         {
             try
             {
-                // Get real system statistics
+                // Get real system statistics from database
                 var totalUsers = await _context.Users.CountAsync();
                 var totalKaizens = await _context.KaizenForms.CountAsync();
                 
                 // Calculate total cost savings from approved kaizens (both manager and engineer approved)
-                var totalCostSaving = await _context.KaizenForms
+                var approvedKaizens = await _context.KaizenForms
                     .Where(k => k.CostSaving.HasValue && 
                                k.EngineerStatus == "Approved" && 
                                k.ManagerStatus == "Approved")
-                    .SumAsync(k => k.CostSaving.Value);
+                    .ToListAsync();
+                
+                var totalCostSaving = approvedKaizens.Sum(k => k.CostSaving.Value);
+                
+                Console.WriteLine($"Debug: Found {approvedKaizens.Count} approved kaizens");
+                foreach (var kaizen in approvedKaizens)
+                {
+                    Console.WriteLine($"Debug: Kaizen {kaizen.KaizenNo} - CostSaving: {kaizen.CostSaving}, EngineerStatus: {kaizen.EngineerStatus}, ManagerStatus: {kaizen.ManagerStatus}");
+                }
 
                 // Get unique departments count
                 var uniqueDepartments = await _context.KaizenForms
@@ -322,20 +330,41 @@ namespace KaizenWebApp.Controllers
                     .Distinct()
                     .CountAsync();
 
-                // Get active gallery images
-                var galleryImages = await _context.Gallery
-                    .Where(g => g.IsActive)
-                    .OrderBy(g => g.DisplayOrder)
-                    .ThenBy(g => g.UploadDate)
-                    .ToListAsync();
+                // Get active gallery images (optional - table might not exist)
+                var galleryImages = new List<Gallery>();
+                try
+                {
+                    galleryImages = await _context.Gallery
+                        .Where(g => g.IsActive)
+                        .OrderBy(g => g.DisplayOrder)
+                        .ThenBy(g => g.UploadDate)
+                        .ToListAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Gallery table not available: {ex.Message}");
+                    // Use empty list if Gallery table doesn't exist
+                    galleryImages = new List<Gallery>();
+                }
 
-                // Get active FAQs
-                var faqs = await _context.FAQs
-                    .Where(f => f.IsActive)
-                    .OrderBy(f => f.DisplayOrder)
-                    .ThenBy(f => f.CreatedDate)
-                    .ToListAsync();
+                // Get active FAQs (optional - table might not exist)
+                var faqs = new List<FAQ>();
+                try
+                {
+                    faqs = await _context.FAQs
+                        .Where(f => f.IsActive)
+                        .OrderBy(f => f.DisplayOrder)
+                        .ThenBy(f => f.CreatedDate)
+                        .ToListAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"FAQ table not available: {ex.Message}");
+                    // Use empty list if FAQ table doesn't exist
+                    faqs = new List<FAQ>();
+                }
 
+                // Set ViewBag values with real database data
                 ViewBag.TotalUsers = totalUsers;
                 ViewBag.TotalKaizens = totalKaizens;
                 ViewBag.TotalCostSaving = totalCostSaving;
@@ -343,11 +372,19 @@ namespace KaizenWebApp.Controllers
                 ViewBag.GalleryImages = galleryImages;
                 ViewBag.FAQs = faqs;
 
+                Console.WriteLine("LandingPage - Using real database data");
+                Console.WriteLine($"ViewBag.TotalUsers: {ViewBag.TotalUsers}");
+                Console.WriteLine($"ViewBag.TotalKaizens: {ViewBag.TotalKaizens}");
+                Console.WriteLine($"ViewBag.TotalCostSaving: {ViewBag.TotalCostSaving}");
+                Console.WriteLine($"ViewBag.UniqueDepartments: {ViewBag.UniqueDepartments}");
+
                 return View();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving landing page statistics");
+                _logger.LogError(ex, "Error in LandingPage action");
+                Console.WriteLine($"LandingPage Error: {ex.Message}");
+                Console.WriteLine($"LandingPage Stack Trace: {ex.StackTrace}");
                 // Return default values if there's an error
                 ViewBag.TotalUsers = 0;
                 ViewBag.TotalKaizens = 0;
@@ -606,6 +643,85 @@ namespace KaizenWebApp.Controllers
         {
             var maintenance = await _systemService.GetSystemMaintenanceStatusAsync();
             ViewBag.MaintenanceMessage = maintenance.MaintenanceMessage;
+            return View();
+        }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> TestLandingPage()
+        {
+            try
+            {
+                // Test basic database connection
+                var totalUsers = await _context.Users.CountAsync();
+                var totalKaizens = await _context.KaizenForms.CountAsync();
+                
+                // Test cost savings calculation
+                var totalCostSaving = await _context.KaizenForms
+                    .Where(k => k.CostSaving.HasValue && 
+                               k.EngineerStatus == "Approved" && 
+                               k.ManagerStatus == "Approved")
+                    .SumAsync(k => k.CostSaving.Value);
+
+                // Test departments count
+                var uniqueDepartments = await _context.KaizenForms
+                    .Where(k => !string.IsNullOrEmpty(k.Department))
+                    .Select(k => k.Department)
+                    .Distinct()
+                    .CountAsync();
+
+                // Test if Gallery table exists
+                var galleryCount = 0;
+                try
+                {
+                    galleryCount = await _context.Gallery.CountAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Gallery table error: {ex.Message}");
+                }
+
+                // Test if FAQ table exists
+                var faqCount = 0;
+                try
+                {
+                    faqCount = await _context.FAQs.CountAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"FAQ table error: {ex.Message}");
+                }
+
+                var result = new
+                {
+                    TotalUsers = totalUsers,
+                    TotalKaizens = totalKaizens,
+                    TotalCostSaving = totalCostSaving,
+                    UniqueDepartments = uniqueDepartments,
+                    GalleryCount = galleryCount,
+                    FAQCount = faqCount,
+                    Success = true
+                };
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { 
+                    error = ex.Message, 
+                    stackTrace = ex.StackTrace,
+                    Success = false 
+                });
+            }
+        }
+
+        [AllowAnonymous]
+        public IActionResult SimpleTest()
+        {
+            ViewBag.TotalUsers = 9;
+            ViewBag.TotalKaizens = 8;
+            ViewBag.TotalCostSaving = 40500;
+            ViewBag.UniqueDepartments = 2;
+            
             return View();
         }
 

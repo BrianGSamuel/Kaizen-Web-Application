@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "Simple Test";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Test</title>
+</head>
+<body>
+    <h1>Simple Test</h1>
+    <p>TotalUsers: @ViewBag.TotalUsers</p>
+    <p>TotalKaizens: @ViewBag.TotalKaizens</p>
+    <p>TotalCostSaving: @ViewBag.TotalCostSaving</p>
+    <p>UniqueDepartments: @ViewBag.UniqueDepartments</p>
+    
+    <h2>Statistics Cards:</h2>
+    <div>
+        <div>Users: @(ViewBag.TotalUsers ?? 0)+</div>
+        <div>Improvements: @(ViewBag.TotalKaizens ?? 0)+</div>
+        <div>Cost Savings: $@(ViewBag.TotalCostSaving?.ToString("N0") ?? "0")+</div>
+        <div>Departments: @(ViewBag.UniqueDepartments ?? 0)+</div>
+    </div>
+</body>
+</html>
+
+
+
