@@ -2170,7 +2170,7 @@ namespace KaizenWebApp.Controllers
         }
 
         // Gallery Management
-        public IActionResult GalleryAndFAQ()
+        public IActionResult Gallery()
         {
             // Check if user is admin
             var username = User.Identity?.Name;
@@ -2197,7 +2197,7 @@ namespace KaizenWebApp.Controllers
                 if (image == null || image.Length == 0)
                 {
                     TempData["ErrorMessage"] = "Please select an image to upload.";
-                    return RedirectToAction("GalleryAndFAQ");
+                    return RedirectToAction("Gallery");
                 }
 
                 // Validate file type
@@ -2206,14 +2206,14 @@ namespace KaizenWebApp.Controllers
                 if (!allowedExtensions.Contains(fileExtension))
                 {
                     TempData["ErrorMessage"] = "Only JPG, PNG, GIF, and WebP images are allowed.";
-                    return RedirectToAction("GalleryAndFAQ");
+                    return RedirectToAction("Gallery");
                 }
 
                 // Validate file size (max 10MB)
                 if (image.Length > 10 * 1024 * 1024)
                 {
                     TempData["ErrorMessage"] = "Image size must be less than 10MB.";
-                    return RedirectToAction("GalleryAndFAQ");
+                    return RedirectToAction("Gallery");
                 }
 
                 // Create uploads directory if it doesn't exist
@@ -2255,43 +2255,10 @@ namespace KaizenWebApp.Controllers
                 TempData["ErrorMessage"] = "An error occurred while uploading the image.";
             }
 
-            return RedirectToAction("GalleryAndFAQ");
+            return RedirectToAction("Gallery");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddFAQ(string question, string answer, string category = "", int displayOrder = 0)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(question) || string.IsNullOrWhiteSpace(answer))
-                {
-                    TempData["ErrorMessage"] = "Question and answer are required.";
-                    return RedirectToAction("GalleryAndFAQ");
-                }
 
-                var faq = new FAQ
-                {
-                    Question = question.Trim(),
-                    Answer = answer.Trim(),
-                    Category = category?.Trim(),
-                    DisplayOrder = displayOrder,
-                    IsActive = true,
-                    CreatedDate = DateTime.Now
-                };
-
-                _context.FAQs.Add(faq);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "FAQ added successfully!";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error adding FAQ: {ex.Message}");
-                TempData["ErrorMessage"] = "An error occurred while adding the FAQ.";
-            }
-
-            return RedirectToAction("GalleryAndFAQ");
-        }
 
         [HttpPost]
         public async Task<IActionResult> UpdateGalleryImage(int id, string title, string description, int displayOrder, bool isActive)
@@ -2302,7 +2269,7 @@ namespace KaizenWebApp.Controllers
                 if (gallery == null)
                 {
                     TempData["ErrorMessage"] = "Image not found.";
-                    return RedirectToAction("GalleryAndFAQ");
+                    return RedirectToAction("Gallery");
                 }
 
                 gallery.Title = title;
@@ -2319,39 +2286,10 @@ namespace KaizenWebApp.Controllers
                 TempData["ErrorMessage"] = "An error occurred while updating the image.";
             }
 
-            return RedirectToAction("GalleryAndFAQ");
+            return RedirectToAction("Gallery");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> UpdateFAQ(int id, string question, string answer, string category, int displayOrder, bool isActive)
-        {
-            try
-            {
-                var faq = await _context.FAQs.FindAsync(id);
-                if (faq == null)
-                {
-                    TempData["ErrorMessage"] = "FAQ not found.";
-                    return RedirectToAction("GalleryAndFAQ");
-                }
 
-                faq.Question = question;
-                faq.Answer = answer;
-                faq.Category = category;
-                faq.DisplayOrder = displayOrder;
-                faq.IsActive = isActive;
-                faq.UpdatedDate = DateTime.Now;
-
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "FAQ updated successfully!";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error updating FAQ: {ex.Message}");
-                TempData["ErrorMessage"] = "An error occurred while updating the FAQ.";
-            }
-
-            return RedirectToAction("GalleryAndFAQ");
-        }
 
         [HttpPost]
         public async Task<IActionResult> DeleteGalleryImage(int id)
@@ -2362,7 +2300,7 @@ namespace KaizenWebApp.Controllers
                 if (gallery == null)
                 {
                     TempData["ErrorMessage"] = "Image not found.";
-                    return RedirectToAction("GalleryAndFAQ");
+                    return RedirectToAction("Gallery");
                 }
 
                 // Delete physical file
@@ -2383,34 +2321,10 @@ namespace KaizenWebApp.Controllers
                 TempData["ErrorMessage"] = "An error occurred while deleting the image.";
             }
 
-            return RedirectToAction("GalleryAndFAQ");
+            return RedirectToAction("Gallery");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteFAQ(int id)
-        {
-            try
-            {
-                var faq = await _context.FAQs.FindAsync(id);
-                if (faq == null)
-                {
-                    TempData["ErrorMessage"] = "FAQ not found.";
-                    return RedirectToAction("GalleryAndFAQ");
-                }
 
-                _context.FAQs.Remove(faq);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "FAQ deleted successfully!";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error deleting FAQ: {ex.Message}");
-                TempData["ErrorMessage"] = "An error occurred while deleting the FAQ.";
-            }
-
-            return RedirectToAction("GalleryAndFAQ");
-        }
 
         [HttpPost]
         public async Task<IActionResult> UploadMultipleImages(IFormFileCollection images, string title, string description, int displayOrder = 0)
@@ -2420,7 +2334,7 @@ namespace KaizenWebApp.Controllers
                 if (images == null || images.Count == 0)
                 {
                     TempData["ErrorMessage"] = "Please select images to upload.";
-                    return RedirectToAction("GalleryAndFAQ");
+                    return RedirectToAction("Gallery");
                 }
 
                 var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "gallery");
@@ -2480,7 +2394,7 @@ namespace KaizenWebApp.Controllers
                 TempData["ErrorMessage"] = "An error occurred while uploading images.";
             }
 
-            return RedirectToAction("GalleryAndFAQ");
+            return RedirectToAction("Gallery");
         }
     }
 } 

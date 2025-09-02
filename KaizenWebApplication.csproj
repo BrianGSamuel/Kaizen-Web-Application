@@ -22,7 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\employee-photos\" />
     <Folder Include="wwwroot\uploads\" />
+    <Folder Include="wwwroot\uploads\gallery\" />
   </ItemGroup>
 
 </Project>

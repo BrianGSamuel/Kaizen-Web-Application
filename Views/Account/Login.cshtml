@@ -128,15 +128,19 @@
         border-radius: 10px;
         font-size: 1rem;
         background: rgba(255, 255, 255, 0.9);
+        color: var(--text-dark) !important;
         transition: all 0.3s ease;
         outline: none;
+        -webkit-text-fill-color: var(--text-dark);
     }
 
     .form-control:focus {
         border-color: var(--primary-blue);
         box-shadow: none;
         background: rgba(255, 255, 255, 1);
+        color: var(--text-dark) !important;
         outline: none;
+        -webkit-text-fill-color: var(--text-dark);
     }
 
     .form-control::placeholder {
@@ -303,6 +307,22 @@
     .login-btn:focus {
         outline: 2px solid var(--primary-blue);
         outline-offset: 2px;
+    }
+
+    /* Autofill styles to ensure text visibility */
+    .form-control:-webkit-autofill,
+    .form-control:-webkit-autofill:hover,
+    .form-control:-webkit-autofill:focus,
+    .form-control:-webkit-autofill:active {
+        -webkit-text-fill-color: var(--text-dark) !important;
+        -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.9) inset !important;
+        color: var(--text-dark) !important;
+    }
+
+    /* Ensure text is always visible */
+    .form-control:not(:placeholder-shown) {
+        color: var(--text-dark) !important;
+        -webkit-text-fill-color: var(--text-dark) !important;
     }
 </style>
 

@@ -147,6 +147,7 @@ body {
     border-radius: 12px;
     font-size: 1rem;
     background: rgba(255, 255, 255, 0.9);
+    color: #2d3748;
     transition: all 0.3s ease;
     outline: none;
 }
@@ -155,6 +156,7 @@ body {
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     background: rgba(255, 255, 255, 1);
+    color: #2d3748;
 }
 
 .form-control::placeholder {
@@ -376,6 +378,22 @@ body {
     outline-offset: 2px;
 }
 
+/* Autofill styles to ensure text visibility */
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover,
+.form-control:-webkit-autofill:focus,
+.form-control:-webkit-autofill:active {
+    -webkit-text-fill-color: #2d3748 !important;
+    -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.9) inset !important;
+    color: #2d3748 !important;
+}
+
+/* Ensure text is always visible */
+.form-control:not(:placeholder-shown) {
+    color: #2d3748 !important;
+    -webkit-text-fill-color: #2d3748 !important;
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
     .login-card {
@@ -401,6 +419,22 @@ body {
     
     .form-control:focus {
         background: rgba(45, 55, 72, 1);
+        color: #f7fafc;
+    }
+    
+    /* Autofill styles for dark mode */
+    .form-control:-webkit-autofill,
+    .form-control:-webkit-autofill:hover,
+    .form-control:-webkit-autofill:focus,
+    .form-control:-webkit-autofill:active {
+        -webkit-text-fill-color: #f7fafc !important;
+        -webkit-box-shadow: 0 0 0 1000px rgba(45, 55, 72, 0.9) inset !important;
+        color: #f7fafc !important;
+    }
+    
+    .form-control:not(:placeholder-shown) {
+        color: #f7fafc !important;
+        -webkit-text-fill-color: #f7fafc !important;
     }
     
     .footer-text {

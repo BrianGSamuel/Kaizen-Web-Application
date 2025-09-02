@@ -65,39 +65,7 @@
                             </select>
                         </div>
 
-                        <!-- Status Filters -->
-                        <div class="col-md-4 mb-3">
-                            <label for="status" class="form-label">
-                                <i class="fas fa-info-circle me-2"></i>Overall Status
-                            </label>
-                            <select id="status" name="status" class="form-select">
-                                <option value="">All Status</option>
-                                @if (ViewBag.CurrentFilters?.Status == "Approved")
-                                {
-                                    <option value="Approved" selected>Approved</option>
-                                }
-                                else
-                                {
-                                    <option value="Approved">Approved</option>
-                                }
-                                @if (ViewBag.CurrentFilters?.Status == "Rejected")
-                                {
-                                    <option value="Rejected" selected>Rejected</option>
-                                }
-                                else
-                                {
-                                    <option value="Rejected">Rejected</option>
-                                }
-                                @if (ViewBag.CurrentFilters?.Status == "Pending")
-                                {
-                                    <option value="Pending" selected>Pending</option>
-                                }
-                                else
-                                {
-                                    <option value="Pending">Pending</option>
-                                }
-                            </select>
-                        </div>
+
 
                         <div class="col-md-4 mb-3">
                             <label for="engineerStatus" class="form-label">

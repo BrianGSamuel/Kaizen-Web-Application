@@ -215,15 +215,7 @@
                                         }
                                     </div>
 
-                                    @if (!string.IsNullOrEmpty(Model.Kaizen.CommitteeComments))
-                                    {
-                                        <div class="mb-3">
-                                            <label class="fw-bold">Comments & Recommendations:</label>
-                                            <div class="border rounded p-2 bg-white">
-                                                @Model.Kaizen.CommitteeComments
-                                            </div>
-                                        </div>
-                                    }
+
 
                                     <!-- Saved Marking Criteria Scores -->
                                     @if (Model.ExistingScores.Any())
@@ -342,45 +334,7 @@
                                             </div>
                                         }
 
-                                        <!-- Award Assignment Fields -->
-                                        <div class="mb-3">
-                                            <label for="awardPrice" class="form-label fw-bold">Award Price:</label>
-                                            <select class="form-select" id="awardPrice" name="awardPrice" required>
-                                                <option value="">Select Award</option>
-                                                @if (Model.Kaizen.AwardPrice == "1ST PLACE")
-                                                {
-                                                    <option value="1ST PLACE" selected>1ST PLACE</option>
-                                                }
-                                                else
-                                                {
-                                                    <option value="1ST PLACE">1ST PLACE</option>
-                                                }
-                                                @if (Model.Kaizen.AwardPrice == "2ND PLACE")
-                                                {
-                                                    <option value="2ND PLACE" selected>2ND PLACE</option>
-                                                }
-                                                else
-                                                {
-                                                    <option value="2ND PLACE">2ND PLACE</option>
-                                                }
-                                                @if (Model.Kaizen.AwardPrice == "3RD PLACE")
-                                                {
-                                                    <option value="3RD PLACE" selected>3RD PLACE</option>
-                                                }
-                                                else
-                                                {
-                                                    <option value="3RD PLACE">3RD PLACE</option>
-                                                }
-                                                @if (Model.Kaizen.AwardPrice == "HONORABLE MENTION")
-                                                {
-                                                    <option value="HONORABLE MENTION" selected>HONORABLE MENTION</option>
-                                                }
-                                                else
-                                                {
-                                                    <option value="HONORABLE MENTION">HONORABLE MENTION</option>
-                                                }
-                                            </select>
-                                        </div>
+
 
                                         <div class="mb-3">
                                             <label for="committeeSignature" class="form-label fw-bold">Committee Signature:</label>
@@ -388,10 +342,7 @@
                                                    value="@Model.Kaizen.CommitteeSignature" required>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="committeeComments" class="form-label fw-bold">Comments & Recommendations:</label>
-                                            <textarea class="form-control" id="committeeComments" name="committeeComments" rows="3">@Model.Kaizen.CommitteeComments</textarea>
-                                        </div>
+
 
                                         @if (!hasExistingScores)
                                         {

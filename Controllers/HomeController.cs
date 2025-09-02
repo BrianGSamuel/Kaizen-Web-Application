@@ -347,22 +347,7 @@ namespace KaizenWebApp.Controllers
                     galleryImages = new List<Gallery>();
                 }
 
-                // Get active FAQs (optional - table might not exist)
-                var faqs = new List<FAQ>();
-                try
-                {
-                    faqs = await _context.FAQs
-                        .Where(f => f.IsActive)
-                        .OrderBy(f => f.DisplayOrder)
-                        .ThenBy(f => f.CreatedDate)
-                        .ToListAsync();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"FAQ table not available: {ex.Message}");
-                    // Use empty list if FAQ table doesn't exist
-                    faqs = new List<FAQ>();
-                }
+
 
                 // Set ViewBag values with real database data
                 ViewBag.TotalUsers = totalUsers;
@@ -370,7 +355,6 @@ namespace KaizenWebApp.Controllers
                 ViewBag.TotalCostSaving = totalCostSaving;
                 ViewBag.UniqueDepartments = uniqueDepartments;
                 ViewBag.GalleryImages = galleryImages;
-                ViewBag.FAQs = faqs;
 
                 Console.WriteLine("LandingPage - Using real database data");
                 Console.WriteLine($"ViewBag.TotalUsers: {ViewBag.TotalUsers}");
@@ -391,7 +375,6 @@ namespace KaizenWebApp.Controllers
                 ViewBag.TotalCostSaving = 0;
                 ViewBag.UniqueDepartments = 0;
                 ViewBag.GalleryImages = new List<Gallery>();
-                ViewBag.FAQs = new List<FAQ>();
                 return View();
             }
         }
@@ -680,16 +663,7 @@ namespace KaizenWebApp.Controllers
                     Console.WriteLine($"Gallery table error: {ex.Message}");
                 }
 
-                // Test if FAQ table exists
-                var faqCount = 0;
-                try
-                {
-                    faqCount = await _context.FAQs.CountAsync();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"FAQ table error: {ex.Message}");
-                }
+
 
                 var result = new
                 {
@@ -698,7 +672,6 @@ namespace KaizenWebApp.Controllers
                     TotalCostSaving = totalCostSaving,
                     UniqueDepartments = uniqueDepartments,
                     GalleryCount = galleryCount,
-                    FAQCount = faqCount,
                     Success = true
                 };
 

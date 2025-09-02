@@ -114,11 +114,6 @@
                                                                 data-category-active="@category.IsActive.ToString().ToLower()">
                                                             <i class="fas @(category.IsActive ? "fa-eye-slash" : "fa-eye")"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger delete-category" 
-                                                                data-category-id="@category.Id" 
-                                                                data-category-name="@category.Name">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -290,30 +285,7 @@
                 });
             });
 
-            // Delete Category
-            $('.delete-category').on('click', function() {
-                const categoryId = $(this).data('category-id');
-                const categoryName = $(this).data('category-name');
 
-                if (confirm(`Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`)) {
-                    $.ajax({
-                        url: '/Admin/DeleteCategory',
-                        type: 'POST',
-                        data: { id: categoryId },
-                        success: function(response) {
-                            if (response.success) {
-                                showToast('Success', response.message, 'success');
-                                location.reload(); // Reload to show updated list
-                            } else {
-                                showToast('Error', response.message, 'error');
-                            }
-                        },
-                        error: function() {
-                            showToast('Error', 'An error occurred while deleting the category.', 'error');
-                        }
-                    });
-                }
-            });
 
             // Toast notification function
             function showToast(title, message, type) {

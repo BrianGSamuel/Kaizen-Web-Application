@@ -99,6 +99,31 @@
         gap: 1rem;
     }
 
+    /* Cost Saving Fields Styling */
+    .cost-saving-section {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .cost-saving-fields {
+        background: white;
+        border-radius: 4px;
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .form-check-inline {
+        margin-right: 1rem;
+    }
+
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
     .info-item {
         background: white;
         padding: 1rem;
@@ -694,14 +719,17 @@
                     
                     @if ((Model.EngineerStatus ?? "Pending") == "Pending")
                     {
-                        <button type="button" class="btn-kaizen btn-executive" onclick="executiveFilling(@Model.Id)">
-                            <i class="fas fa-user-tie"></i>
-                            Executive Filling
-                        </button>
-                        
                         <button type="button" class="btn-kaizen btn-approval" onclick="showApprovalPopup(@Model.Id)">
                             <i class="fas fa-gavel"></i>
                             Approval Decision
+                        </button>
+                    }
+                    
+                    @if ((Model.EngineerStatus ?? "Pending") == "Approved")
+                    {
+                        <button type="button" class="btn-kaizen btn-executive" onclick="executiveFilling(@Model.Id)">
+                            <i class="fas fa-user-tie"></i>
+                            Executive Filling
                         </button>
                     }
                 </div>
@@ -722,6 +750,7 @@
             </div>
             <div class="modal-body">
                 <form id="editKaizenForm" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" id="editKaizenId" name="Id" />
 
                     <div class="row mb-3">
@@ -796,6 +825,36 @@
                             <i class="fas fa-star me-2"></i>Other Benefits
                         </label>
                         <textarea id="editOtherBenefits" name="OtherBenefits" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <!-- Cost Saving Section -->
+                    <div class="mb-3 cost-saving-section">
+                        <label class="form-label">
+                            <i class="fas fa-coins me-2"></i>Cost Saving Information
+                        </label>
+                        <div class="mt-2 mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="editCostSavingType" id="editNoCostSaving" value="no" onchange="toggleEditCostSavingFields()">
+                                <label class="form-check-label" for="editNoCostSaving">No Cost Saving</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="editCostSavingType" id="editHasCostSaving" value="yes" onchange="toggleEditCostSavingFields()">
+                                <label class="form-check-label" for="editHasCostSaving">Has Cost Saving</label>
+                            </div>
+                        </div>
+                        
+                        <div id="editCostSavingFields" class="cost-saving-fields" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="editCostSaving" class="form-label">Cost Saving ($ per year)</label>
+                                    <input type="number" id="editCostSaving" name="CostSaving" class="form-control" step="0.01" min="0" placeholder="Enter amount" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editDollarRate" class="form-label">Dollar Rate</label>
+                                    <input type="number" id="editDollarRate" name="DollarRate" class="form-control" step="0.01" min="0" placeholder="Enter rate" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -1185,6 +1244,9 @@
                     document.getElementById('editSuggestionDescription').value = data.data.suggestionDescription || '';
                     document.getElementById('editOtherBenefits').value = data.data.otherBenefits || '';
 
+                    // Populate cost saving fields
+                    populateEditCostSavingFields(data.data.costSaving, data.data.dollarRate);
+
                     // Show modal
                     const modal = new bootstrap.Modal(document.getElementById('editKaizenModal'));
                     modal.show();
@@ -1475,6 +1537,34 @@
              implementationAreaField.style.display = 'none';
              // Clear the input field
              implementationAreaInput.value = '';
+         }
+     }
+
+     // Function to toggle cost saving fields in edit modal
+     function toggleEditCostSavingFields() {
+         const hasCostSaving = document.getElementById('editHasCostSaving');
+         const costSavingFields = document.getElementById('editCostSavingFields');
+         
+         if (hasCostSaving.checked) {
+             costSavingFields.style.display = 'block';
+         } else {
+             costSavingFields.style.display = 'none';
+             // Clear the input fields
+             document.getElementById('editCostSaving').value = '';
+             document.getElementById('editDollarRate').value = '';
+         }
+     }
+
+     // Function to populate cost saving fields when editing
+     function populateEditCostSavingFields(costSaving, dollarRate) {
+         if (costSaving && costSaving > 0) {
+             document.getElementById('editHasCostSaving').checked = true;
+             document.getElementById('editCostSaving').value = costSaving;
+             document.getElementById('editDollarRate').value = dollarRate || '';
+             document.getElementById('editCostSavingFields').style.display = 'block';
+         } else {
+             document.getElementById('editNoCostSaving').checked = true;
+             document.getElementById('editCostSavingFields').style.display = 'none';
          }
      }
 </script>
