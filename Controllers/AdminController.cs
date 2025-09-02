@@ -1517,6 +1517,47 @@ namespace KaizenWebApp.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> DeleteNotification([FromBody] DeleteNotificationRequest request)
+        {
+            var username = User.Identity?.Name;
+            if (string.IsNullOrEmpty(username))
+            {
+                return Json(new { success = false, message = "User not authenticated" });
+            }
+
+            var success = await _systemService.DeleteNotificationAsync(request.NotificationId, username);
+            return Json(new { success = success, message = success ? "Notification deleted successfully" : "Failed to delete notification" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUsersByRole(string role)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return Json(new { success = false, message = "Access denied" });
+            }
+
+            try
+            {
+                var users = await _context.Users
+                    .Where(u => u.Role == role)
+                    .Select(u => new { 
+                        username = u.UserName, 
+                        displayName = $"{u.UserName} ({u.Role})" 
+                    })
+                    .ToListAsync();
+
+                return Json(new { success = true, users = users });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error retrieving users: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
         public async Task<IActionResult> DeleteLastNotification()
         {
             // Check if user is admin
@@ -1631,115 +1672,9 @@ namespace KaizenWebApp.Controllers
 
 
 
-        [HttpGet]
-        public async Task<IActionResult> EditMarkingCriteria(int id)
-        {
-            // Check if user is admin
-            var username = User.Identity?.Name;
-            if (username?.ToLower() != "admin")
-            {
-                return RedirectToAction("AccessDenied", "Home");
-            }
 
-            var criteria = await _context.MarkingCriteria.FindAsync(id);
-            if (criteria == null)
-            {
-                return NotFound();
-            }
 
-            var viewModel = new MarkingCriteriaViewModel
-            {
-                Id = criteria.Id,
-                CriteriaName = criteria.CriteriaName,
-                Description = criteria.Description,
-                MaxScore = criteria.MaxScore,
-                Weight = criteria.Weight,
-                Category = criteria.Category,
-                IsActive = criteria.IsActive,
-                Notes = criteria.Notes
-            };
 
-            return View(viewModel);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditMarkingCriteria(int id, MarkingCriteriaViewModel model)
-        {
-            // Check if user is admin
-            var username = User.Identity?.Name;
-            if (username?.ToLower() != "admin")
-            {
-                return RedirectToAction("AccessDenied", "Home");
-            }
-
-            if (id != model.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                var criteria = await _context.MarkingCriteria.FindAsync(id);
-                if (criteria == null)
-                {
-                    return NotFound();
-                }
-
-                criteria.CriteriaName = model.CriteriaName;
-                criteria.Description = model.Description;
-                criteria.MaxScore = model.MaxScore;
-                criteria.Weight = model.Weight;
-                criteria.Category = model.Category;
-                criteria.IsActive = model.IsActive;
-                criteria.Notes = model.Notes;
-                criteria.UpdatedBy = username;
-                criteria.UpdatedAt = DateTime.Now;
-
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "Marking criteria updated successfully.";
-                return RedirectToAction("MarkingCriteria");
-            }
-
-            return View(model);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> UpdateMarkingCriteria([FromBody] UpdateMarkingCriteriaRequest request)
-        {
-            try
-            {
-                // Check if user is admin
-                var username = User.Identity?.Name;
-                if (username?.ToLower() != "admin")
-                {
-                    return Json(new { success = false, message = "Access denied" });
-                }
-
-                var criteria = await _context.MarkingCriteria.FindAsync(request.Id);
-                if (criteria == null)
-                {
-                    return Json(new { success = false, message = "Criteria not found" });
-                }
-
-                // Update the criteria
-                criteria.CriteriaName = request.CriteriaName;
-                criteria.Weight = request.Weight;
-                criteria.MaxScore = request.Weight; // 1:1 ratio
-                criteria.Description = $"Evaluation criteria for {request.CriteriaName}";
-                criteria.UpdatedBy = username;
-                criteria.UpdatedAt = DateTime.Now;
-
-                await _context.SaveChangesAsync();
-
-                return Json(new { success = true, message = "Criteria updated successfully" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = $"Error updating criteria: {ex.Message}" });
-            }
-        }
 
         [HttpPost]
         public async Task<IActionResult> DeleteMarkingCriteria([FromBody] DeleteMarkingCriteriaRequest request)

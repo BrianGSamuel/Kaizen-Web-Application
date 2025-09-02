@@ -199,16 +199,25 @@
         $(document).ready(function() {
             // Show/hide specific user section based on recipient role
             $('#recipientRole').change(function() {
-                if ($(this).val() === 'All') {
+                var selectedRole = $(this).val();
+                if (selectedRole === 'All') {
                     $('#specificUserSection').hide();
                     $('#recipientUsername').val('');
                 } else {
                     $('#specificUserSection').show();
+                    // Load users for the selected role
+                    loadUsersByRole(selectedRole);
                 }
             });
 
             // Initialize on page load
             $('#recipientRole').trigger('change');
+            
+            // If a role is pre-selected and it's not "All", load users for that role
+            var initialRole = $('#recipientRole').val();
+            if (initialRole && initialRole !== 'All') {
+                loadUsersByRole(initialRole);
+            }
 
             // Confirmation for system maintenance changes
             $('form[asp-action="UpdateSystemMaintenance"]').submit(function(e) {
@@ -232,6 +241,45 @@
                 }
             });
         });
+
+        // Function to load users by role
+        function loadUsersByRole(role) {
+            // Clear current options except the first one
+            var select = $('#recipientUsername');
+            select.find('option:not(:first)').remove();
+            
+            // Show loading state
+            select.html('<option value="">Loading users...</option>');
+            
+            // Fetch users from the server
+            $.ajax({
+                url: '/Admin/GetUsersByRole',
+                type: 'GET',
+                data: { role: role },
+                success: function(response) {
+                    if (response.success) {
+                        // Reset to default option
+                        select.html('<option value="">Select a specific user...</option>');
+                        
+                        // Add user options
+                        if (response.users && response.users.length > 0) {
+                            response.users.forEach(function(user) {
+                                select.append(`<option value="${user.username}">${user.displayName}</option>`);
+                            });
+                        } else {
+                            select.append('<option value="" disabled>No users found for this role</option>');
+                        }
+                    } else {
+                        select.html('<option value="">Error loading users</option>');
+                        console.error('Error loading users:', response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    select.html('<option value="">Error loading users</option>');
+                    console.error('Error loading users:', error);
+                }
+            });
+        }
 
         // Function to delete last notification
         function deleteLastNotification() {

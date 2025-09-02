@@ -348,7 +348,25 @@
         .notification-type.warning { background-color: #ffc107; }
         .notification-type.success { background-color: #28a745; }
         .notification-type.error { background-color: #dc3545; }
+
+        .notification-actions {
+            margin-left: auto;
+            padding-left: 10px;
+        }
+
+        .delete-notification {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        .delete-notification:hover {
+            background-color: #dc3545;
+            color: white;
+        }
     </style>
+    
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     @Html.AntiForgeryToken()
@@ -522,6 +540,13 @@
             notificationBtn.addEventListener('click', function() {
                 notificationPanel.style.display = notificationPanel.style.display === 'none' ? 'block' : 'none';
                 loadNotifications();
+                
+                // Mark badge as viewed when user opens notification panel
+                const badge = document.getElementById('notificationBadge');
+                if (badge) {
+                    badge.style.display = 'none';
+                    badge.dataset.viewed = 'true';
+                }
             });
 
             // Close panel when clicking outside
@@ -552,11 +577,19 @@
 
         function updateNotificationBadge(count) {
             const badge = document.getElementById('notificationBadge');
-            if (count > 0) {
-                badge.textContent = count > 99 ? '99+' : count;
-                badge.style.display = 'flex';
-            } else {
-                badge.style.display = 'none';
+            if (badge) {
+                // Check if user has already viewed notifications (badge should stay hidden)
+                if (badge.dataset.viewed === 'true') {
+                    badge.style.display = 'none';
+                    return;
+                }
+                
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
             }
         }
 
@@ -569,14 +602,20 @@
             }
 
             list.innerHTML = notifications.map(notification => `
-                <div class="notification-item ${notification.isRead ? '' : 'unread'}" 
-                     onclick="markNotificationAsRead(${notification.id}, this)">
+                <div class="notification-item ${notification.isRead ? '' : 'unread'}">
                     <div class="d-flex align-items-start">
                         <div class="notification-type ${notification.type}"></div>
-                        <div class="flex-grow-1">
+                        <div class="flex-grow-1" onclick="markNotificationAsRead(${notification.id}, this)">
                             <div class="notification-title">${notification.title}</div>
                             <div class="notification-message">${notification.message}</div>
                             <div class="notification-time">${notification.createdAt}</div>
+                        </div>
+                        <div class="notification-actions">
+                            <button class="btn btn-sm btn-outline-danger delete-notification" 
+                                    onclick="deleteNotification(${notification.id}, this)" 
+                                    title="Delete notification">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -595,10 +634,46 @@
             .then(data => {
                 if (data.success) {
                     element.classList.remove('unread');
-                    loadNotifications(); // Refresh to update badge count
+                    // Hide the notification badge permanently after viewing
+                    const badge = document.getElementById('notificationBadge');
+                    if (badge) {
+                        badge.style.display = 'none';
+                        badge.dataset.viewed = 'true'; // Mark as viewed permanently
+                    }
                 }
             })
             .catch(error => console.error('Error marking notification as read:', error));
+        }
+
+        function deleteNotification(notificationId, element) {
+            if (confirm('Are you sure you want to delete this notification?')) {
+                fetch('/Admin/DeleteNotification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ notificationId: notificationId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the notification item from the list
+                        element.closest('.notification-item').remove();
+                        
+                        // If no notifications left, show "No notifications" message
+                        const list = document.getElementById('notificationList');
+                        if (list.children.length === 0) {
+                            list.innerHTML = '<div class="p-3 text-center text-muted">No notifications</div>';
+                        }
+                    } else {
+                        alert('Failed to delete notification: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting notification:', error);
+                    alert('An error occurred while deleting the notification.');
+                });
+            }
         }
     </script>
     

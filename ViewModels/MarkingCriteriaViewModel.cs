@@ -11,12 +11,10 @@ namespace KaizenWebApp.ViewModels
         [Display(Name = "Criteria Name")]
         public string CriteriaName { get; set; }
 
-        [Required(ErrorMessage = "Description is required")]
         [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters")]
         [Display(Name = "Description")]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Maximum score is required")]
         [Range(1, 100, ErrorMessage = "Maximum score must be between 1 and 100")]
         [Display(Name = "Maximum Score")]
         public int MaxScore { get; set; }
@@ -28,13 +26,13 @@ namespace KaizenWebApp.ViewModels
 
         [StringLength(50, ErrorMessage = "Category cannot exceed 50 characters")]
         [Display(Name = "Category")]
-        public string Category { get; set; }
+        public string Category { get; set; } = string.Empty;
 
         [Display(Name = "Active")]
         public bool IsActive { get; set; } = true;
 
         [StringLength(500, ErrorMessage = "Notes cannot exceed 500 characters")]
         [Display(Name = "Notes")]
-        public string Notes { get; set; }
+        public string Notes { get; set; } = string.Empty;
     }
 }
