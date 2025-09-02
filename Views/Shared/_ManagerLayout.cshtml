@@ -263,6 +263,8 @@
         .notification-type.success { background-color: #28a745; }
         .notification-type.error { background-color: #dc3545; }
 
+
+
         /* Responsive Design */
         @@media (max-width: 768px) {
             .manager-sidebar {
@@ -948,6 +950,13 @@
             notificationBtn.addEventListener('click', function() {
                 notificationPanel.style.display = notificationPanel.style.display === 'none' ? 'block' : 'none';
                 loadNotifications();
+                
+                // Mark badge as viewed when user opens notification panel
+                const badge = document.getElementById('notificationBadge');
+                if (badge) {
+                    badge.style.display = 'none';
+                    badge.dataset.viewed = 'true';
+                }
             });
 
             // Close panel when clicking outside
@@ -979,6 +988,12 @@
         function updateNotificationBadge(count) {
             const badge = document.getElementById('notificationBadge');
             if (badge) {
+                // Check if user has already viewed notifications (badge should stay hidden)
+                if (badge.dataset.viewed === 'true') {
+                    badge.style.display = 'none';
+                    return;
+                }
+                
                 if (count > 0) {
                     badge.textContent = count > 99 ? '99+' : count;
                     badge.style.display = 'flex';
@@ -998,11 +1013,10 @@
             }
 
             list.innerHTML = notifications.map(notification => `
-                <div class="notification-item ${notification.isRead ? '' : 'unread'}" 
-                     onclick="markNotificationAsRead(${notification.id}, this)">
+                <div class="notification-item ${notification.isRead ? '' : 'unread'}">
                     <div class="d-flex align-items-start">
                         <div class="notification-type ${notification.type}"></div>
-                        <div class="flex-grow-1">
+                        <div class="flex-grow-1" onclick="markNotificationAsRead(${notification.id}, this)">
                             <div class="notification-title">${notification.title}</div>
                             <div class="notification-message">${notification.message}</div>
                             <div class="notification-time">${notification.createdAt}</div>
@@ -1024,11 +1038,18 @@
             .then(data => {
                 if (data.success) {
                     element.classList.remove('unread');
-                    loadNotifications(); // Refresh to update badge count
+                    // Hide the notification badge permanently after viewing
+                    const badge = document.getElementById('notificationBadge');
+                    if (badge) {
+                        badge.style.display = 'none';
+                        badge.dataset.viewed = 'true'; // Mark as viewed permanently
+                    }
                 }
             })
             .catch(error => console.error('Error marking notification as read:', error));
         }
+
+
     </script>
     
     @await RenderSectionAsync("Scripts", required: false)

@@ -13,5 +13,6 @@ namespace KaizenWebApp.Services
         Task<bool> MarkNotificationAsReadAsync(int notificationId, string username);
         Task<int> GetUnreadNotificationCountAsync(string username, string role);
         Task<bool> DeleteLastNotificationAsync();
+        Task<bool> DeleteNotificationAsync(int notificationId, string username);
     }
 }

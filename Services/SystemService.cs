@@ -128,6 +128,25 @@ namespace KaizenWebApp.Services
             }
         }
 
+        public async Task<bool> DeleteNotificationAsync(int notificationId, string username)
+        {
+            try
+            {
+                var notification = await _context.Notifications.FindAsync(notificationId);
+                if (notification != null)
+                {
+                    _context.Notifications.Remove(notification);
+                    await _context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public async Task<int> GetUnreadNotificationCountAsync(string username, string role)
         {
             return await _context.Notifications

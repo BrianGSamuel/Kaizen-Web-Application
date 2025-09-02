@@ -74,7 +74,6 @@
                                             <th>Category Name</th>
                                             <th>Status</th>
                                             <th>Created Date</th>
-                                            <th>Last Updated</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -92,29 +91,11 @@
                                                 </td>
                                                 <td>@category.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                                                 <td>
-                                                    @if (category.UpdatedAt.HasValue)
-                                                    {
-                                                        @category.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="text-muted">Never</span>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group" role="group">
-                                                                                                                 <button type="button" class="btn btn-sm btn-outline-primary edit-category" 
-                                                                 data-category-id="@category.Id" 
-                                                                 data-category-name="@category.Name"
-                                                                 data-category-active="@category.IsActive.ToString().ToLower()">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-warning toggle-status" 
-                                                                data-category-id="@category.Id" 
-                                                                data-category-active="@category.IsActive.ToString().ToLower()">
-                                                            <i class="fas @(category.IsActive ? "fa-eye-slash" : "fa-eye")"></i>
-                                                        </button>
-                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-warning toggle-status" 
+                                                            data-category-id="@category.Id" 
+                                                            data-category-active="@category.IsActive.ToString().ToLower()">
+                                                        <i class="fas @(category.IsActive ? "fa-eye-slash" : "fa-eye")"></i>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         }
@@ -137,43 +118,7 @@
     </div>
 </div>
 
-<!-- Edit Category Modal -->
-<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editCategoryModalLabel">
-                    <i class="fas fa-edit me-2"></i>Edit Category
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="editCategoryForm">
-                <div class="modal-body">
-                    <input type="hidden" id="editCategoryId" />
-                    <div class="mb-3">
-                        <label for="editCategoryName" class="form-label">Category Name *</label>
-                        <input type="text" class="form-control" id="editCategoryName" required />
-                        <div class="invalid-feedback" id="editCategoryNameError"></div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="editCategoryActive" checked />
-                            <label class="form-check-label" for="editCategoryActive">Active</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-admin">
-                        <i class="fas fa-save me-2"></i>Update Category
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+
 
 <!-- Success/Error Toast -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
@@ -220,47 +165,7 @@
                 });
             });
 
-            // Edit Category Button Click
-            $('.edit-category').on('click', function() {
-                const categoryId = $(this).data('category-id');
-                const categoryName = $(this).data('category-name');
-                const categoryActive = $(this).data('category-active') === 'true';
 
-                $('#editCategoryId').val(categoryId);
-                $('#editCategoryName').val(categoryName);
-                $('#editCategoryActive').prop('checked', categoryActive);
-
-                $('#editCategoryModal').modal('show');
-            });
-
-            // Edit Category Form Submission
-            $('#editCategoryForm').on('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = {
-                    Id: $('#editCategoryId').val(),
-                    Name: $('#editCategoryName').val().trim(),
-                    IsActive: $('#editCategoryActive').is(':checked')
-                };
-
-                $.ajax({
-                    url: '/Admin/UpdateCategory',
-                    type: 'POST',
-                    data: formData,
-                    success: function(response) {
-                        if (response.success) {
-                            showToast('Success', response.message, 'success');
-                            $('#editCategoryModal').modal('hide');
-                            location.reload(); // Reload to show updated category
-                        } else {
-                            showToast('Error', response.message, 'error');
-                        }
-                    },
-                    error: function() {
-                        showToast('Error', 'An error occurred while updating the category.', 'error');
-                    }
-                });
-            });
 
             // Toggle Category Status
             $('.toggle-status').on('click', function() {
