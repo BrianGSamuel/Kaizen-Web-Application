@@ -61,8 +61,13 @@
         .user-sidebar-header img {
             height: 40px;
             width: auto;
-            filter: brightness(0) invert(1);
             margin-bottom: 10px;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .user-sidebar-header img:hover {
+            transform: scale(1.1);
         }
 
         .user-sidebar-header h4 {

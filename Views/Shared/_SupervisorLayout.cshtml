@@ -61,8 +61,13 @@
         .supervisor-sidebar-header img {
             height: 40px;
             width: auto;
-            filter: brightness(0) invert(1);
             margin-bottom: 10px;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .supervisor-sidebar-header img:hover {
+            transform: scale(1.1);
         }
 
         .supervisor-sidebar-header h4 {
