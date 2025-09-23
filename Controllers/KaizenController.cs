@@ -6056,6 +6056,162 @@ namespace KaizenWebApp.Controllers
             }
         }
 
+        // GET: /Kaizen/AwardTrackingEngineer - Award tracking for engineers (department-specific)
+        [HttpGet]
+        public async Task<IActionResult> AwardTrackingEngineer(string startDate, string endDate, string category, string awardStatus)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow engineers
+            if (!IsEngineerRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                // Get current user's department
+                var currentUserDepartment = await GetCurrentUserDepartment();
+                if (string.IsNullOrEmpty(currentUserDepartment))
+                {
+                    TempData["Error"] = "Unable to determine your department. Please contact administrator.";
+                    return RedirectToAction("EngineerDashboard");
+                }
+
+                // Get base query for approved kaizens in engineer's department only
+                var query = _context.KaizenForms
+                    .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && k.Department == currentUserDepartment);
+
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+                {
+                    query = query.Where(k => k.DateSubmitted >= start);
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
+                }
+
+                // Apply category filter
+                if (!string.IsNullOrEmpty(category))
+                {
+                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                }
+
+                // Note: Award status filtering will be applied after dynamic calculation
+                // since we need to calculate awards based on scores, not static AwardPrice field
+
+                // Get filtered results
+                var approvedKaizens = query.ToList();
+
+                // Calculate scores for each kaizen (same logic as Admin and Manager)
+                var kaizensWithScores = new List<object>();
+                foreach (var kaizen in approvedKaizens)
+                {
+                    var scores = _context.KaizenMarkingScores.Where(s => s.KaizenId == kaizen.Id).ToList();
+                    
+                    // Get the total weight of criteria that were actually scored for this kaizen
+                    var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
+                    var totalWeight = _context.MarkingCriteria
+                        .Where(c => scoredCriteriaIds.Contains(c.Id))
+                        .Sum(c => c.Weight);
+                    
+                    var totalScore = scores.Sum(s => s.Score);
+                    var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+
+                    // Get award information using dynamic calculation (same as Admin and Manager)
+                    var awardInfo = GetAwardForPercentage(percentage);
+                    var awardName = awardInfo.AwardName;
+                    var awardClass = awardInfo.AwardClass;
+
+                    kaizensWithScores.Add(new
+                    {
+                        Kaizen = kaizen,
+                        Score = totalScore,
+                        TotalWeight = totalWeight,
+                        Percentage = percentage,
+                        AwardName = awardName,
+                        AwardClass = awardClass
+                    });
+                }
+
+                // Apply award status filtering after dynamic calculation
+                if (!string.IsNullOrEmpty(awardStatus))
+                {
+                    if (awardStatus == "Pending")
+                    {
+                        // Filter for kaizens that don't have scores yet
+                        kaizensWithScores = kaizensWithScores.Where(k => ((dynamic)k).TotalWeight == 0).ToList();
+                    }
+                    else if (awardStatus == "Assigned")
+                    {
+                        // Filter for kaizens that have scores (any award assigned)
+                        kaizensWithScores = kaizensWithScores.Where(k => ((dynamic)k).TotalWeight > 0).ToList();
+                    }
+                    else
+                    {
+                        // Filter for kaizens with the specific award name
+                        kaizensWithScores = kaizensWithScores.Where(k => ((dynamic)k).AwardName == awardStatus).ToList();
+                    }
+                }
+
+                // Sort by percentage in descending order (highest score first)
+                kaizensWithScores = kaizensWithScores
+                    .OrderByDescending(k => ((dynamic)k).Percentage)
+                    .ThenByDescending(k => ((dynamic)k).Score)
+                    .ThenByDescending(k => ((dynamic)k).Kaizen.DateSubmitted)
+                    .ToList();
+
+                // Populate ViewBag with filter options for engineer's department only
+                var allCategories = new List<string>();
+                var kaizensWithCategories = _context.KaizenForms
+                    .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && 
+                               k.Department == currentUserDepartment && !string.IsNullOrEmpty(k.Category))
+                    .Select(k => k.Category)
+                    .ToList();
+
+                foreach (var catString in kaizensWithCategories)
+                {
+                    if (!string.IsNullOrEmpty(catString))
+                    {
+                        var categories = catString.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(c => c.Trim())
+                            .Where(c => !string.IsNullOrEmpty(c));
+                        allCategories.AddRange(categories);
+                    }
+                }
+
+                ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
+
+                // Get dynamic award names from AwardThresholds table for filter dropdown
+                var awardNames = _context.AwardThresholds
+                    .Where(t => t.IsActive)
+                    .Select(t => t.AwardName)
+                    .Distinct()
+                    .OrderBy(a => a)
+                    .ToList();
+                
+                // Add "Pending" and "Assigned" options
+                var allAwardStatusOptions = new List<string> { "Pending", "Assigned" };
+                allAwardStatusOptions.AddRange(awardNames);
+                ViewBag.AwardStatusOptions = allAwardStatusOptions;
+
+                return View("AwardTrackingEngineer", kaizensWithScores);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in AwardTrackingEngineer: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
         // GET: /Kaizen/AwardDetailsManager - Award details for managers
         [HttpGet]
         public async Task<IActionResult> AwardDetailsManager(int id)
@@ -6111,6 +6267,65 @@ namespace KaizenWebApp.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in AwardDetailsManager: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // GET: /Kaizen/AwardDetailsEngineer - Award details for engineers
+        [HttpGet]
+        public async Task<IActionResult> AwardDetailsEngineer(int id)
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow engineers
+            if (!IsEngineerRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                // Get current user's department
+                var currentUserDepartment = await GetCurrentUserDepartment();
+                if (string.IsNullOrEmpty(currentUserDepartment))
+                {
+                    TempData["Error"] = "Unable to determine your department. Please contact administrator.";
+                    return RedirectToAction("AwardTrackingEngineer");
+                }
+
+                var kaizen = _context.KaizenForms.FirstOrDefault(k => k.Id == id && k.Department == currentUserDepartment);
+                if (kaizen == null)
+                {
+                    return NotFound();
+                }
+
+                // Get active marking criteria
+                var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+                
+                // Get existing scores for this kaizen
+                var existingScores = await _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == id)
+                    .ToListAsync();
+                
+                // Get award thresholds
+                var awardThresholds = await _context.AwardThresholds
+                    .Where(t => t.IsActive)
+                    .ToListAsync();
+
+                // Pass data to view via ViewBag
+                ViewBag.ExistingScores = existingScores;
+                ViewBag.MarkingCriteria = markingCriteria;
+                ViewBag.AwardThresholds = awardThresholds;
+
+                return View("AwardDetailsEngineer", kaizen);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in AwardDetailsEngineer: {ex.Message}");
                 return RedirectToAction("Error", "Home");
             }
         }
