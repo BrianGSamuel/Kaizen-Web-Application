@@ -2518,9 +2518,42 @@ namespace KaizenWebApp.Controllers
                 }
 
                 Console.WriteLine($"Successfully retrieved kaizen {id} for supervisor view");
+
+                // Get active marking criteria
+                var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+                
+                // Get existing scores for this kaizen
+                var existingScores = await _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == id)
+                    .ToListAsync();
+                
+                // Calculate total score and percentage
+                var totalScore = existingScores.Sum(s => s.Score);
+                var scoredCriteriaIds = existingScores.Select(s => s.MarkingCriteriaId).ToList();
+                var totalWeight = markingCriteria
+                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                    .Sum(c => c.Weight);
+                var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+                
+                // Get award information based on percentage
+                var awardInfo = GetAwardForPercentage(percentage);
+                
+                // Create a view model to pass both kaizen and marking criteria
+                var viewModel = new AwardDetailsViewModel
+                {
+                    Kaizen = kaizen,
+                    MarkingCriteria = markingCriteria,
+                    ExistingScores = existingScores,
+                    TotalScore = totalScore,
+                    TotalWeight = totalWeight,
+                    Percentage = percentage,
+                    AwardName = awardInfo.Item1,
+                    AwardClass = awardInfo.Item2
+                };
+
                 Console.WriteLine($"=== END SUPERVISORKAIZENDETAILS DEBUG ===");
 
-                return View("~/Views/Kaizen/SupervisorKaizenDetails.cshtml", kaizen);
+                return View("~/Views/Kaizen/SupervisorKaizenDetails.cshtml", viewModel);
             }
             catch (Exception ex)
             {
@@ -4451,9 +4484,10 @@ namespace KaizenWebApp.Controllers
             var approvedKaizens = _context.KaizenForms.Count(k => 
                 k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
 
-            // Awarded kaizens: where award price is assigned
+            // Awarded kaizens: where scores are assigned (dynamic award calculation)
             var awardedKaizens = _context.KaizenForms.Count(k => 
-                !string.IsNullOrEmpty(k.AwardPrice));
+                k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && 
+                _context.KaizenMarkingScores.Any(s => s.KaizenId == k.Id));
 
             // Calculate percentages
             var totalForPercentage = totalKaizens > 0 ? totalKaizens : 1;
@@ -4580,11 +4614,6 @@ namespace KaizenWebApp.Controllers
                     Console.WriteLine($"Applied department filter: {department}");
                 }
 
-                // Apply category filter
-                if (!string.IsNullOrEmpty(category))
-                {
-                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
-                }
 
                 // Engineer status and manager status filters removed as requested
 
@@ -4798,11 +4827,6 @@ namespace KaizenWebApp.Controllers
                     Console.WriteLine($"Applied department filter: {department}");
                 }
 
-                // Apply category filter
-                if (!string.IsNullOrEmpty(category))
-                {
-                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
-                }
 
                 // Engineer status and manager status filters removed as requested
 
@@ -5230,10 +5254,43 @@ namespace KaizenWebApp.Controllers
                     return RedirectToAction("KaizenListManager");
                 }
 
-                return View("~/Views/Kaizen/KaizenDetails.cshtml", kaizen);
+                // Get active marking criteria
+                var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+                
+                // Get existing scores for this kaizen
+                var existingScores = await _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == id)
+                    .ToListAsync();
+                
+                // Calculate total score and percentage
+                var totalScore = existingScores.Sum(s => s.Score);
+                var scoredCriteriaIds = existingScores.Select(s => s.MarkingCriteriaId).ToList();
+                var totalWeight = markingCriteria
+                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                    .Sum(c => c.Weight);
+                var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+                
+                // Get award information based on percentage
+                var awardInfo = GetAwardForPercentage(percentage);
+                
+                // Create a view model to pass both kaizen and marking criteria
+                var viewModel = new AwardDetailsViewModel
+                {
+                    Kaizen = kaizen,
+                    MarkingCriteria = markingCriteria,
+                    ExistingScores = existingScores,
+                    TotalScore = totalScore,
+                    TotalWeight = totalWeight,
+                    Percentage = percentage,
+                    AwardName = awardInfo.Item1,
+                    AwardClass = awardInfo.Item2
+                };
+
+                return View("~/Views/Kaizen/KaizenDetails.cshtml", viewModel);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error in KaizenDetails: {ex.Message}");
                 TempData["ErrorMessage"] = "An error occurred while loading the kaizen details.";
                 return RedirectToAction("KaizenListManager");
             }
@@ -5266,10 +5323,43 @@ namespace KaizenWebApp.Controllers
                     return RedirectToAction("KaizenTeamView");
                 }
 
-                return View("~/Views/Kaizen/KaizenTeamDetails.cshtml", kaizen);
+                // Get active marking criteria
+                var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+                
+                // Get existing scores for this kaizen
+                var existingScores = await _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == id)
+                    .ToListAsync();
+                
+                // Calculate total score and percentage
+                var totalScore = existingScores.Sum(s => s.Score);
+                var scoredCriteriaIds = existingScores.Select(s => s.MarkingCriteriaId).ToList();
+                var totalWeight = markingCriteria
+                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                    .Sum(c => c.Weight);
+                var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+                
+                // Get award information based on percentage
+                var awardInfo = GetAwardForPercentage(percentage);
+                
+                // Create a view model to pass both kaizen and marking criteria
+                var viewModel = new AwardDetailsViewModel
+                {
+                    Kaizen = kaizen,
+                    MarkingCriteria = markingCriteria,
+                    ExistingScores = existingScores,
+                    TotalScore = totalScore,
+                    TotalWeight = totalWeight,
+                    Percentage = percentage,
+                    AwardName = awardInfo.Item1,
+                    AwardClass = awardInfo.Item2
+                };
+
+                return View("~/Views/Kaizen/KaizenTeamDetails.cshtml", viewModel);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error in KaizenTeamDetails: {ex.Message}");
                 TempData["ErrorMessage"] = "An error occurred while loading the kaizen details.";
                 return RedirectToAction("KaizenTeamView");
             }
@@ -5859,23 +5949,69 @@ namespace KaizenWebApp.Controllers
                     query = query.Where(k => k.Category != null && k.Category.Contains(category));
                 }
 
-                // Apply award status filter
+                // Note: Award status filtering will be applied after dynamic calculation
+                // since we need to calculate awards based on scores, not static AwardPrice field
+
+                // Get filtered results
+                var approvedKaizens = query.ToList();
+
+                // Calculate scores for each kaizen (same logic as Admin)
+                var kaizensWithScores = new List<object>();
+                foreach (var kaizen in approvedKaizens)
+                {
+                    var scores = _context.KaizenMarkingScores.Where(s => s.KaizenId == kaizen.Id).ToList();
+                    
+                    // Get the total weight of criteria that were actually scored for this kaizen
+                    var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
+                    var totalWeight = _context.MarkingCriteria
+                        .Where(c => scoredCriteriaIds.Contains(c.Id))
+                        .Sum(c => c.Weight);
+                    
+                    var totalScore = scores.Sum(s => s.Score);
+                    var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+
+                    // Get award information using dynamic calculation (same as Admin)
+                    var awardInfo = GetAwardForPercentage(percentage);
+                    var awardName = awardInfo.AwardName;
+                    var awardClass = awardInfo.AwardClass;
+
+                    kaizensWithScores.Add(new
+                    {
+                        Kaizen = kaizen,
+                        Score = totalScore,
+                        TotalWeight = totalWeight,
+                        Percentage = percentage,
+                        AwardName = awardName,
+                        AwardClass = awardClass
+                    });
+                }
+
+                // Apply award status filtering after dynamic calculation
                 if (!string.IsNullOrEmpty(awardStatus))
                 {
                     if (awardStatus == "Pending")
                     {
-                        // Filter for kaizens that don't have an award price assigned
-                        query = query.Where(k => string.IsNullOrEmpty(k.AwardPrice));
+                        // Filter for kaizens that don't have scores yet
+                        kaizensWithScores = kaizensWithScores.Where(k => ((dynamic)k).TotalWeight == 0).ToList();
+                    }
+                    else if (awardStatus == "Assigned")
+                    {
+                        // Filter for kaizens that have scores (any award assigned)
+                        kaizensWithScores = kaizensWithScores.Where(k => ((dynamic)k).TotalWeight > 0).ToList();
                     }
                     else
                     {
-                        // Filter for kaizens with the specific award price
-                        query = query.Where(k => k.AwardPrice == awardStatus);
+                        // Filter for kaizens with the specific award name
+                        kaizensWithScores = kaizensWithScores.Where(k => ((dynamic)k).AwardName == awardStatus).ToList();
                     }
                 }
 
-                // Get filtered results
-                var approvedKaizens = query.OrderByDescending(k => k.DateSubmitted).ToList();
+                // Sort by percentage in descending order (highest score first)
+                kaizensWithScores = kaizensWithScores
+                    .OrderByDescending(k => ((dynamic)k).Percentage)
+                    .ThenByDescending(k => ((dynamic)k).Score)
+                    .ThenByDescending(k => ((dynamic)k).Kaizen.DateSubmitted)
+                    .ToList();
 
                 // Populate ViewBag with filter options for manager's department only
                 var allCategories = new List<string>();
@@ -5898,7 +6034,20 @@ namespace KaizenWebApp.Controllers
 
                 ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
 
-                return View("AwardTrackingManager", approvedKaizens);
+                // Get dynamic award names from AwardThresholds table for filter dropdown
+                var awardNames = _context.AwardThresholds
+                    .Where(t => t.IsActive)
+                    .Select(t => t.AwardName)
+                    .Distinct()
+                    .OrderBy(a => a)
+                    .ToList();
+                
+                // Add "Pending" and "Assigned" options
+                var allAwardStatusOptions = new List<string> { "Pending", "Assigned" };
+                allAwardStatusOptions.AddRange(awardNames);
+                ViewBag.AwardStatusOptions = allAwardStatusOptions;
+
+                return View("AwardTrackingManager", kaizensWithScores);
             }
             catch (Exception ex)
             {
@@ -5938,6 +6087,24 @@ namespace KaizenWebApp.Controllers
                 {
                     return NotFound();
                 }
+
+                // Get active marking criteria
+                var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+                
+                // Get existing scores for this kaizen
+                var existingScores = await _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == id)
+                    .ToListAsync();
+                
+                // Get award thresholds
+                var awardThresholds = await _context.AwardThresholds
+                    .Where(t => t.IsActive)
+                    .ToListAsync();
+
+                // Pass data to view via ViewBag
+                ViewBag.ExistingScores = existingScores;
+                ViewBag.MarkingCriteria = markingCriteria;
+                ViewBag.AwardThresholds = awardThresholds;
 
                 return View("AwardDetailsManager", kaizen);
             }
@@ -6017,7 +6184,7 @@ namespace KaizenWebApp.Controllers
                     return Json(new { success = false, message = "Kaizen suggestion not found." });
                 }
 
-                kaizen.AwardPrice = awardPrice;
+                // Award price is now calculated dynamically based on scores
                 kaizen.CommitteeComments = committeeComments;
                 kaizen.CommitteeSignature = committeeSignature;
                 kaizen.AwardDate = DateTime.Now;
@@ -6064,7 +6231,7 @@ namespace KaizenWebApp.Controllers
                     return NotFound();
                 }
 
-                kaizen.AwardPrice = awardPrice;
+                // Award price is now calculated dynamically based on scores
                 kaizen.CommitteeComments = committeeComments;
                 kaizen.CommitteeSignature = committeeSignature;
                 kaizen.AwardDate = DateTime.Now;
@@ -6163,6 +6330,33 @@ namespace KaizenWebApp.Controllers
             }
         }
 
+        // GET: /Kaizen/UserAboutSystem
+        [HttpGet]
+        public async Task<IActionResult> UserAboutSystem()
+        {
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Only allow users with "user" in their username
+            if (!IsUserRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UserAboutSystem: {ex.Message}");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
         // GET: /Kaizen/UserManagement
         [HttpGet]
         public async Task<IActionResult> UserManagement()
@@ -6194,15 +6388,69 @@ namespace KaizenWebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> KaizenDetailsEngineer(int id)
         {
-            var kaizen = await _context.KaizenForms
-                .FirstOrDefaultAsync(k => k.Id == id);
-
-            if (kaizen == null)
+            // Check for direct URL access and end session if detected
+            if (await CheckAndEndSessionIfDirectAccess())
             {
-                return NotFound();
+                return RedirectToAction("Login", "Account");
             }
 
-            return View(kaizen);
+            // Only allow engineers
+            if (!IsEngineerRole())
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            try
+            {
+                var kaizen = await _context.KaizenForms
+                    .FirstOrDefaultAsync(k => k.Id == id);
+
+                if (kaizen == null)
+                {
+                    TempData["ErrorMessage"] = "Kaizen suggestion not found.";
+                    return RedirectToAction("KaizenListEngineer");
+                }
+
+                // Get active marking criteria
+                var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+                
+                // Get existing scores for this kaizen
+                var existingScores = await _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == id)
+                    .ToListAsync();
+                
+                // Calculate total score and percentage
+                var totalScore = existingScores.Sum(s => s.Score);
+                var scoredCriteriaIds = existingScores.Select(s => s.MarkingCriteriaId).ToList();
+                var totalWeight = markingCriteria
+                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                    .Sum(c => c.Weight);
+                var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+                
+                // Get award information based on percentage
+                var awardInfo = GetAwardForPercentage(percentage);
+                
+                // Create a view model to pass both kaizen and marking criteria
+                var viewModel = new AwardDetailsViewModel
+                {
+                    Kaizen = kaizen,
+                    MarkingCriteria = markingCriteria,
+                    ExistingScores = existingScores,
+                    TotalScore = totalScore,
+                    TotalWeight = totalWeight,
+                    Percentage = percentage,
+                    AwardName = awardInfo.Item1,
+                    AwardClass = awardInfo.Item2
+                };
+
+                return View("~/Views/Kaizen/KaizenDetailsEngineer.cshtml", viewModel);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in KaizenDetailsEngineer: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while loading the kaizen details.";
+                return RedirectToAction("KaizenListEngineer");
+            }
         }
 
         // GET: /Kaizen/UserKaizenDetails
@@ -6225,7 +6473,39 @@ namespace KaizenWebApp.Controllers
                     return NotFound();
                 }
 
-                return View("~/Views/Kaizen/UserKaizenDetails.cshtml", kaizen);
+                // Get active marking criteria
+                var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+                
+                // Get existing scores for this kaizen
+                var existingScores = await _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == id)
+                    .ToListAsync();
+                
+                // Calculate total score and percentage
+                var totalScore = existingScores.Sum(s => s.Score);
+                var scoredCriteriaIds = existingScores.Select(s => s.MarkingCriteriaId).ToList();
+                var totalWeight = markingCriteria
+                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                    .Sum(c => c.Weight);
+                var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+                
+                // Get award information based on percentage
+                var awardInfo = GetAwardForPercentage(percentage);
+                
+                // Create a view model to pass both kaizen and marking criteria
+                var viewModel = new AwardDetailsViewModel
+                {
+                    Kaizen = kaizen,
+                    MarkingCriteria = markingCriteria,
+                    ExistingScores = existingScores,
+                    TotalScore = totalScore,
+                    TotalWeight = totalWeight,
+                    Percentage = percentage,
+                    AwardName = awardInfo.Item1,
+                    AwardClass = awardInfo.Item2
+                };
+
+                return View("~/Views/Kaizen/UserKaizenDetails.cshtml", viewModel);
             }
             catch (Exception ex)
             {
@@ -6401,24 +6681,8 @@ namespace KaizenWebApp.Controllers
                     var award2nd = "";
                     var award3rd = "";
                     
-                    if (!string.IsNullOrEmpty(kaizen.AwardPrice))
-                    {
-                        switch (kaizen.AwardPrice.ToUpper())
-                        {
-                            case "1ST PRICE":
-                            case "1ST":
-                                award1st = "X";
-                                break;
-                            case "2ND PRICE":
-                            case "2ND":
-                                award2nd = "X";
-                                break;
-                            case "3RD PRICE":
-                            case "3RD":
-                                award3rd = "X";
-                                break;
-                        }
-                    }
+                    // Award calculation is now dynamic based on scores
+                    // This will be calculated separately if needed for export
 
                     // Get quarter information
                     var kaizenQuarter = ((kaizen.DateSubmitted.Month - 1) / 3) + 1;
@@ -6455,7 +6719,7 @@ namespace KaizenWebApp.Controllers
                         EscapeCsvValue(kaizen.CanImplementInOtherFields ?? ""),
                         EscapeCsvValue(kaizen.ManagerComments ?? ""),
                         EscapeCsvValue(kaizen.ManagerSignature ?? ""),
-                        EscapeCsvValue(kaizen.AwardPrice ?? ""),
+                        EscapeCsvValue(""), // Award price is now dynamic
                         EscapeCsvValue(award1st),
                         EscapeCsvValue(award2nd),
                         EscapeCsvValue(award3rd),
@@ -6913,13 +7177,11 @@ namespace KaizenWebApp.Controllers
             {
                 if (awardStatus == "Pending")
                 {
-                    // Filter for kaizens that don't have an award price assigned
-                    query = query.Where(k => string.IsNullOrEmpty(k.AwardPrice));
+                    // Filter for kaizens that don't have scores yet (will be filtered after calculation)
                 }
                 else if (awardStatus == "Assigned")
                 {
-                    // Filter for kaizens that have an award price assigned
-                    query = query.Where(k => !string.IsNullOrEmpty(k.AwardPrice));
+                    // Filter for kaizens that have scores (will be filtered after calculation)
                 }
             }
 
@@ -6985,11 +7247,28 @@ namespace KaizenWebApp.Controllers
 
             ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
 
-            return View(kaizensWithScores);
+            // Add award information to each kaizen
+            var kaizensWithAwards = new List<object>();
+            foreach (dynamic item in kaizensWithScores)
+            {
+                var awardInfo = GetAwardForPercentage(item.Percentage);
+                kaizensWithAwards.Add(new
+                {
+                    Kaizen = item.Kaizen,
+                    Score = item.Score,
+                    TotalWeight = item.TotalWeight,
+                    Percentage = item.Percentage,
+                    AwardName = awardInfo.Item1,
+                    AwardClass = awardInfo.Item2
+                });
+            }
+
+            return View(kaizensWithAwards);
         }
 
-        // Nominations action for Kaizen Team
-        public IActionResult Nominations(string startDate, string endDate, string department, string category, string nominationStatus)
+        // GET: /Kaizen/ExportAwardTrackingToExcel
+        [HttpGet]
+        public IActionResult ExportAwardTrackingToExcel(string startDate, string endDate, string department, string awardStatus)
         {
             // Check if user is kaizen team
             if (!IsKaizenTeamRole())
@@ -6997,130 +7276,73 @@ namespace KaizenWebApp.Controllers
                 return RedirectToAction("AccessDenied", "Home");
             }
 
-            // Get base query for approved kaizens
-            var query = _context.KaizenForms
-                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
-
-            // Apply date range filter
-            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+            try
             {
-                query = query.Where(k => k.DateSubmitted >= start);
-            }
+                // Get base query for approved kaizens (same logic as AwardTracking action)
+                var query = _context.KaizenForms
+                    .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
 
-            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
-            {
-                // Add one day to include the end date
-                end = end.AddDays(1);
-                query = query.Where(k => k.DateSubmitted < end);
-            }
-
-            // Apply department filter
-            if (!string.IsNullOrEmpty(department))
-            {
-                query = query.Where(k => k.Department == department);
-            }
-
-            // Apply category filter
-            if (!string.IsNullOrEmpty(category))
-            {
-                query = query.Where(k => k.Category != null && k.Category.Contains(category));
-            }
-
-            // Apply nomination status filter
-            if (!string.IsNullOrEmpty(nominationStatus))
-            {
-                if (nominationStatus == "Pending")
+                // Apply date range filter
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
                 {
-                    // Filter for kaizens that don't have an award price assigned
-                    query = query.Where(k => string.IsNullOrEmpty(k.AwardPrice));
+                    query = query.Where(k => k.DateSubmitted >= start);
                 }
-                else if (nominationStatus == "Nominated")
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
                 {
-                    // Filter for kaizens that have an award price assigned
-                    query = query.Where(k => !string.IsNullOrEmpty(k.AwardPrice));
+                    // Add one day to include the end date
+                    end = end.AddDays(1);
+                    query = query.Where(k => k.DateSubmitted < end);
                 }
-            }
 
-            // Get filtered results
-            var approvedKaizens = query.ToList();
-
-            // Calculate percentage for each kaizen and filter only those with scores above 0%
-            var kaizensWithPercentage = new List<(KaizenForm Kaizen, double Percentage)>();
-            
-            foreach (var kaizen in approvedKaizens)
-            {
-                // Get marking scores for this kaizen
-                var scores = _context.KaizenMarkingScores
-                    .Where(s => s.KaizenId == kaizen.Id)
-                    .ToList();
-
-                // Get total weight from marking criteria
-                var totalWeight = _context.MarkingCriteria
-                    .Where(c => c.IsActive)
-                    .Sum(c => c.Weight);
-
-                // Calculate total score and percentage
-                var totalScore = scores.Sum(s => s.Score);
-                var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
-
-                // Only include kaizens that have a score above 0%
-                if (percentage > 0)
+                // Apply department filter
+                if (!string.IsNullOrEmpty(department))
                 {
-                    kaizensWithPercentage.Add((kaizen, percentage));
+                    query = query.Where(k => k.Department == department);
                 }
+
+
+                // Note: Award status filtering will be applied after dynamic calculation
+
+                // Get filtered results
+                var approvedKaizens = query.ToList();
+
+                // Create CSV content
+                var csv = new StringBuilder();
+                csv.AppendLine("Kaizen No,Employee No,Employee Name,Department,Date Submitted,Cost Saving,Award Status,Award Price");
+
+                foreach (var kaizen in approvedKaizens)
+                {
+                    // Award status is now dynamic based on scores
+                    var hasScores = _context.KaizenMarkingScores.Any(s => s.KaizenId == kaizen.Id);
+                    var currentAwardStatus = hasScores ? "Awarded" : "Pending";
+
+                    // Escape CSV values and create row
+                    var row = new List<string>
+                    {
+                        EscapeCsvValue(kaizen.KaizenNo),
+                        EscapeCsvValue(kaizen.EmployeeNo),
+                        EscapeCsvValue(kaizen.EmployeeName),
+                        EscapeCsvValue(kaizen.Department),
+                        EscapeCsvValue(kaizen.DateSubmitted.ToString("yyyy-MM-dd")),
+                        EscapeCsvValue(kaizen.CostSaving.HasValue ? kaizen.CostSaving.Value.ToString("N2") : ""),
+                        EscapeCsvValue(currentAwardStatus),
+                        EscapeCsvValue("") // Award price is now dynamic
+                    };
+
+                    csv.AppendLine(string.Join(",", row));
+                }
+
+                // Return CSV file
+                var fileName = $"Award_Tracking_Export_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+                return File(bytes, "text/csv", fileName);
             }
-
-            // Sort by percentage: 75%+ first, then 65%+, then the rest
-            var sortedKaizens = kaizensWithPercentage
-                .OrderByDescending(k => k.Percentage)
-                .ThenByDescending(k => k.Kaizen.DateSubmitted)
-                .Select(k => k.Kaizen)
-                .ToList();
-
-            // Set percentage in ViewBag for the view
-            if (sortedKaizens.Any())
+            catch (Exception ex)
             {
-                var firstKaizen = sortedKaizens.First();
-                var scores = _context.KaizenMarkingScores.Where(s => s.KaizenId == firstKaizen.Id).ToList();
-                var totalWeight = _context.MarkingCriteria.Where(c => c.IsActive).Sum(c => c.Weight);
-                var totalScore = scores.Sum(s => s.Score);
-                var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
-                ViewBag.Percentage = percentage;
+                Console.WriteLine($"Error in ExportAwardTrackingToExcel: {ex.Message}");
+                return RedirectToAction("Error", "Home");
             }
-
-            return View(sortedKaizens);
-        }
-
-        // Nomination Details action for Kaizen Team
-        public async Task<IActionResult> NominationDetails(int id)
-        {
-            // Check if user is kaizen team
-            if (!IsKaizenTeamRole())
-            {
-                return RedirectToAction("AccessDenied", "Home");
-            }
-
-            var kaizen = await _context.KaizenForms.FindAsync(id);
-            if (kaizen == null)
-            {
-                return NotFound();
-            }
-
-            // Calculate percentage for this kaizen
-            var scores = await _context.KaizenMarkingScores
-                .Where(s => s.KaizenId == id)
-                .ToListAsync();
-
-            var totalWeight = await _context.MarkingCriteria
-                .Where(c => c.IsActive)
-                .SumAsync(c => c.Weight);
-
-            var totalScore = scores.Sum(s => s.Score);
-            var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
-
-            ViewBag.Percentage = percentage;
-
-            return View(kaizen);
         }
 
         // GET: /Kaizen/TeamMarksDetails - Team marks details for Kaizen Team (Read-Only)
@@ -7155,12 +7377,28 @@ namespace KaizenWebApp.Controllers
                     .Where(s => s.KaizenId == id)
                     .ToListAsync();
                 
+                // Calculate total score and percentage
+                var totalScore = existingScores.Sum(s => s.Score);
+                var scoredCriteriaIds = existingScores.Select(s => s.MarkingCriteriaId).ToList();
+                var totalWeight = markingCriteria
+                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                    .Sum(c => c.Weight);
+                var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+                
+                // Get award information based on percentage
+                var awardInfo = GetAwardForPercentage(percentage);
+                
                 // Create a view model to pass both kaizen and marking criteria
                 var viewModel = new AwardDetailsViewModel
                 {
                     Kaizen = kaizen,
                     MarkingCriteria = markingCriteria,
-                    ExistingScores = existingScores
+                    ExistingScores = existingScores,
+                    TotalScore = totalScore,
+                    TotalWeight = totalWeight,
+                    Percentage = percentage,
+                    AwardName = awardInfo.Item1,
+                    AwardClass = awardInfo.Item2
                 };
 
                 return View("TeamMarksDetails", viewModel);
@@ -7169,6 +7407,42 @@ namespace KaizenWebApp.Controllers
             {
                 Console.WriteLine($"Error in TeamMarksDetails: {ex.Message}");
                 return RedirectToAction("Error", "Home");
+            }
+        }
+
+        // Helper method to determine award based on percentage
+        private (string AwardName, string AwardClass) GetAwardForPercentage(double percentage)
+        {
+            try
+            {
+                // Get all active award thresholds ordered by minimum percentage (highest first)
+                var awardThresholds = _context.AwardThresholds
+                    .Where(t => t.IsActive)
+                    .OrderByDescending(t => t.MinPercentage)
+                    .ToList();
+
+                // Find the appropriate award range
+                foreach (var threshold in awardThresholds)
+                {
+                    if (percentage >= (double)threshold.MinPercentage && percentage <= (double)threshold.MaxPercentage)
+                    {
+                        // Determine CSS class based on award name
+                        string awardClass = threshold.AwardName.ToLower().Contains("1st") || threshold.AwardName.ToLower().Contains("first") ? "bg-success" :
+                                          threshold.AwardName.ToLower().Contains("2nd") || threshold.AwardName.ToLower().Contains("second") ? "bg-warning" :
+                                          threshold.AwardName.ToLower().Contains("3rd") || threshold.AwardName.ToLower().Contains("third") ? "bg-info" :
+                                          "bg-primary";
+
+                        return (threshold.AwardName, awardClass);
+                    }
+                }
+
+                // If no award range matches, return "No Award"
+                return ("No Award", "bg-secondary");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting award for percentage {percentage}: {ex.Message}");
+                return ("No Award", "bg-secondary");
             }
         }
     }

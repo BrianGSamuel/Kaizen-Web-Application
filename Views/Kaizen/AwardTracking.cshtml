@@ -88,6 +88,12 @@
             color: #155724 !important;
         }
         
+        /* Hide action column in print */
+        .table th:last-child,
+        .table td:last-child {
+            display: none !important;
+        }
+        
         /* Hide unnecessary elements */
         .kaizen-sidebar,
         .kaizen-header,
@@ -153,19 +159,6 @@
                                             {
                                                 var selected = Context.Request.Query["department"].ToString() == dept;
                                                 <option value="@dept" selected="@selected">@dept</option>
-                                            }
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-2">
-                                    <div class="mb-3">
-                                        <label for="category" class="form-label fw-bold">Category</label>
-                                        <select class="form-select" id="category" name="category">
-                                            <option value="">All Categories</option>
-                                            @foreach (var cat in ViewBag.Categories ?? new List<string>())
-                                            {
-                                                var selected = Context.Request.Query["category"].ToString() == cat;
-                                                <option value="@cat" selected="@selected">@cat</option>
                                             }
                                         </select>
                                     </div>
@@ -251,6 +244,8 @@
                                     var score = item.Score;
                                     var totalWeight = item.TotalWeight;
                                     var percentage = item.Percentage;
+                                    var awardName = item.AwardName;
+                                    var awardClass = item.AwardClass;
                                     
                                     <tr>
                                         <td style="min-width: 120px; max-width: 150px; word-wrap: break-word;">
@@ -319,18 +314,18 @@
                                             }
                                         </td>
                                         <td>
-                                            @if (!string.IsNullOrEmpty(kaizen.AwardPrice?.ToString()))
+                                            @if (totalWeight > 0)
                                             {
-                                                <span class="badge bg-success">
+                                                <span class="badge @awardClass">
                                                     <i class="fas fa-trophy me-1"></i>
-                                                    @kaizen.AwardPrice
+                                                    @awardName
                                                 </span>
                                             }
                                             else
                                             {
-                                                <span class="badge bg-warning">
-                                                    <i class="fas fa-clock me-1"></i>
-                                                    Pending
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-minus me-1"></i>
+                                                    No Award
                                                 </span>
                                             }
                                         </td>
@@ -404,18 +399,18 @@
             exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
             exportBtn.disabled = true;
             
-            var form = document.getElementById('searchForm');
-            var formData = new FormData(form);
+            // Get form values directly
+            var startDate = document.getElementById('startDate').value;
+            var endDate = document.getElementById('endDate').value;
+            var department = document.getElementById('department').value;
+            
+            // Build URL with parameters
             var params = new URLSearchParams();
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            if (department) params.append('department', department);
             
-            // Add form data to params
-            for (var pair of formData.entries()) {
-                if (pair[1]) { // Only add non-empty values
-                    params.append(pair[0], pair[1]);
-                }
-            }
-            
-            var url = '/Admin/ExportAwardTrackingToExcel?' + params.toString();
+            var url = '/Kaizen/ExportAwardTrackingToExcel?' + params.toString();
             
             // Create a temporary link to trigger download
             var link = document.createElement('a');
