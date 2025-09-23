@@ -197,7 +197,25 @@
                                 </h5>
                             </div>
                             <div class="manager-card-body">
-                                @if (!string.IsNullOrEmpty(Model.AwardPrice))
+                                @{
+                                    // Calculate award dynamically based on scores
+                                    var scores = ViewBag.ExistingScores as List<KaizenWebApp.Models.KaizenMarkingScore> ?? new List<KaizenWebApp.Models.KaizenMarkingScore>();
+                                    var markingCriteria = ViewBag.MarkingCriteria as List<KaizenWebApp.Models.MarkingCriteria> ?? new List<KaizenWebApp.Models.MarkingCriteria>();
+                                    var totalScore = scores.Sum(s => s.Score);
+                                    var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
+                                    var totalWeight = markingCriteria.Where(c => scoredCriteriaIds.Contains(c.Id)).Sum(c => c.Weight);
+                                    var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+                                    
+                                    // Get award information
+                                    var awardName = "No Award";
+                                    if (totalWeight > 0)
+                                    {
+                                        var awardThresholds = ViewBag.AwardThresholds as List<KaizenWebApp.Models.AwardThreshold> ?? new List<KaizenWebApp.Models.AwardThreshold>();
+                                        var threshold = awardThresholds.Where(t => t.IsActive && percentage >= (double)t.MinPercentage && percentage <= (double)t.MaxPercentage).FirstOrDefault();
+                                        awardName = threshold?.AwardName ?? "No Award";
+                                    }
+                                }
+                                @if (totalWeight > 0 && !string.IsNullOrEmpty(awardName) && awardName != "No Award")
                                 {
                                     <!-- Award Already Assigned -->
                                     <div class="alert alert-success">
@@ -205,7 +223,7 @@
                                             <i class="fas fa-check-circle me-2"></i>
                                             Award Already Assigned
                                         </h6>
-                                        <p class="mb-2"><strong>Award Price:</strong> @Model.AwardPrice</p>
+                                        <p class="mb-2"><strong>Award:</strong> @awardName</p>
                                         <p class="mb-2"><strong>Date:</strong> @Model.AwardDate?.ToString("MMM dd, yyyy")</p>
                                         @if (!string.IsNullOrEmpty(Model.CommitteeSignature))
                                         {

@@ -19,13 +19,6 @@ namespace KaizenWebApp.Enums
         HasCostSaving
     }
 
-    public enum AwardPrice
-    {
-        FirstPrice,
-        SecondPrice,
-        ThirdPrice,
-        NoPrice
-    }
 
     public enum UserRole
     {

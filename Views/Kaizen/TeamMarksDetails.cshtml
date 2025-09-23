@@ -186,19 +186,38 @@
                                 </h5>
                             </div>
                             <div class="card-body" style="background-color: #E8F5E8; border: 1px solid #ffffff;">
-                                @if (!string.IsNullOrEmpty(Model.Kaizen.AwardPrice))
+                                @if (Model.ExistingScores.Any())
                                 {
-                                    <!-- Award Already Assigned -->
+                                    <!-- Award Status Based on Score -->
                                     <div class="mb-3">
                                         <div class="d-flex align-items-center mb-2">
-                                            <i class="fas fa-check-circle text-success me-2"></i>
-                                            <strong>Award Already Assigned</strong>
+                                            <i class="fas fa-trophy text-warning me-2"></i>
+                                            <strong>Award Status</strong>
                                         </div>
-                                        <p class="mb-1"><strong>Award Price:</strong> @Model.Kaizen.AwardPrice</p>
-                                        <p class="mb-1"><strong>Date:</strong> @Model.Kaizen.AwardDate?.ToString("MMM dd, yyyy")</p>
-                                        @if (!string.IsNullOrEmpty(Model.Kaizen.CommitteeSignature))
+                                        @if (Model.TotalWeight > 0)
                                         {
-                                            <p class="mb-1"><strong>Signature:</strong> @Model.Kaizen.CommitteeSignature</p>
+                                            <div class="mb-2">
+                                                <span class="badge @Model.AwardClass fs-6">
+                                                    <i class="fas fa-trophy me-1"></i>
+                                                    @Model.AwardName
+                                                </span>
+                                            </div>
+                                            <p class="mb-1"><strong>Score:</strong> @Model.TotalScore / @Model.TotalWeight</p>
+                                            <p class="mb-1"><strong>Percentage:</strong> 
+                                                <span class="@(Model.Percentage >= 90 ? "text-success" : Model.Percentage >= 70 ? "text-warning" : "text-danger") fw-bold">
+                                                    @Model.Percentage%
+                                                </span>
+                                            </p>
+                                        }
+                                        else
+                                        {
+                                            <div class="mb-2">
+                                                <span class="badge bg-secondary fs-6">
+                                                    <i class="fas fa-minus me-1"></i>
+                                                    No Award
+                                                </span>
+                                            </div>
+                                            <p class="text-muted">No scores available for award calculation.</p>
                                         }
                                     </div>
 
@@ -213,95 +232,52 @@
                                     }
 
                                     <!-- Saved Marking Criteria Scores -->
-                                    @if (Model.ExistingScores.Any())
-                                    {
-                                        <div class="mb-3">
-                                            <label class="fw-bold">Saved Marking Criteria Scores:</label>
-                                            <div class="border rounded p-2 bg-white">
-                                                @{
-                                                    int totalSavedScore = 0;
-                                                    int totalSavedWeight = 0;
-                                                }
-                                                @foreach (var score in Model.ExistingScores)
+                                    <div class="mb-3">
+                                        <label class="fw-bold">Saved Marking Criteria Scores:</label>
+                                        <div class="border rounded p-2 bg-white">
+                                            @foreach (var score in Model.ExistingScores)
+                                            {
+                                                var criteria = Model.MarkingCriteria.FirstOrDefault(c => c.Id == score.MarkingCriteriaId);
+                                                if (criteria != null)
                                                 {
-                                                    var criteria = Model.MarkingCriteria.FirstOrDefault(c => c.Id == score.MarkingCriteriaId);
-                                                    if (criteria != null)
-                                                    {
-                                                        totalSavedScore += score.Score;
-                                                        totalSavedWeight += criteria.Weight;
-                                                        <div class="row mb-1">
-                                                            <div class="col-6">@criteria.CriteriaName:</div>
-                                                            <div class="col-6">@score.Score / @criteria.Weight</div>
-                                                        </div>
-                                                    }
+                                                    <div class="row mb-1">
+                                                        <div class="col-6">@criteria.CriteriaName:</div>
+                                                        <div class="col-6">@score.Score / @criteria.Weight</div>
+                                                    </div>
                                                 }
-                                                <hr class="my-2">
-                                                <div class="row">
-                                                    <div class="col-6"><strong>Total Score:</strong></div>
-                                                    <div class="col-6"><strong>@totalSavedScore / @totalSavedWeight</strong></div>
-                                                </div>
-                                                @{
-                                                    var savedPercentage = totalSavedWeight > 0 ? Math.Round((double)totalSavedScore / totalSavedWeight * 100, 1) : 0;
-                                                    var savedPercentageClass = savedPercentage >= 90 ? "text-success" : savedPercentage >= 70 ? "text-warning" : "text-danger";
-                                                }
-                                                <div class="row">
-                                                    <div class="col-6"><strong>Percentage:</strong></div>
-                                                    <div class="col-6"><strong class="@savedPercentageClass">@savedPercentage%</strong></div>
+                                            }
+                                            <hr class="my-2">
+                                            <div class="row">
+                                                <div class="col-6"><strong>Total Score:</strong></div>
+                                                <div class="col-6"><strong>@Model.TotalScore / @Model.TotalWeight</strong></div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6"><strong>Percentage:</strong></div>
+                                                <div class="col-6">
+                                                    <strong class="@(Model.Percentage >= 90 ? "text-success" : Model.Percentage >= 70 ? "text-warning" : "text-danger")">
+                                                        @Model.Percentage%
+                                                    </strong>
                                                 </div>
                                             </div>
                                         </div>
-                                    }
+                                    </div>
                                 }
                                 else
                                 {
-                                    <!-- No Award Assigned -->
+                                    <!-- No Scores Available -->
                                     <div class="mb-3">
                                         <div class="d-flex align-items-center mb-2">
-                                            <i class="fas fa-clock text-warning me-2"></i>
-                                            <strong>No Award Assigned</strong>
+                                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                            <strong>No Scores Available</strong>
                                         </div>
-                                        <p class="text-muted">This kaizen has not been awarded yet.</p>
+                                        <p class="text-muted">This kaizen has not been scored yet. No award can be calculated.</p>
+                                        <div class="mb-2">
+                                            <span class="badge bg-secondary fs-6">
+                                                <i class="fas fa-minus me-1"></i>
+                                                No Award
+                                            </span>
+                                        </div>
                                     </div>
-
-                                    <!-- Saved Marking Criteria Scores (if any) -->
-                                    @if (Model.ExistingScores.Any())
-                                    {
-                                        <div class="mb-3">
-                                            <label class="fw-bold">Saved Marking Criteria Scores:</label>
-                                            <div class="border rounded p-2 bg-white">
-                                                @{
-                                                    int totalSavedScore = 0;
-                                                    int totalSavedWeight = 0;
-                                                }
-                                                @foreach (var score in Model.ExistingScores)
-                                                {
-                                                    var criteria = Model.MarkingCriteria.FirstOrDefault(c => c.Id == score.MarkingCriteriaId);
-                                                    if (criteria != null)
-                                                    {
-                                                        totalSavedScore += score.Score;
-                                                        totalSavedWeight += criteria.Weight;
-                                                        <div class="row mb-1">
-                                                            <div class="col-6">@criteria.CriteriaName:</div>
-                                                            <div class="col-6">@score.Score / @criteria.Weight</div>
-                                                        </div>
-                                                    }
-                                                }
-                                                <hr class="my-2">
-                                                <div class="row">
-                                                    <div class="col-6"><strong>Total Score:</strong></div>
-                                                    <div class="col-6"><strong>@totalSavedScore / @totalSavedWeight</strong></div>
-                                                </div>
-                                                @{
-                                                    var savedPercentage = totalSavedWeight > 0 ? Math.Round((double)totalSavedScore / totalSavedWeight * 100, 1) : 0;
-                                                    var savedPercentageClass = savedPercentage >= 90 ? "text-success" : savedPercentage >= 70 ? "text-warning" : "text-danger";
-                                                }
-                                                <div class="row">
-                                                    <div class="col-6"><strong>Percentage:</strong></div>
-                                                    <div class="col-6"><strong class="@savedPercentageClass">@savedPercentage%</strong></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
                                 }
                             </div>
                         </div>

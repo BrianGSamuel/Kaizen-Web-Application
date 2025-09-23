@@ -247,7 +247,7 @@
                         </div>
 
                         <!-- Award Information -->
-                        @if (!string.IsNullOrEmpty(Model.Kaizen.AwardPrice))
+                        @if (Model.TotalWeight > 0)
                         {
                             <div class="card mb-4">
                                 <div class="card-header bg-warning text-dark">
@@ -262,7 +262,7 @@
                                             <i class="fas fa-check-circle me-2"></i>
                                             Award Assigned
                                         </h6>
-                                        <p class="mb-2"><strong>Award Price:</strong> @Model.Kaizen.AwardPrice</p>
+                                        <p class="mb-2"><strong>Award:</strong> @Model.AwardName</p>
                                         <p class="mb-2"><strong>Date:</strong> @Model.Kaizen.AwardDate?.ToString("MMM dd, yyyy")</p>
                                         @if (!string.IsNullOrEmpty(Model.Kaizen.CommitteeSignature))
                                         {

@@ -4,107 +4,6 @@
     Layout = "~/Views/Shared/_KaizenTeamLayout.cshtml";
 }
 
-<style>
-    @@media print {
-        .search-section {
-            display: none !important;
-        }
-        
-        .btn {
-            display: none !important;
-        }
-        
-        .card-header {
-            background-color: #f8f9fa !important;
-            color: #000 !important;
-        }
-        
-        .table-dark {
-            background-color: #343a40 !important;
-            color: #fff !important;
-        }
-        
-        .table-dark th {
-            background-color: #343a40 !important;
-            color: #fff !important;
-        }
-        
-        .badge {
-            border: 1px solid #000 !important;
-        }
-        
-        .bg-success {
-            background-color: #d4edda !important;
-            color: #155724 !important;
-        }
-        
-        .bg-danger {
-            background-color: #f8d7da !important;
-            color: #721c24 !important;
-        }
-        
-        .bg-warning {
-            background-color: #fff3cd !important;
-            color: #856404 !important;
-        }
-        
-        .bg-primary {
-            background-color: #cce7ff !important;
-            color: #004085 !important;
-        }
-        
-        /* Additional print optimizations */
-        body {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        
-        .container-fluid {
-            width: 100% !important;
-            max-width: none !important;
-        }
-        
-        .card {
-            border: 1px solid #000 !important;
-            box-shadow: none !important;
-        }
-        
-        .table {
-            font-size: 12px !important;
-        }
-        
-        .table th,
-        .table td {
-            padding: 8px 4px !important;
-            border: 1px solid #000 !important;
-        }
-        
-        /* Ensure text is readable in print */
-        .text-muted {
-            color: #6c757d !important;
-        }
-        
-        .text-success {
-            color: #155724 !important;
-        }
-        
-        /* Hide unnecessary elements */
-        .kaizen-sidebar,
-        .kaizen-header,
-        .kaizen-toggle {
-            display: none !important;
-        }
-        
-        .kaizen-main {
-            margin-left: 0 !important;
-            padding: 0 !important;
-        }
-        
-        .kaizen-content {
-            padding: 0 !important;
-        }
-    }
-</style>
 
 <div class="container-fluid">
     <!-- Advanced Search Section -->
@@ -264,9 +163,6 @@
                         <button type="button" class="btn btn-success" onclick="exportToExcel()" title="Export to Excel format matching the image specification">
                             <i class="fas fa-file-excel me-2"></i>Export Excel
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="printResults()">
-                            <i class="fas fa-print me-2"></i>Print
-                        </button>
                     </div>
                 </div>
             </div>
@@ -283,7 +179,7 @@
                     else
                     {
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover" id="printableTable">
                                 <thead class="table-dark">
                                     <tr>
                                         <th><i class="fas fa-calendar me-2"></i>Date Submitted</th>
@@ -410,7 +306,4 @@
         }, 2000);
     }
 
-    function printResults() {
-        window.print();
-    }
 </script>

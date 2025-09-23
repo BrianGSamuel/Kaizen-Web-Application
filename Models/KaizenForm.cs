@@ -90,8 +90,6 @@ namespace KaizenWebApp.Models
         public string? ManagerApprovedBy { get; set; }
 
         // Award tracking fields
-        [StringLength(20)]
-        public string? AwardPrice { get; set; } // "1ST PRICE", "2ND PRICE", "3RD PRICE", "NO PRICE"
 
         [StringLength(1000)]
         public string? CommitteeComments { get; set; }

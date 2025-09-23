@@ -55,9 +55,10 @@ namespace KaizenWebApp.Controllers
                 k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
 
             // Calculate awarded kaizens
+            // Count kaizens with scores (dynamic award calculation)
             var awardedKaizens = _context.KaizenForms.Count(k => 
                 k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && 
-                !string.IsNullOrEmpty(k.AwardPrice) && k.AwardPrice != "NO PRICE");
+                _context.KaizenMarkingScores.Any(s => s.KaizenId == k.Id));
 
             // Calculate percentages
             var totalForPercentage = totalKaizens > 0 ? totalKaizens : 1;
@@ -222,7 +223,7 @@ namespace KaizenWebApp.Controllers
             return View(viewModel);
         }
 
-        public IActionResult AwardTracking(string startDate, string endDate, string department, string category)
+        public IActionResult AwardTracking(string startDate, string endDate, string department, string awardStatus)
         {
             // Check if user is admin
             var username = User.Identity?.Name;
@@ -254,11 +255,8 @@ namespace KaizenWebApp.Controllers
                 query = query.Where(k => k.Department == department);
             }
 
-            // Apply category filter
-            if (!string.IsNullOrEmpty(category))
-            {
-                query = query.Where(k => k.Category != null && k.Category.Contains(category));
-            }
+
+            // Note: Award status filtering will be applied after dynamic calculation
 
             // Get filtered results
             var approvedKaizens = query.ToList();
@@ -285,6 +283,26 @@ namespace KaizenWebApp.Controllers
                     TotalWeight = totalWeight,
                     Percentage = percentage
                 });
+            }
+
+            // Apply award status filtering after dynamic calculation
+            if (!string.IsNullOrEmpty(awardStatus))
+            {
+                if (awardStatus == "Pending")
+                {
+                    // Filter for kaizens that don't have scores yet
+                    kaizensWithScores = kaizensWithScores.Where(k => ((dynamic)k).TotalWeight == 0).ToList();
+                }
+                else if (awardStatus == "Assigned")
+                {
+                    // Filter for kaizens that have scores (any award assigned)
+                    kaizensWithScores = kaizensWithScores.Where(k => ((dynamic)k).TotalWeight > 0).ToList();
+                }
+                else
+                {
+                    // Filter for kaizens with the specific award name
+                    kaizensWithScores = kaizensWithScores.Where(k => ((dynamic)k).AwardName == awardStatus).ToList();
+                }
             }
 
             // Sort by percentage in descending order (highest score first)
@@ -322,230 +340,38 @@ namespace KaizenWebApp.Controllers
 
             ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
 
-            return View(kaizensWithScores);
-        }
-
-        public IActionResult Nominations(string startDate, string endDate, string department, string category, string awardStatus)
-        {
-            // Check if user is admin
-            var username = User.Identity?.Name;
-            if (username?.ToLower() != "admin")
-            {
-                return RedirectToAction("AccessDenied", "Home");
-            }
-
-            // Get base query for approved kaizens
-            var query = _context.KaizenForms
-                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved");
-
-            // Apply date range filter
-            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
-            {
-                query = query.Where(k => k.DateSubmitted >= start);
-            }
-
-            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
-            {
-                // Add one day to include the end date
-                end = end.AddDays(1);
-                query = query.Where(k => k.DateSubmitted < end);
-            }
-
-            // Apply department filter
-            if (!string.IsNullOrEmpty(department))
-            {
-                query = query.Where(k => k.Department == department);
-            }
-
-            // Apply category filter
-            if (!string.IsNullOrEmpty(category))
-            {
-                query = query.Where(k => k.Category != null && k.Category.Contains(category));
-            }
-
-            // Apply award status filter
-            if (!string.IsNullOrEmpty(awardStatus))
-            {
-                if (awardStatus == "Pending")
-                {
-                    // Filter for kaizens that don't have an award price assigned
-                    query = query.Where(k => string.IsNullOrEmpty(k.AwardPrice));
-                }
-                else
-                {
-                    // Filter for kaizens with the specific award price
-                    query = query.Where(k => k.AwardPrice == awardStatus);
-                }
-            }
-
-            // Get filtered results
-            var approvedKaizens = query.ToList();
-
-            // Calculate percentage for each kaizen and filter only those with scores above 0%
-            var kaizensWithPercentage = new List<(KaizenForm Kaizen, double Percentage)>();
-            
-            foreach (var kaizen in approvedKaizens)
-            {
-                // Get marking scores for this kaizen
-                var scores = _context.KaizenMarkingScores
-                    .Where(s => s.KaizenId == kaizen.Id)
-                    .ToList();
-
-                // Get the total weight of criteria that were actually scored for this kaizen
-                var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
-                var totalWeight = _context.MarkingCriteria
-                    .Where(c => scoredCriteriaIds.Contains(c.Id))
-                    .Sum(c => c.Weight);
-
-                // Calculate total score and percentage
-                var totalScore = scores.Sum(s => s.Score);
-                var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
-
-                // Only include kaizens that have a score above 0%
-                if (percentage > 0)
-                {
-                    kaizensWithPercentage.Add((kaizen, percentage));
-                }
-            }
-
-            // Sort by percentage: 75%+ first, then 65%+, then the rest
-            var sortedKaizens = kaizensWithPercentage
-                .OrderByDescending(k => k.Percentage)
-                .ThenByDescending(k => k.Kaizen.DateSubmitted)
-                .Select(k => k.Kaizen)
-                .ToList();
-
-            // Populate ViewBag with filter options
-            ViewBag.Departments = _context.KaizenForms
-                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && !string.IsNullOrEmpty(k.Department))
-                .Select(k => k.Department)
+            // Get dynamic award names from AwardThresholds table for filter dropdown
+            var awardNames = _context.AwardThresholds
+                .Where(t => t.IsActive)
+                .Select(t => t.AwardName)
                 .Distinct()
-                .OrderBy(d => d)
+                .OrderBy(a => a)
                 .ToList();
-
-            // Get all unique categories from approved kaizens
-            var allCategories = new List<string>();
-            var kaizensWithCategories = _context.KaizenForms
-                .Where(k => k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved" && !string.IsNullOrEmpty(k.Category))
-                .Select(k => k.Category)
-                .ToList();
-
-            foreach (var catString in kaizensWithCategories)
-            {
-                if (!string.IsNullOrEmpty(catString))
-                {
-                    var categories = catString.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(c => c.Trim())
-                        .Where(c => !string.IsNullOrEmpty(c));
-                    allCategories.AddRange(categories);
-                }
-            }
-
-            ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
-
-            return View(sortedKaizens);
-        }
-
-        public IActionResult NominationDetails(int id)
-        {
-            // Check if user is admin
-            var username = User.Identity?.Name;
-            if (username?.ToLower() != "admin")
-            {
-                return RedirectToAction("AccessDenied", "Home");
-            }
-
-            var kaizen = _context.KaizenForms.FirstOrDefault(k => k.Id == id);
-            if (kaizen == null)
-            {
-                TempData["ErrorMessage"] = "Kaizen not found.";
-                return RedirectToAction("Nominations");
-            }
-
-            // Calculate percentage for this kaizen
-            var scores = _context.KaizenMarkingScores
-                .Where(s => s.KaizenId == kaizen.Id)
-                .ToList();
-
-            // Get the total weight of criteria that were actually scored for this kaizen
-            var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
-            var totalWeight = _context.MarkingCriteria
-                .Where(c => scoredCriteriaIds.Contains(c.Id))
-                .Sum(c => c.Weight);
-
-            var totalScore = scores.Sum(s => s.Score);
-            var percentage = totalWeight > 0 ? (double)totalScore / totalWeight * 100 : 0;
-
-            ViewBag.Percentage = percentage;
-            ViewBag.TotalScore = totalScore;
-            ViewBag.TotalWeight = totalWeight;
-
-            return View(kaizen);
-        }
-
-        [HttpPost]
-        public IActionResult AssignNomination(int kaizenId, string awardPlacement, string committeeComments, string committeeSignature)
-        {
-            // Check if user is admin
-            var username = User.Identity?.Name;
-            if (username?.ToLower() != "admin")
-            {
-                return RedirectToAction("AccessDenied", "Home");
-            }
-
-            Console.WriteLine("=== NOMINATION FORM DATA DEBUG ===");
-            Console.WriteLine($"Kaizen ID: {kaizenId}");
-            Console.WriteLine($"Award Placement: '{awardPlacement}'");
-            Console.WriteLine($"Committee Comments: '{committeeComments}'");
-            Console.WriteLine($"Committee Signature: '{committeeSignature}'");
-
-            // Basic validation
-            if (string.IsNullOrWhiteSpace(awardPlacement))
-            {
-                Console.WriteLine("ERROR: Award placement is empty");
-                TempData["SubmissionErrorMessage"] = "Please select an award placement.";
-                return RedirectToAction("NominationDetails", new { id = kaizenId });
-            }
-
-            if (string.IsNullOrWhiteSpace(committeeSignature))
-            {
-                Console.WriteLine("ERROR: Committee signature is empty");
-                TempData["SubmissionErrorMessage"] = "Please provide a committee signature.";
-                return RedirectToAction("NominationDetails", new { id = kaizenId });
-            }
-
-            // Find the kaizen record
-            var kaizen = _context.KaizenForms.FirstOrDefault(k => k.Id == kaizenId);
-            if (kaizen == null)
-            {
-                Console.WriteLine($"ERROR: Kaizen with ID {kaizenId} not found");
-                TempData["SubmissionErrorMessage"] = "Kaizen not found.";
-                return RedirectToAction("Nominations");
-            }
-
-            // Update the kaizen record using raw SQL to avoid entity tracking issues
-            var updateResult = _context.Database.ExecuteSqlRaw(
-                "UPDATE KaizenForms SET AwardPrice = {0}, CommitteeComments = {1}, CommitteeSignature = {2}, AwardDate = {3} WHERE Id = {4}",
-                awardPlacement,
-                committeeComments ?? "",
-                committeeSignature ?? "",
-                DateTime.Now,
-                kaizenId
-            );
-
-            Console.WriteLine($"Kaizen update result: {updateResult} rows affected");
-            Console.WriteLine($"Updated Kaizen fields: AwardPlacement={awardPlacement}, Comments={committeeComments}, Signature={committeeSignature}");
-
-            // Verify the data was saved by retrieving it using raw SQL
-            var savedKaizen = _context.KaizenForms.FromSqlRaw("SELECT * FROM KaizenForms WHERE Id = {0}", kaizenId).FirstOrDefault();
             
-            Console.WriteLine($"Verification - Saved Award Placement: {savedKaizen?.AwardPrice}");
-            Console.WriteLine($"Verification - Saved Comments: {savedKaizen?.CommitteeComments}");
-            Console.WriteLine($"Verification - Saved Signature: {savedKaizen?.CommitteeSignature}");
+            // Add "Pending" and "Assigned" options
+            var allAwardStatusOptions = new List<string> { "Pending", "Assigned" };
+            allAwardStatusOptions.AddRange(awardNames);
+            ViewBag.AwardStatusOptions = allAwardStatusOptions;
 
-            TempData["SubmissionSuccessMessage"] = $"Nomination assigned successfully! Award: {awardPlacement}";
-            return RedirectToAction("NominationDetails", new { id = kaizenId });
+            // Add award information to each kaizen
+            var kaizensWithAwards = new List<object>();
+            foreach (dynamic item in kaizensWithScores)
+            {
+                var awardInfo = GetAwardForPercentage(item.Percentage);
+                kaizensWithAwards.Add(new
+                {
+                    Kaizen = item.Kaizen,
+                    Score = item.Score,
+                    TotalWeight = item.TotalWeight,
+                    Percentage = item.Percentage,
+                    AwardName = awardInfo.Item1,
+                    AwardClass = awardInfo.Item2
+                });
+            }
+
+            return View(kaizensWithAwards);
         }
+
 
         public async Task<IActionResult> AwardDetails(int id)
         {
@@ -570,12 +396,28 @@ namespace KaizenWebApp.Controllers
                 .Where(s => s.KaizenId == id)
                 .ToListAsync();
             
+            // Calculate total score and percentage
+            var totalScore = existingScores.Sum(s => s.Score);
+            var scoredCriteriaIds = existingScores.Select(s => s.MarkingCriteriaId).ToList();
+            var totalWeight = markingCriteria
+                .Where(c => scoredCriteriaIds.Contains(c.Id))
+                .Sum(c => c.Weight);
+            var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+            
+            // Get award information based on percentage
+            var awardInfo = GetAwardForPercentage(percentage);
+            
             // Create a view model to pass both kaizen and marking criteria
             var viewModel = new AwardDetailsViewModel
             {
                 Kaizen = kaizen,
                 MarkingCriteria = markingCriteria,
-                ExistingScores = existingScores
+                ExistingScores = existingScores,
+                TotalScore = totalScore,
+                TotalWeight = totalWeight,
+                Percentage = percentage,
+                AwardName = awardInfo.Item1,
+                AwardClass = awardInfo.Item2
             };
 
             return View(viewModel);
@@ -712,7 +554,7 @@ namespace KaizenWebApp.Controllers
                 var savedKaizen = _context.KaizenForms.FromSqlRaw("SELECT * FROM KaizenForms WHERE Id = {0}", kaizenId).FirstOrDefault();
                 var savedScoresCount = _context.KaizenMarkingScores.FromSqlRaw("SELECT * FROM KaizenMarkingScores WHERE KaizenId = {0}", kaizenId).Count();
                 
-                Console.WriteLine($"Verification - Saved Award Price: {savedKaizen?.AwardPrice}");
+                Console.WriteLine($"Verification - Saved Award Price: [Dynamic calculation based on scores]");
                 Console.WriteLine($"Verification - Saved Comments: {savedKaizen?.CommitteeComments}");
                 Console.WriteLine($"Verification - Saved Signature: {savedKaizen?.CommitteeSignature}");
                 Console.WriteLine($"Verification - Saved Scores Count: {savedScoresCount}");
@@ -1010,7 +852,7 @@ namespace KaizenWebApp.Controllers
 
         // New action for viewing all kaizens with comprehensive filters
         public IActionResult ViewAllKaizens(string searchString, string department, string status, 
-            string startDate, string endDate, string category, string engineerStatus, string managerStatus, 
+            string startDate, string endDate, string engineerStatus, string managerStatus, 
             string costSavingRange, string employeeName, string employeeNo, string kaizenNo)
         {
             // Check if user is admin
@@ -1057,11 +899,6 @@ namespace KaizenWebApp.Controllers
                 query = query.Where(k => k.Department == department);
             }
 
-            // Apply category filter
-            if (!string.IsNullOrEmpty(category))
-            {
-                query = query.Where(k => k.Category != null && k.Category.Contains(category));
-            }
 
             // Apply engineer status filter
             if (!string.IsNullOrEmpty(engineerStatus))
@@ -1164,25 +1001,6 @@ namespace KaizenWebApp.Controllers
                 .OrderBy(d => d)
                 .ToList();
 
-            // Get all unique categories
-            var allCategories = new List<string>();
-            var kaizensWithCategories = _context.KaizenForms
-                .Where(k => !string.IsNullOrEmpty(k.Category))
-                .Select(k => k.Category)
-                .ToList();
-
-            foreach (var catString in kaizensWithCategories)
-            {
-                if (!string.IsNullOrEmpty(catString))
-                {
-                    var categories = catString.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(c => c.Trim())
-                        .Where(c => !string.IsNullOrEmpty(c));
-                    allCategories.AddRange(categories);
-                }
-            }
-
-            ViewBag.Categories = allCategories.Distinct().OrderBy(c => c).ToList();
 
             // Pass current filter values back to view
             ViewBag.CurrentFilters = new
@@ -1191,7 +1009,6 @@ namespace KaizenWebApp.Controllers
                 Status = status,
                 StartDate = startDate,
                 EndDate = endDate,
-                Category = category,
                 EngineerStatus = engineerStatus,
                 ManagerStatus = managerStatus,
                 CostSavingRange = costSavingRange,
@@ -1225,10 +1042,43 @@ namespace KaizenWebApp.Controllers
                     return RedirectToAction("ViewAllKaizens");
                 }
 
-                return View("~/Views/Admin/AdminKaizenDetails.cshtml", kaizen);
+                // Get active marking criteria
+                var markingCriteria = await _context.MarkingCriteria.Where(c => c.IsActive).ToListAsync();
+                
+                // Get existing scores for this kaizen
+                var existingScores = await _context.KaizenMarkingScores
+                    .Where(s => s.KaizenId == id)
+                    .ToListAsync();
+                
+                // Calculate total score and percentage
+                var totalScore = existingScores.Sum(s => s.Score);
+                var scoredCriteriaIds = existingScores.Select(s => s.MarkingCriteriaId).ToList();
+                var totalWeight = markingCriteria
+                    .Where(c => scoredCriteriaIds.Contains(c.Id))
+                    .Sum(c => c.Weight);
+                var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
+                
+                // Get award information based on percentage
+                var awardInfo = GetAwardForPercentage(percentage);
+                
+                // Create a view model to pass both kaizen and marking criteria
+                var viewModel = new AwardDetailsViewModel
+                {
+                    Kaizen = kaizen,
+                    MarkingCriteria = markingCriteria,
+                    ExistingScores = existingScores,
+                    TotalScore = totalScore,
+                    TotalWeight = totalWeight,
+                    Percentage = percentage,
+                    AwardName = awardInfo.Item1,
+                    AwardClass = awardInfo.Item2
+                };
+
+                return View("~/Views/Admin/AdminKaizenDetails.cshtml", viewModel);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error in AdminKaizenDetails: {ex.Message}");
                 TempData["ErrorMessage"] = "An error occurred while loading the kaizen details.";
                 return RedirectToAction("ViewAllKaizens");
             }
@@ -1237,7 +1087,7 @@ namespace KaizenWebApp.Controllers
         // AJAX endpoint for real-time search
         [HttpGet]
         public IActionResult SearchAllKaizens(string searchString, string department, string status, 
-            string startDate, string endDate, string category, string engineerStatus, string managerStatus, 
+            string startDate, string endDate, string engineerStatus, string managerStatus, 
             string costSavingRange, string employeeName, string employeeNo, string kaizenNo)
         {
             // Check if user is admin
@@ -1284,10 +1134,6 @@ namespace KaizenWebApp.Controllers
                     query = query.Where(k => k.Department == department);
                 }
 
-                if (!string.IsNullOrEmpty(category))
-                {
-                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
-                }
 
                 if (!string.IsNullOrEmpty(engineerStatus))
                 {
@@ -1384,7 +1230,6 @@ namespace KaizenWebApp.Controllers
                         costSaving = k.CostSaving,
                         engineerStatus = k.EngineerStatus ?? "Pending",
                         managerStatus = k.ManagerStatus ?? "Pending",
-                        category = k.Category,
                         suggestionDescription = k.SuggestionDescription
                     })
                     .ToList();
@@ -1596,7 +1441,17 @@ namespace KaizenWebApp.Controllers
                 .ThenBy(c => c.CriteriaName)
                 .ToListAsync();
 
-            return View(criteria);
+            var thresholds = await _context.AwardThresholds
+                .OrderBy(t => t.MinPercentage)
+                .ToListAsync();
+
+            var viewModel = new MarkingCriteriaManagementViewModel
+            {
+                MarkingCriteria = criteria,
+                AwardThresholds = thresholds
+            };
+
+            return View(viewModel);
         }
 
         [HttpGet]
@@ -1959,7 +1814,7 @@ namespace KaizenWebApp.Controllers
 
         // GET: /Admin/ExportAwardTrackingToExcel
         [HttpGet]
-        public async Task<IActionResult> ExportAwardTrackingToExcel(string startDate, string endDate, string department, string category)
+        public IActionResult ExportAwardTrackingToExcel(string startDate, string endDate, string department, string awardStatus)
         {
             // Check if user is admin
             var username = User.Identity?.Name;
@@ -1993,61 +1848,32 @@ namespace KaizenWebApp.Controllers
                     query = query.Where(k => k.Department == department);
                 }
 
-                // Apply category filter
-                if (!string.IsNullOrEmpty(category))
+
+                // Apply award status filter
+                if (!string.IsNullOrEmpty(awardStatus))
                 {
-                    query = query.Where(k => k.Category != null && k.Category.Contains(category));
+                    if (awardStatus == "Pending")
+                    {
+                        // Filter for kaizens that don't have scores yet (will be filtered after calculation)
+                    }
+                    else if (awardStatus == "Assigned")
+                    {
+                        // Filter for kaizens that have scores (will be filtered after calculation)
+                    }
                 }
 
                 // Get filtered results
-                var approvedKaizens = await query.ToListAsync();
-
-                // Calculate scores for each kaizen
-                var kaizensWithScores = new List<object>();
-                foreach (var kaizen in approvedKaizens)
-                {
-                    var scores = _context.KaizenMarkingScores.Where(s => s.KaizenId == kaizen.Id).ToList();
-                    
-                    // Get the total weight of criteria that were actually scored for this kaizen
-                    var scoredCriteriaIds = scores.Select(s => s.MarkingCriteriaId).ToList();
-                    var totalWeight = _context.MarkingCriteria
-                        .Where(c => scoredCriteriaIds.Contains(c.Id))
-                        .Sum(c => c.Weight);
-                    
-                    var totalScore = scores.Sum(s => s.Score);
-                    var percentage = totalWeight > 0 ? Math.Round((double)totalScore / totalWeight * 100, 1) : 0;
-
-                    kaizensWithScores.Add(new
-                    {
-                        Kaizen = kaizen,
-                        Score = totalScore,
-                        TotalWeight = totalWeight,
-                        Percentage = percentage
-                    });
-                }
-
-                // Sort by percentage in descending order (highest score first)
-                kaizensWithScores = kaizensWithScores
-                    .OrderByDescending(k => ((dynamic)k).Percentage)
-                    .ThenByDescending(k => ((dynamic)k).Score)
-                    .ThenByDescending(k => ((dynamic)k).Kaizen.DateSubmitted)
-                    .ToList();
+                var approvedKaizens = query.ToList();
 
                 // Create CSV content
                 var csv = new StringBuilder();
-                
-                // Add headers
-                csv.AppendLine("KAIZEN NO,EMPLOYEE NO,EMPLOYEE NAME,DEPARTMENT,DATE SUBMITTED,CATEGORY,COST SAVING PER YEAR ($),SCORE,PERCENTAGE,AWARD STATUS,AWARD PRICE");
+                csv.AppendLine("Kaizen No,Employee No,Employee Name,Department,Date Submitted,Cost Saving,Award Status,Award Price");
 
-                // Add data rows
-                foreach (dynamic item in kaizensWithScores)
+                foreach (var kaizen in approvedKaizens)
                 {
-                    var kaizen = item.Kaizen;
-                    var score = item.Score;
-                    var totalWeight = item.TotalWeight;
-                    var percentage = item.Percentage;
-                    
-                    var awardStatus = !string.IsNullOrEmpty(kaizen.AwardPrice?.ToString()) ? "Awarded" : "Pending";
+                    // Award status is now dynamic based on scores
+                    var hasScores = _context.KaizenMarkingScores.Any(s => s.KaizenId == kaizen.Id);
+                    var currentAwardStatus = hasScores ? "Awarded" : "Pending";
 
                     // Escape CSV values and create row
                     var row = new List<string>
@@ -2057,30 +1883,18 @@ namespace KaizenWebApp.Controllers
                         EscapeCsvValue(kaizen.EmployeeName),
                         EscapeCsvValue(kaizen.Department),
                         EscapeCsvValue(kaizen.DateSubmitted.ToString("yyyy-MM-dd")),
-                        EscapeCsvValue(kaizen.Category ?? ""),
                         EscapeCsvValue(kaizen.CostSaving.HasValue ? kaizen.CostSaving.Value.ToString("N2") : ""),
-                        EscapeCsvValue(score.ToString()),
-                        EscapeCsvValue(percentage.ToString("F1")),
-                        EscapeCsvValue(awardStatus),
-                        EscapeCsvValue(kaizen.AwardPrice ?? "")
+                        EscapeCsvValue(currentAwardStatus),
+                        EscapeCsvValue("") // Award price is now dynamic
                     };
 
                     csv.AppendLine(string.Join(",", row));
                 }
 
-                // Generate descriptive filename
-                var filterDescription = new List<string>();
-                if (!string.IsNullOrEmpty(department)) filterDescription.Add(department);
-                if (!string.IsNullOrEmpty(category)) filterDescription.Add(category);
-                if (!string.IsNullOrEmpty(startDate)) filterDescription.Add($"From_{startDate}");
-                if (!string.IsNullOrEmpty(endDate)) filterDescription.Add($"To_{endDate}");
-                
-                var filterSuffix = filterDescription.Any() ? $"_{string.Join("_", filterDescription)}" : "";
-                var fileName = $"Award_Tracking_Export{filterSuffix}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
-
-                // Return the CSV file
-                var content = Encoding.UTF8.GetBytes(csv.ToString());
-                return File(content, "text/csv", fileName);
+                // Return CSV file
+                var fileName = $"Award_Tracking_Export_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+                return File(bytes, "text/csv", fileName);
             }
             catch (Exception ex)
             {
@@ -2196,7 +2010,7 @@ namespace KaizenWebApp.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> UpdateGalleryImage(int id, string title, string description, int displayOrder, bool isActive)
+        public async Task<IActionResult> UpdateGalleryImage(int id, string title, int displayOrder)
         {
             try
             {
@@ -2208,9 +2022,7 @@ namespace KaizenWebApp.Controllers
                 }
 
                 gallery.Title = title;
-                gallery.Description = description;
                 gallery.DisplayOrder = displayOrder;
-                gallery.IsActive = isActive;
 
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Image updated successfully!";
@@ -2262,7 +2074,7 @@ namespace KaizenWebApp.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> UploadMultipleImages(IFormFileCollection images, string title, string description, int displayOrder = 0)
+        public async Task<IActionResult> UploadMultipleImages(IFormFileCollection images, string title, int displayOrder = 0)
         {
             try
             {
@@ -2300,7 +2112,6 @@ namespace KaizenWebApp.Controllers
                     var gallery = new Gallery
                     {
                         Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(image.FileName) : title,
-                        Description = description,
                         ImagePath = $"/uploads/gallery/{fileName}",
                         DisplayOrder = displayOrder + uploadedCount,
                         UploadDate = DateTime.Now,
@@ -2330,6 +2141,289 @@ namespace KaizenWebApp.Controllers
             }
 
             return RedirectToAction("Gallery");
+        }
+
+        // AWARD THRESHOLD MANAGEMENT METHODS
+
+        [HttpGet]
+        public async Task<IActionResult> AwardThresholds()
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var thresholds = await _context.AwardThresholds
+                .OrderBy(t => t.MinPercentage)
+                .ToListAsync();
+
+            return View(thresholds);
+        }
+
+        [HttpGet]
+        public IActionResult AddAwardThreshold()
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            return View(new AwardThresholdViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddAwardThreshold(AwardThresholdViewModel model)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied." });
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                    return Json(new { success = false, message = string.Join(", ", errors) });
+                }
+
+                // Validate percentage ranges
+                if (model.MinPercentage >= model.MaxPercentage)
+                {
+                    return Json(new { success = false, message = "Minimum percentage must be less than maximum percentage." });
+                }
+
+                // Check for overlapping ranges
+                var existingThresholds = await _context.AwardThresholds
+                    .Where(t => t.IsActive)
+                    .ToListAsync();
+
+                foreach (var existing in existingThresholds)
+                {
+                    if ((model.MinPercentage < existing.MaxPercentage && model.MaxPercentage > existing.MinPercentage))
+                    {
+                        return Json(new { success = false, message = "This range overlaps with an existing award threshold." });
+                    }
+                }
+
+                var threshold = new AwardThreshold
+                {
+                    AwardName = model.AwardName,
+                    MinPercentage = model.MinPercentage,
+                    MaxPercentage = model.MaxPercentage,
+                    Description = null, // Description field removed
+                    IsActive = model.IsActive,
+                    CreatedBy = username,
+                    CreatedAt = DateTime.Now
+                };
+
+                _context.AwardThresholds.Add(threshold);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Award threshold added successfully!" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding award threshold: {ex.Message}");
+                return Json(new { success = false, message = "An error occurred while adding the award threshold." });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditAwardThreshold(int id)
+        {
+            // Check if user is admin
+            var username = User.Identity?.Name;
+            if (username?.ToLower() != "admin")
+            {
+                return RedirectToAction("AccessDenied", "Home");
+            }
+
+            var threshold = await _context.AwardThresholds.FindAsync(id);
+            if (threshold == null)
+            {
+                TempData["ErrorMessage"] = "Award threshold not found.";
+                return RedirectToAction("AwardThresholds");
+            }
+
+            var model = new AwardThresholdViewModel
+            {
+                Id = threshold.Id,
+                AwardName = threshold.AwardName,
+                MinPercentage = threshold.MinPercentage,
+                MaxPercentage = threshold.MaxPercentage,
+                IsActive = threshold.IsActive
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditAwardThreshold(AwardThresholdViewModel model)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied." });
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                    return Json(new { success = false, message = string.Join(", ", errors) });
+                }
+
+                // Validate percentage ranges
+                if (model.MinPercentage >= model.MaxPercentage)
+                {
+                    return Json(new { success = false, message = "Minimum percentage must be less than maximum percentage." });
+                }
+
+                var threshold = await _context.AwardThresholds.FindAsync(model.Id);
+                if (threshold == null)
+                {
+                    return Json(new { success = false, message = "Award threshold not found." });
+                }
+
+                // Check for overlapping ranges (excluding current threshold)
+                var existingThresholds = await _context.AwardThresholds
+                    .Where(t => t.IsActive && t.Id != model.Id)
+                    .ToListAsync();
+
+                foreach (var existing in existingThresholds)
+                {
+                    if ((model.MinPercentage < existing.MaxPercentage && model.MaxPercentage > existing.MinPercentage))
+                    {
+                        return Json(new { success = false, message = "This range overlaps with an existing award threshold." });
+                    }
+                }
+
+                threshold.AwardName = model.AwardName;
+                threshold.MinPercentage = model.MinPercentage;
+                threshold.MaxPercentage = model.MaxPercentage;
+                threshold.Description = null; // Description field removed
+                threshold.IsActive = model.IsActive;
+                threshold.UpdatedBy = username;
+                threshold.UpdatedAt = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Award threshold updated successfully!" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating award threshold: {ex.Message}");
+                return Json(new { success = false, message = "An error occurred while updating the award threshold." });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteAwardThreshold(int id)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied." });
+                }
+
+                var threshold = await _context.AwardThresholds.FindAsync(id);
+                if (threshold == null)
+                {
+                    return Json(new { success = false, message = "Award threshold not found." });
+                }
+
+                _context.AwardThresholds.Remove(threshold);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Award threshold deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting award threshold: {ex.Message}");
+                return Json(new { success = false, message = "An error occurred while deleting the award threshold." });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ToggleAwardThresholdStatus(int id)
+        {
+            try
+            {
+                // Check if user is admin
+                var username = User.Identity?.Name;
+                if (username?.ToLower() != "admin")
+                {
+                    return Json(new { success = false, message = "Access denied." });
+                }
+
+                var threshold = await _context.AwardThresholds.FindAsync(id);
+                if (threshold == null)
+                {
+                    return Json(new { success = false, message = "Award threshold not found." });
+                }
+
+                threshold.IsActive = !threshold.IsActive;
+                threshold.UpdatedBy = username;
+                threshold.UpdatedAt = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                var status = threshold.IsActive ? "activated" : "deactivated";
+                return Json(new { success = true, message = $"Award threshold {status} successfully." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error toggling award threshold status: {ex.Message}");
+                return Json(new { success = false, message = "An error occurred while updating the award threshold status." });
+            }
+        }
+
+        // Helper method to determine award based on percentage
+        private (string AwardName, string AwardClass) GetAwardForPercentage(double percentage)
+        {
+            try
+            {
+                // Get all active award thresholds ordered by minimum percentage (highest first)
+                var awardThresholds = _context.AwardThresholds
+                    .Where(t => t.IsActive)
+                    .OrderByDescending(t => t.MinPercentage)
+                    .ToList();
+
+                // Find the appropriate award range
+                foreach (var threshold in awardThresholds)
+                {
+                    if (percentage >= (double)threshold.MinPercentage && percentage <= (double)threshold.MaxPercentage)
+                    {
+                        // Determine CSS class based on award name
+                        string awardClass = threshold.AwardName.ToLower().Contains("1st") || threshold.AwardName.ToLower().Contains("first") ? "bg-success" :
+                                          threshold.AwardName.ToLower().Contains("2nd") || threshold.AwardName.ToLower().Contains("second") ? "bg-warning" :
+                                          threshold.AwardName.ToLower().Contains("3rd") || threshold.AwardName.ToLower().Contains("third") ? "bg-info" :
+                                          "bg-primary";
+
+                        return (threshold.AwardName, awardClass);
+                    }
+                }
+
+                // If no award range matches, return "No Award"
+                return ("No Award", "bg-secondary");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting award for percentage {percentage}: {ex.Message}");
+                return ("No Award", "bg-secondary");
+            }
         }
     }
 } 

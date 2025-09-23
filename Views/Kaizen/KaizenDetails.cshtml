@@ -1,4 +1,4 @@
-@model KaizenWebApp.Models.KaizenForm
+@model KaizenWebApp.ViewModels.AwardDetailsViewModel
 
 @{
     ViewData["Title"] = "Kaizen Details";
@@ -280,16 +280,16 @@
                 <div class="kaizen-header">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <div class="kaizen-no">@Model.KaizenNo</div>
-                            <div class="kaizen-status @(Model.ManagerStatus == "Approved" ? "status-approved" : Model.ManagerStatus == "Rejected" ? "status-rejected" : "status-pending")">
-                                <i class="fas fa-@(Model.ManagerStatus == "Approved" ? "check" : Model.ManagerStatus == "Rejected" ? "times" : "clock") me-2"></i>
-                                Manager Status: @(Model.ManagerStatus ?? "Pending")
+                            <div class="kaizen-no">@Model.Kaizen.KaizenNo</div>
+                            <div class="kaizen-status @(Model.Kaizen.ManagerStatus == "Approved" ? "status-approved" : Model.Kaizen.ManagerStatus == "Rejected" ? "status-rejected" : "status-pending")">
+                                <i class="fas fa-@(Model.Kaizen.ManagerStatus == "Approved" ? "check" : Model.Kaizen.ManagerStatus == "Rejected" ? "times" : "clock") me-2"></i>
+                                Manager Status: @(Model.Kaizen.ManagerStatus ?? "Pending")
                             </div>
                             <p class="mb-0 opacity-75">Kaizen Suggestion Details</p>
                         </div>
                         <div class="text-end">
                             <small class="opacity-75">Submitted on</small><br>
-                            <strong>@Model.DateSubmitted.ToString("MMMM dd, yyyy")</strong>
+                            <strong>@Model.Kaizen.DateSubmitted.ToString("MMMM dd, yyyy")</strong>
                         </div>
                     </div>
                 </div>
@@ -298,9 +298,9 @@
                 <div class="info-section">
                     <h5><i class="fas fa-user me-2"></i>Employee Information</h5>
                     <div class="employee-card">
-                        @if (!string.IsNullOrEmpty(Model.EmployeePhotoPath))
+                        @if (!string.IsNullOrEmpty(Model.Kaizen.EmployeePhotoPath))
                         {
-                            <img src="@Model.EmployeePhotoPath" alt="Employee Photo" class="employee-photo" />
+                            <img src="@Model.Kaizen.EmployeePhotoPath" alt="Employee Photo" class="employee-photo" />
                         }
                         else
                         {
@@ -309,9 +309,9 @@
                             </div>
                         }
                         <div class="employee-info">
-                            <h6>@Model.EmployeeName</h6>
-                            <p><i class="fas fa-id-badge me-1"></i>@Model.EmployeeNo</p>
-                            <p><i class="fas fa-building me-1"></i>@Model.Department</p>
+                            <h6>@Model.Kaizen.EmployeeName</h6>
+                            <p><i class="fas fa-id-badge me-1"></i>@Model.Kaizen.EmployeeNo</p>
+                            <p><i class="fas fa-building me-1"></i>@Model.Kaizen.Department</p>
                         </div>
                     </div>
                 </div>
@@ -322,44 +322,44 @@
                     <div class="info-grid">
                         <div class="info-item">
                             <div class="info-label">Category</div>
-                            <div class="info-value">@Model.Category</div>
+                            <div class="info-value">@Model.Kaizen.Category</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Date Implemented</div>
                             <div class="info-value">
-                                @(Model.DateImplemented?.ToString("MMMM dd, yyyy") ?? "Not implemented yet")
+                                @(Model.Kaizen.DateImplemented?.ToString("MMMM dd, yyyy") ?? "Not implemented yet")
                             </div>
                         </div>
                     </div>
                     <div class="mt-3">
                         <div class="info-label">Suggestion Description</div>
                         <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; min-height: 100px;">
-                            @Model.SuggestionDescription
+                            @Model.Kaizen.SuggestionDescription
                         </div>
                     </div>
                 </div>
 
                 <!-- Cost Saving Information -->
-                @if (Model.CostSaving.HasValue && Model.CostSaving > 0)
+                @if (Model.Kaizen.CostSaving.HasValue && Model.Kaizen.CostSaving > 0)
                 {
                     <div class="cost-saving-card">
                         <h5><i class="fas fa-coins me-2"></i>Cost Saving Information</h5>
-                        <div class="cost-saving-amount">$@Model.CostSaving.Value.ToString("N2")</div>
+                        <div class="cost-saving-amount">$@Model.Kaizen.CostSaving.Value.ToString("N2")</div>
                         <p class="mb-0">Annual cost saving</p>
-                        @if (Model.DollarRate.HasValue)
+                        @if (Model.Kaizen.DollarRate.HasValue)
                         {
-                            <small>Dollar Rate: $@Model.DollarRate.Value.ToString("N2")</small>
+                            <small>Dollar Rate: $@Model.Kaizen.DollarRate.Value.ToString("N2")</small>
                         }
                     </div>
                 }
 
                 <!-- Other Benefits -->
-                @if (!string.IsNullOrEmpty(Model.OtherBenefits))
+                @if (!string.IsNullOrEmpty(Model.Kaizen.OtherBenefits))
                 {
                     <div class="info-section">
                         <h5><i class="fas fa-star me-2"></i>Other Benefits</h5>
                         <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef;">
-                            @Model.OtherBenefits
+                            @Model.Kaizen.OtherBenefits
                         </div>
                     </div>
                 }
@@ -371,10 +371,10 @@
                         <div class="col-md-6">
                             <div class="image-section">
                                 <h6 class="text-center mb-3">Before Kaizen</h6>
-                                @if (!string.IsNullOrEmpty(Model.BeforeKaizenImagePath))
+                                @if (!string.IsNullOrEmpty(Model.Kaizen.BeforeKaizenImagePath))
                                 {
                                     <div class="image-container">
-                                        <img src="@Model.BeforeKaizenImagePath" alt="Before Kaizen" class="kaizen-image" />
+                                        <img src="@Model.Kaizen.BeforeKaizenImagePath" alt="Before Kaizen" class="kaizen-image" />
                                     </div>
                                 }
                                 else
@@ -389,10 +389,10 @@
                         <div class="col-md-6">
                             <div class="image-section">
                                 <h6 class="text-center mb-3">After Kaizen</h6>
-                                @if (!string.IsNullOrEmpty(Model.AfterKaizenImagePath))
+                                @if (!string.IsNullOrEmpty(Model.Kaizen.AfterKaizenImagePath))
                                 {
                                     <div class="image-container">
-                                        <img src="@Model.AfterKaizenImagePath" alt="After Kaizen" class="kaizen-image" />
+                                        <img src="@Model.Kaizen.AfterKaizenImagePath" alt="After Kaizen" class="kaizen-image" />
                                     </div>
                                 }
                                 else
@@ -408,39 +408,39 @@
                 </div>
 
                 <!-- Executive/Engineer Review Section -->
-                @if (!string.IsNullOrEmpty(Model.Comments) || !string.IsNullOrEmpty(Model.EngineerApprovedBy))
+                @if (!string.IsNullOrEmpty(Model.Kaizen.Comments) || !string.IsNullOrEmpty(Model.Kaizen.EngineerApprovedBy))
                 {
                     <div class="info-section">
                         <h5><i class="fas fa-user-tie me-2"></i>Engineer Review</h5>
                         <div class="info-grid">
-                            @if (!string.IsNullOrEmpty(Model.EngineerApprovedBy))
+                            @if (!string.IsNullOrEmpty(Model.Kaizen.EngineerApprovedBy))
                             {
                                 <div class="info-item">
                                     <div class="info-label">Reviewed By</div>
-                                    <div class="info-value">@Model.EngineerApprovedBy</div>
+                                    <div class="info-value">@Model.Kaizen.EngineerApprovedBy</div>
                                 </div>
                             }
-                            @if (!string.IsNullOrEmpty(Model.CanImplementInOtherFields))
+                            @if (!string.IsNullOrEmpty(Model.Kaizen.CanImplementInOtherFields))
                             {
                                 <div class="info-item">
                                     <div class="info-label">Can be implemented in other fields</div>
-                                    <div class="info-value">@Model.CanImplementInOtherFields</div>
+                                    <div class="info-value">@Model.Kaizen.CanImplementInOtherFields</div>
                                 </div>
                             }
-                            @if (!string.IsNullOrEmpty(Model.ImplementationArea))
+                            @if (!string.IsNullOrEmpty(Model.Kaizen.ImplementationArea))
                             {
                                 <div class="info-item">
                                     <div class="info-label">Implementation Area</div>
-                                    <div class="info-value">@Model.ImplementationArea</div>
+                                    <div class="info-value">@Model.Kaizen.ImplementationArea</div>
                                 </div>
                             }
                         </div>
-                        @if (!string.IsNullOrEmpty(Model.Comments))
+                        @if (!string.IsNullOrEmpty(Model.Kaizen.Comments))
                         {
                             <div class="mt-3">
                                 <div class="info-label">Comments & Recommendations</div>
                                 <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; min-height: 100px;">
-                                    @Model.Comments
+                                    @Model.Kaizen.Comments
                                 </div>
                             </div>
                         }
@@ -448,38 +448,34 @@
                 }
 
                 <!-- Manager Review Section -->
-                @if (!string.IsNullOrEmpty(Model.ManagerComments))
+                @if (!string.IsNullOrEmpty(Model.Kaizen.ManagerComments))
                 {
                     <div class="info-section">
                         <h5><i class="fas fa-user-tie me-2"></i>Manager Review</h5>
                         <div class="info-grid">
-                            @if (!string.IsNullOrEmpty(Model.ManagerApprovedBy))
+                            @if (!string.IsNullOrEmpty(Model.Kaizen.ManagerApprovedBy))
                             {
                                 <div class="info-item">
                                     <div class="info-label">Approved By</div>
-                                    <div class="info-value">@Model.ManagerApprovedBy</div>
+                                    <div class="info-value">@Model.Kaizen.ManagerApprovedBy</div>
                                 </div>
                             }
-                            <div class="info-item">
-                                <div class="info-label">Manager Status</div>
-                                <div class="info-value">@Model.ManagerStatus</div>
-                            </div>
                         </div>
-                        @if (!string.IsNullOrEmpty(Model.ManagerComments))
+                        @if (!string.IsNullOrEmpty(Model.Kaizen.ManagerComments))
                         {
                             <div class="mt-3">
                                 <div class="info-label">Comments & Recommendations</div>
                                 <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; min-height: 100px;">
-                                    @Model.ManagerComments
+                                    @Model.Kaizen.ManagerComments
                                 </div>
                             </div>
                         }
-                        @if (!string.IsNullOrEmpty(Model.ManagerSignature))
+                        @if (!string.IsNullOrEmpty(Model.Kaizen.ManagerSignature))
                         {
                             <div class="mt-3">
                                 <div class="info-label">Manager Signature</div>
                                 <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; text-align: center; font-weight: 600;">
-                                    <i class="fas fa-signature me-2"></i>@Model.ManagerSignature
+                                    <i class="fas fa-signature me-2"></i>@Model.Kaizen.ManagerSignature
                                 </div>
                             </div>
                         }
@@ -487,43 +483,67 @@
                 }
 
                 <!-- Award Information -->
-                @if (!string.IsNullOrEmpty(Model.AwardPrice))
-                {
-                    <div class="info-section">
-                        <h5><i class="fas fa-trophy me-2"></i>Award Information</h5>
+                <div class="info-section">
+                    <h5><i class="fas fa-trophy me-2"></i>Award Information</h5>
+                    @if (Model.ExistingScores.Any())
+                    {
+                        <!-- Dynamic Award Status Based on Score -->
                         <div class="info-grid">
                             <div class="info-item">
-                                <div class="info-label">Award Price</div>
-                                <div class="info-value">@Model.AwardPrice</div>
+                                <div class="info-label">Award Status</div>
+                                <div class="info-value">
+                                    @if (Model.TotalWeight > 0)
+                                    {
+                                        <span class="badge @Model.AwardClass fs-6">
+                                            <i class="fas fa-trophy me-1"></i>
+                                            @Model.AwardName
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary fs-6">
+                                            <i class="fas fa-minus me-1"></i>
+                                            No Award
+                                        </span>
+                                    }
+                                </div>
                             </div>
-                            @if (Model.AwardDate.HasValue)
+                            @if (Model.TotalWeight > 0)
                             {
                                 <div class="info-item">
-                                    <div class="info-label">Award Date</div>
-                                    <div class="info-value">@Model.AwardDate.Value.ToString("MMMM dd, yyyy")</div>
+                                    <div class="info-label">Score</div>
+                                    <div class="info-value">@Model.TotalScore / @Model.TotalWeight</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Percentage</div>
+                                    <div class="info-value">
+                                        <span class="@(Model.Percentage >= 90 ? "text-success" : Model.Percentage >= 70 ? "text-warning" : "text-danger") fw-bold">
+                                            @Model.Percentage.ToString("F1")%
+                                        </span>
+                                    </div>
                                 </div>
                             }
                         </div>
-                        @if (!string.IsNullOrEmpty(Model.CommitteeComments))
-                        {
-                            <div class="mt-3">
-                                <div class="info-label">Committee Comments</div>
-                                <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; min-height: 100px;">
-                                    @Model.CommitteeComments
-                                </div>
+                    }
+                    else
+                    {
+                        <div class="no-data">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>No scores available - Award cannot be determined</p>
+                        </div>
+                    }
+                    
+                    <!-- Committee Signature -->
+                    @if (!string.IsNullOrEmpty(Model.Kaizen.CommitteeSignature))
+                    {
+                        <div class="mt-3">
+                            <div class="info-label">Committee Signature</div>
+                            <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; text-align: center; font-weight: 600;">
+                                <i class="fas fa-signature me-2"></i>@Model.Kaizen.CommitteeSignature
                             </div>
-                        }
-                        @if (!string.IsNullOrEmpty(Model.CommitteeSignature))
-                        {
-                            <div class="mt-3">
-                                <div class="info-label">Committee Signature</div>
-                                <div class="info-value" style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #e9ecef; text-align: center; font-weight: 600;">
-                                    <i class="fas fa-signature me-2"></i>@Model.CommitteeSignature
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </div>

@@ -129,10 +129,6 @@
                             <input type="text" class="form-control" id="title" name="title" required>
                         </div>
                         <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                        </div>
-                        <div class="mb-3">
                             <label for="displayOrder" class="form-label">Display Order</label>
                             <input type="number" class="form-control" id="displayOrder" name="displayOrder" value="0" min="0">
                         </div>
@@ -156,10 +152,6 @@
                         <div class="mb-3">
                             <label for="bulkTitle" class="form-label">Default Title (Optional)</label>
                             <input type="text" class="form-control" id="bulkTitle" name="title" placeholder="Leave empty to use filename">
-                        </div>
-                        <div class="mb-3">
-                            <label for="bulkDescription" class="form-label">Default Description (Optional)</label>
-                            <textarea class="form-control" id="bulkDescription" name="description" rows="3"></textarea>
                         </div>
                         <div class="mb-3">
                             <label for="bulkDisplayOrder" class="form-label">Starting Display Order</label>
@@ -202,7 +194,7 @@
                                         </span>
                                     </div>
                                     <div class="gallery-actions">
-                                        <button class="btn btn-sm btn-outline-primary" onclick="editGallery(@gallery.Id, '@(gallery.Title ?? "")', '@(gallery.Description ?? "")', @gallery.DisplayOrder, @gallery.IsActive.ToString().ToLower())">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editGallery(@gallery.Id, '@(gallery.Title ?? "")', @gallery.DisplayOrder)">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button class="btn btn-sm btn-outline-danger" onclick="deleteGallery(@gallery.Id)">
@@ -247,20 +239,8 @@
                         <input type="text" class="form-control" id="editGalleryTitle" name="title" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editGalleryDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="editGalleryDescription" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
                         <label for="editGalleryDisplayOrder" class="form-label">Display Order</label>
                         <input type="number" class="form-control" id="editGalleryDisplayOrder" name="displayOrder" min="0">
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="editGalleryIsActive" name="isActive" value="true">
-                            <label class="form-check-label" for="editGalleryIsActive">
-                                Active
-                            </label>
-                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -295,12 +275,10 @@
 
 <script>
     // Gallery functions
-    function editGallery(id, title, description, displayOrder, isActive) {
+    function editGallery(id, title, displayOrder) {
         document.getElementById('editGalleryId').value = id;
         document.getElementById('editGalleryTitle').value = title;
-        document.getElementById('editGalleryDescription').value = description;
         document.getElementById('editGalleryDisplayOrder').value = displayOrder;
-        document.getElementById('editGalleryIsActive').checked = isActive === 'true';
         
         new bootstrap.Modal(document.getElementById('editGalleryModal')).show();
     }
