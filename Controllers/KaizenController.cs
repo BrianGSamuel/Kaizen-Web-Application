@@ -1770,6 +1770,10 @@ namespace KaizenWebApp.Controllers
                 }
 
                 Console.WriteLine($"Found manager: {manager.EmployeeName} ({manager.Email})");
+                Console.WriteLine($"Engineer Comments for email: '{kaizenForm.Comments}'");
+                Console.WriteLine($"Comments length: {kaizenForm.Comments?.Length ?? 0}");
+                Console.WriteLine($"Comments is null: {kaizenForm.Comments == null}");
+                Console.WriteLine($"Comments is empty: {string.IsNullOrEmpty(kaizenForm.Comments)}");
 
                 // Generate website URL
                 var websiteUrl = $"{Request.Scheme}://{Request.Host}";
@@ -3706,9 +3710,15 @@ namespace KaizenWebApp.Controllers
                 // Only send manager email notification if engineer approved the kaizen
                 if (request.EngineerStatus == "Approved")
                 {
-                    Console.WriteLine($"=== ENGINEER APPROVED - SENDING MANAGER EMAIL ===");
-                    Console.WriteLine($"Kaizen No: {kaizen.KaizenNo}");
-                    Console.WriteLine($"Engineer: {request.EngineerApprovedBy}");
+                Console.WriteLine($"=== ENGINEER APPROVED - SENDING MANAGER EMAIL ===");
+                Console.WriteLine($"Kaizen No: {kaizen.KaizenNo}");
+                Console.WriteLine($"Engineer: {request.EngineerApprovedBy}");
+                Console.WriteLine($"Engineer Comments BEFORE reload: '{kaizen.Comments}'");
+                
+                // Refresh the kaizen object to get the latest data including comments
+                await _context.Entry(kaizen).ReloadAsync();
+                
+                Console.WriteLine($"Engineer Comments AFTER reload: '{kaizen.Comments}'");
                     
                     await SendManagerEmailNotification(kaizen, request.EngineerApprovedBy);
                     
@@ -4416,7 +4426,7 @@ namespace KaizenWebApp.Controllers
                 // Update the kaizen with executive filling data
                 kaizen.Category = categories != null ? string.Join(", ", categories) : "";
                 kaizen.EngineerApprovedBy = approvedBy?.Trim();
-                kaizen.Comments = comments?.Trim();
+                kaizen.Comments = comments?.Trim(); // Store engineer comments in Comments field
                 kaizen.CanImplementInOtherFields = canImplementInOtherFields;
                 kaizen.ImplementationArea = implementationArea?.Trim();
                 
