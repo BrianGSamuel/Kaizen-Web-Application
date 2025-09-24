@@ -193,7 +193,7 @@ namespace KaizenWebApp.Services
             var body = new StringBuilder();
             body.AppendLine("<html><body>");
             body.AppendLine("<h2>Engineer Review Completed</h2>");
-            body.AppendLine("<p>An engineer has completed their review of a kaizen suggestion and it now requires your approval.</p>");
+            body.AppendLine("<p>Your department engineer has completed a review of a kaizen suggestion and it now requires your approval.</p>");
             body.AppendLine("<br/>");
             body.AppendLine("<h3>Kaizen Details:</h3>");
             body.AppendLine("<table style='border-collapse: collapse; width: 100%;'>");
@@ -212,10 +212,6 @@ namespace KaizenWebApp.Services
             body.AppendLine("<tr>");
             body.AppendLine("<td style='border: 1px solid #ddd; padding: 8px; font-weight: bold;'>Engineer:</td>");
             body.AppendLine($"<td style='border: 1px solid #ddd; padding: 8px;'>{engineerName}</td>");
-            body.AppendLine("</tr>");
-            body.AppendLine("<tr style='background-color: #f2f2f2;'>");
-            body.AppendLine("<td style='border: 1px solid #ddd; padding: 8px; font-weight: bold;'>Engineer Comments:</td>");
-            body.AppendLine($"<td style='border: 1px solid #ddd; padding: 8px;'>{engineerComments ?? "No comments provided"}</td>");
             body.AppendLine("</tr>");
             body.AppendLine("</table>");
             body.AppendLine("<br/>");

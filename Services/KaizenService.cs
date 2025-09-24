@@ -191,9 +191,11 @@ namespace KaizenWebApp.Services
             {
                 _logger.LogInformation("Finding similar kaizens for department: {Department}, current kaizen ID: {CurrentKaizenId}", department, currentKaizenId);
                 
-                // Get all kaizens from the same department (excluding the current one)
+                // Get all kaizens from the same department (excluding the current one and pending kaizens)
                 var similarKaizens = await _context.KaizenForms
-                    .Where(k => k.Department == department && k.Id != currentKaizenId)
+                    .Where(k => k.Department == department && 
+                               k.Id != currentKaizenId &&
+                               k.EngineerStatus == "Approved" && k.ManagerStatus == "Approved") // Only include fully approved kaizens
                     .ToListAsync();
 
                 _logger.LogInformation("Found {Count} total kaizens in department {Department}", similarKaizens.Count, department);
