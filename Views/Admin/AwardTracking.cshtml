@@ -336,6 +336,12 @@
                                                     <i class="fas fa-eye me-1"></i>
                                                     View Details
                                                 </a>
+                                                @if (totalWeight > 0)
+                                                {
+                                                    <a href="@Url.Action("PrintFormB", "Kaizen", new { id = kaizen.Id })" target="_blank" class="btn btn-sm btn-outline-info">
+                                                        <i class="fas fa-print me-1"></i>Print
+                                                    </a>
+                                                }
                                             </div>
                                         </td>
                                     </tr>
