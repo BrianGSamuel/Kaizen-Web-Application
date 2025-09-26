@@ -529,6 +529,7 @@
                             <h6>@Model.Kaizen.EmployeeName</h6>
                             <p><i class="fas fa-id-badge me-1"></i>@Model.Kaizen.EmployeeNo</p>
                             <p><i class="fas fa-building me-1"></i>@Model.Kaizen.Department</p>
+                            <p><i class="fas fa-industry me-1"></i>@(Model.Kaizen.Plant ?? "N/A")</p>
                         </div>
                     </div>
                 </div>
@@ -749,9 +750,9 @@
                         Back to List
                     </a>
                     
-                    @if ((Model.Kaizen.EngineerStatus ?? "Pending") == "Pending")
+                    @if ((Model.Kaizen.EngineerStatus ?? "Pending") != "Approved")
                     {
-                        <button type="button" class="btn-kaizen btn-edit" onclick="editKaizen(@Model.Kaizen.Id)">
+                        <button type="button" class="btn-kaizen btn-edit" onclick="showEditModal(@Model.Kaizen.Id)">
                             <i class="fas fa-edit"></i>
                             Edit Kaizen
                         </button>
@@ -771,137 +772,6 @@
     </div>
 </div>
 
-<!-- Edit Modal -->
-<div class="modal fade" id="editKaizenModal" tabindex="-1" aria-labelledby="editKaizenModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editKaizenModalLabel">
-                    <i class="fas fa-edit me-2"></i>Edit Kaizen Suggestion
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editKaizenForm" enctype="multipart/form-data">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" id="editKaizenId" name="Id" />
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="editDateSubmitted" class="form-label">
-                                <i class="fas fa-calendar me-2"></i>Date Submitted
-                            </label>
-                            <input type="date" id="editDateSubmitted" name="DateSubmitted" class="form-control" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label for="editDateImplemented" class="form-label">
-                                <i class="fas fa-calendar-check me-2"></i>Date Implemented
-                            </label>
-                            <input type="date" id="editDateImplemented" name="DateImplemented" class="form-control" />
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="editKaizenNo" class="form-label">
-                                <i class="fas fa-hashtag me-2"></i>Kaizen No
-                            </label>
-                            <input type="text" id="editKaizenNo" name="KaizenNo" class="form-control" readonly />
-                        </div>
-                        <div class="col-md-6">
-                            <label for="editDepartment" class="form-label">
-                                <i class="fas fa-building me-2"></i>Department Name
-                            </label>
-                            <input type="text" id="editDepartment" name="Department" class="form-control" required />
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="editEmployeeName" class="form-label">
-                                <i class="fas fa-user me-2"></i>Employee Name
-                            </label>
-                            <input type="text" id="editEmployeeName" name="EmployeeName" class="form-control" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label for="editEmployeeNo" class="form-label">
-                                <i class="fas fa-id-badge me-2"></i>Employee No
-                            </label>
-                            <input type="text" id="editEmployeeNo" name="EmployeeNo" class="form-control" required />
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="editSuggestionDescription" class="form-label">
-                            <i class="fas fa-lightbulb me-2"></i>Kaizen Suggestion Description
-                        </label>
-                        <textarea id="editSuggestionDescription" name="SuggestionDescription" class="form-control" rows="3" required></textarea>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="editBeforeKaizenImage" class="form-label">
-                                <i class="fas fa-image me-2"></i>Before Kaizen Image
-                            </label>
-                            <input type="file" id="editBeforeKaizenImage" name="BeforeKaizenImage" class="form-control" accept="image/*" />
-                        </div>
-                        <div class="col-md-6">
-                            <label for="editAfterKaizenImage" class="form-label">
-                                <i class="fas fa-image me-2"></i>After Kaizen Image
-                            </label>
-                            <input type="file" id="editAfterKaizenImage" name="AfterKaizenImage" class="form-control" accept="image/*" />
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="editOtherBenefits" class="form-label">
-                            <i class="fas fa-star me-2"></i>Other Benefits
-                        </label>
-                        <textarea id="editOtherBenefits" name="OtherBenefits" class="form-control" rows="2"></textarea>
-                    </div>
-
-                    <!-- Cost Saving Section -->
-                    <div class="mb-3 cost-saving-section">
-                        <label class="form-label">
-                            <i class="fas fa-coins me-2"></i>Cost Saving Information
-                        </label>
-                        <div class="mt-2 mb-3">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="editCostSavingType" id="editNoCostSaving" value="no" onchange="toggleEditCostSavingFields()">
-                                <label class="form-check-label" for="editNoCostSaving">No Cost Saving</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="editCostSavingType" id="editHasCostSaving" value="yes" onchange="toggleEditCostSavingFields()">
-                                <label class="form-check-label" for="editHasCostSaving">Has Cost Saving</label>
-                            </div>
-                        </div>
-                        
-                        <div id="editCostSavingFields" class="cost-saving-fields" style="display: none;">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label for="editCostSaving" class="form-label">Cost Saving ($ per year)</label>
-                                    <input type="number" id="editCostSaving" name="CostSaving" class="form-control" step="0.01" min="0" placeholder="Enter amount" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="editDollarRate" class="form-label">Dollar Rate</label>
-                                    <input type="number" id="editDollarRate" name="DollarRate" class="form-control" step="0.01" min="0" placeholder="Enter rate" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancel
-                </button>
-                <button type="button" class="btn btn-primary" onclick="saveKaizenEdit()">
-                    <i class="fas fa-save me-2"></i>Save Changes
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Enhanced Edit Modal -->
 <div class="modal fade" id="enhancedEditModal" tabindex="-1" aria-labelledby="enhancedEditModalLabel" aria-hidden="true">
@@ -1005,7 +875,7 @@
                 <h5 class="modal-title" id="approvalModalLabel">
                     <i class="fas fa-gavel me-2"></i>Kaizen Approval
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
                 <div class="mb-4">
@@ -1014,10 +884,10 @@
                     <p class="text-muted">Please select your decision below</p>
                 </div>
                 <div class="d-flex justify-content-center gap-3">
-                    <button type="button" class="btn btn-success btn-lg" onclick="showNameInput('approve')">
+                    <button type="button" class="btn btn-success btn-lg px-4 py-3" onclick="approveKaizenDirect()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);">
                         <i class="fas fa-check me-2"></i>Approve
                     </button>
-                    <button type="button" class="btn btn-danger btn-lg" onclick="showNameInput('reject')">
+                    <button type="button" class="btn btn-danger btn-lg px-4 py-3" onclick="rejectKaizenDirect()" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; color: white; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);">
                         <i class="fas fa-times me-2"></i>Reject
                     </button>
                 </div>
@@ -1031,33 +901,177 @@
     </div>
 </div>
 
-<!-- Name Input Modal -->
-<div class="modal fade" id="nameInputModal" tabindex="-1" aria-labelledby="nameInputModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+<!-- Comprehensive Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="nameInputModalLabel">
-                    <i class="fas fa-user me-2"></i>Enter Your Name
+                <h5 class="modal-title" id="editModalLabel">
+                    <i class="fas fa-edit me-2"></i>Edit Kaizen Suggestion
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label for="userNameInput" class="form-label">
-                        <i class="fas fa-signature me-2"></i>Your Name
-                    </label>
-                    <input type="text" id="userNameInput" class="form-control" placeholder="Enter your full name" required />
-                    <div class="invalid-feedback">
-                        Please enter your name.
+                <form id="editForm" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editKaizenId" name="Id" />
+
+                    <!-- Basic Information Section -->
+                    <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+                        <h6 class="mb-3">
+                            <i class="fas fa-info-circle me-2"></i>Basic Information
+                        </h6>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editKaizenNo" class="form-label">
+                                    <i class="fas fa-hashtag me-2"></i>Kaizen Number *
+                                </label>
+                                <input type="text" id="editKaizenNo" name="KaizenNo" class="form-control" required readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editEmployeeName" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Employee Name *
+                                </label>
+                                <input type="text" id="editEmployeeName" name="EmployeeName" class="form-control" required />
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editEmployeeNo" class="form-label">
+                                    <i class="fas fa-id-badge me-2"></i>Employee Number *
+                                </label>
+                                <input type="text" id="editEmployeeNo" name="EmployeeNo" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editDepartment" class="form-label">
+                                    <i class="fas fa-building me-2"></i>Department
+                                </label>
+                                <input type="text" id="editDepartment" name="Department" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editPlant" class="form-label">
+                                    <i class="fas fa-industry me-2"></i>Plant
+                                </label>
+                                <input type="text" id="editPlant" name="Plant" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editSuggestionDescription" class="form-label">
+                                <i class="fas fa-lightbulb me-2"></i>Suggestion Description *
+                            </label>
+                            <textarea id="editSuggestionDescription" name="SuggestionDescription" class="form-control" rows="4" required></textarea>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editDateSubmitted" class="form-label">
+                                    <i class="fas fa-calendar me-2"></i>Date Submitted *
+                                </label>
+                                <input type="date" id="editDateSubmitted" name="DateSubmitted" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editDateImplemented" class="form-label">
+                                    <i class="fas fa-calendar-check me-2"></i>Date Implemented
+                                </label>
+                                <input type="date" id="editDateImplemented" name="DateImplemented" class="form-control" />
+                            </div>
+                        </div>
                     </div>
-                </div>
+
+                    <!-- Cost Saving Information Section -->
+                    <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+                        <h6 class="mb-3">
+                            <i class="fas fa-coins me-2"></i>Cost Saving Information
+                        </h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-question-circle me-2"></i>Does this suggestion have cost saving?
+                            </label>
+                            <div class="mt-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="CostSavingType" id="edit_noCostSaving" value="NoCostSaving" onchange="toggleCostSavingFields()">
+                                    <label class="form-check-label" for="edit_noCostSaving">No Cost Saving</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="CostSavingType" id="edit_hasCostSaving" value="HasCostSaving" onchange="toggleCostSavingFields()">
+                                    <label class="form-check-label" for="edit_hasCostSaving">Has Cost Saving</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="costSavingFields" style="display: none;">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="editCostSaving" class="form-label">
+                                        <i class="fas fa-dollar-sign me-2"></i>Cost Saving ($ per year)
+                                    </label>
+                                    <input type="number" id="editCostSaving" name="CostSaving" class="form-control" step="0.01" min="0" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editDollarRate" class="form-label">
+                                        <i class="fas fa-exchange-alt me-2"></i>Current Dollar Rate
+                                    </label>
+                                    <input type="number" id="editDollarRate" name="DollarRate" class="form-control" step="0.01" min="0" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editOtherBenefits" class="form-label">
+                                <i class="fas fa-star me-2"></i>Other Benefits
+                            </label>
+                            <textarea id="editOtherBenefits" name="OtherBenefits" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Images Section -->
+                    <div class="mb-4" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; background-color: #f8f9fa;">
+                        <h6 class="mb-3">
+                            <i class="fas fa-images me-2"></i>Images
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="editBeforeKaizenImage" class="form-label">
+                                    <i class="fas fa-image me-2"></i>Before Kaizen Image
+                                </label>
+                                <input type="file" id="editBeforeKaizenImage" name="BeforeKaizenImage" class="form-control" accept="image/*" />
+                                <small class="form-text text-muted">Leave empty to keep current image</small>
+                                <div id="currentBeforeImage" class="mt-2" style="display: none;">
+                                    <small class="text-muted">Current image:</small>
+                                    <img id="currentBeforeImagePreview" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editAfterKaizenImage" class="form-label">
+                                    <i class="fas fa-image me-2"></i>After Kaizen Image
+                                </label>
+                                <input type="file" id="editAfterKaizenImage" name="AfterKaizenImage" class="form-control" accept="image/*" />
+                                <small class="form-text text-muted">Leave empty to keep current image</small>
+                                <div id="currentAfterImage" class="mt-2" style="display: none;">
+                                    <small class="text-muted">Current image:</small>
+                                    <img id="currentAfterImagePreview" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" />
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <button type="button" class="btn btn-primary" id="confirmActionBtn" onclick="confirmAction()">
-                    <i class="fas fa-check me-2"></i>Confirm
+                <button type="button" class="btn btn-primary" onclick="saveEdit()">
+                    <i class="fas fa-save me-2"></i>Save Changes
                 </button>
             </div>
         </div>
@@ -1258,70 +1272,7 @@
          input.dispatchEvent(new Event('input'));
      }
 
-    function editKaizen(id) {
-        currentKaizenId = id;
-        
-        // Fetch kaizen data
-        fetch(`/Kaizen/Edit/${id}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Populate form fields
-                    document.getElementById('editKaizenId').value = data.data.id;
-                    document.getElementById('editKaizenNo').value = data.data.kaizenNo;
-                    document.getElementById('editDateSubmitted').value = data.data.dateSubmitted.split('T')[0];
-                    document.getElementById('editDateImplemented').value = data.data.dateImplemented ? data.data.dateImplemented.split('T')[0] : '';
-                    document.getElementById('editDepartment').value = data.data.department;
-                    document.getElementById('editEmployeeName').value = data.data.employeeName;
-                    document.getElementById('editEmployeeNo').value = data.data.employeeNo;
-                    document.getElementById('editSuggestionDescription').value = data.data.suggestionDescription || '';
-                    document.getElementById('editOtherBenefits').value = data.data.otherBenefits || '';
 
-                    // Populate cost saving fields
-                    populateEditCostSavingFields(data.data.costSaving, data.data.dollarRate);
-
-                    // Show modal
-                    const modal = new bootstrap.Modal(document.getElementById('editKaizenModal'));
-                    modal.show();
-                } else {
-                    showToast('Error: ' + data.message, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred while loading the kaizen data.', 'error');
-            });
-    }
-
-    function saveKaizenEdit() {
-        const form = document.getElementById('editKaizenForm');
-        const formData = new FormData(form);
-        const id = document.getElementById('editKaizenId').value;
-
-        // Add antiforgery token
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        formData.append('__RequestVerificationToken', token);
-
-        fetch(`/Kaizen/Edit/${id}`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSubmissionToast(data.message, 'success');
-                bootstrap.Modal.getInstance(document.getElementById('editKaizenModal')).hide();
-                // Reload the page to show updated data
-                location.reload();
-            } else {
-                showToast('Error: ' + data.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('An error occurred while saving the changes.', 'error');
-        });
-    }
 
          function executiveFilling(id) {
          currentKaizenId = id;
@@ -1477,49 +1428,30 @@
         modal.show();
     }
 
-    function showNameInput(action) {
-        document.getElementById('userNameInput').value = '';
+    function approveKaizenDirect() {
+        if (!currentKaizenId) return;
         
-        const modal = new bootstrap.Modal(document.getElementById('nameInputModal'));
-        modal.show();
+        // Get the logged-in user's employee name from the page
+        const loggedInUserEmployeeName = '@ViewBag.CurrentUserEmployeeName' || 'Engineer';
         
-        document.getElementById('confirmActionBtn').onclick = function() {
-            const name = document.getElementById('userNameInput').value.trim();
-            if (name) {
-                if (action === 'approve') {
-                    approveKaizen(currentKaizenId, name);
-                } else if (action === 'reject') {
-                    rejectKaizen(currentKaizenId, name);
-                }
-                modal.hide();
-            } else {
-                showToast('Please enter your name to confirm the action.', 'error');
-                document.getElementById('userNameInput').focus();
-            }
-        };
-    }
-
-    function confirmAction() {
-        // Handled by onclick attribute
-    }
-
-    function approveKaizen(id, name) {
-        if (!id) return;
-
         if (confirm(`Are you sure you want to approve this Kaizen suggestion?`)) {
-            fetch(`/Kaizen/UpdateEngineerStatus/${id}`, {
+            fetch(`/Kaizen/UpdateEngineerStatus/${currentKaizenId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ engineerStatus: 'Approved', engineerApprovedBy: name })
+                body: JSON.stringify({ engineerStatus: 'Approved', engineerApprovedBy: loggedInUserEmployeeName })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     showSubmissionToast('Kaizen suggestion approved successfully!', 'success');
                     bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
-                    location.reload();
+                    
+                    // Automatically show the Add Review popup after approval
+                    setTimeout(() => {
+                        executiveFilling(currentKaizenId);
+                    }, 1000); // Small delay to ensure the approval is processed
                 } else {
                     showToast('Error: ' + data.message, 'error');
                 }
@@ -1531,16 +1463,19 @@
         }
     }
 
-    function rejectKaizen(id, name) {
-        if (!id) return;
-
+    function rejectKaizenDirect() {
+        if (!currentKaizenId) return;
+        
+        // Get the logged-in user's employee name from the page
+        const loggedInUserEmployeeName = '@ViewBag.CurrentUserEmployeeName' || 'Engineer';
+        
         if (confirm(`Are you sure you want to reject this Kaizen suggestion?`)) {
-            fetch(`/Kaizen/UpdateEngineerStatus/${id}`, {
+            fetch(`/Kaizen/UpdateEngineerStatus/${currentKaizenId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ engineerStatus: 'Rejected', engineerApprovedBy: name })
+                body: JSON.stringify({ engineerStatus: 'Rejected', engineerApprovedBy: loggedInUserEmployeeName })
             })
             .then(response => response.json())
             .then(data => {
@@ -1574,30 +1509,195 @@
      }
 
      // Function to toggle cost saving fields in edit modal
-     function toggleEditCostSavingFields() {
-         const hasCostSaving = document.getElementById('editHasCostSaving');
-         const costSavingFields = document.getElementById('editCostSavingFields');
+     function toggleCostSavingFields() {
+         const hasCostSaving = document.getElementById('edit_hasCostSaving');
+         const costSavingFields = document.getElementById('costSavingFields');
          
          if (hasCostSaving.checked) {
              costSavingFields.style.display = 'block';
          } else {
              costSavingFields.style.display = 'none';
-             // Clear the input fields
+             // Clear the cost saving fields
              document.getElementById('editCostSaving').value = '';
              document.getElementById('editDollarRate').value = '';
          }
      }
 
-     // Function to populate cost saving fields when editing
-     function populateEditCostSavingFields(costSaving, dollarRate) {
-         if (costSaving && costSaving > 0) {
-             document.getElementById('editHasCostSaving').checked = true;
-             document.getElementById('editCostSaving').value = costSaving;
-             document.getElementById('editDollarRate').value = dollarRate || '';
-             document.getElementById('editCostSavingFields').style.display = 'block';
-         } else {
-             document.getElementById('editNoCostSaving').checked = true;
-             document.getElementById('editCostSavingFields').style.display = 'none';
+     // Function to show edit modal
+     function showEditModal(id) {
+         currentKaizenId = id;
+         
+         // Fetch kaizen data for edit
+         fetch(`/Kaizen/Edit/${id}`)
+             .then(response => response.json())
+             .then(data => {
+                 if (data.success) {
+                     // Populate form fields
+                     document.getElementById('editKaizenId').value = data.data.id;
+                     document.getElementById('editKaizenNo').value = data.data.kaizenNo || '';
+                     document.getElementById('editEmployeeName').value = data.data.employeeName || '';
+                     document.getElementById('editEmployeeNo').value = data.data.employeeNo || '';
+                     document.getElementById('editDepartment').value = data.data.department || '';
+                     document.getElementById('editPlant').value = data.data.plant || '';
+                     document.getElementById('editSuggestionDescription').value = data.data.suggestionDescription || '';
+                     
+                     // Handle dates
+                     if (data.data.dateSubmitted) {
+                         const dateSubmitted = new Date(data.data.dateSubmitted);
+                         document.getElementById('editDateSubmitted').value = dateSubmitted.toISOString().split('T')[0];
+                     }
+                     
+                     if (data.data.dateImplemented) {
+                         const dateImplemented = new Date(data.data.dateImplemented);
+                         document.getElementById('editDateImplemented').value = dateImplemented.toISOString().split('T')[0];
+                     }
+                     
+                     // Handle cost saving
+                     if (data.data.costSavingType === 'HasCostSaving') {
+                         document.getElementById('edit_hasCostSaving').checked = true;
+                         document.getElementById('costSavingFields').style.display = 'block';
+                         document.getElementById('editCostSaving').value = data.data.costSaving || '';
+                         document.getElementById('editDollarRate').value = data.data.dollarRate || '';
+                     } else {
+                         document.getElementById('edit_noCostSaving').checked = true;
+                         document.getElementById('costSavingFields').style.display = 'none';
+                     }
+                     
+                     document.getElementById('editOtherBenefits').value = data.data.otherBenefits || '';
+                     
+                     // Show current images
+                     if (data.data.beforeKaizenImagePath) {
+                         document.getElementById('currentBeforeImage').style.display = 'block';
+                         document.getElementById('currentBeforeImagePreview').src = data.data.beforeKaizenImagePath;
+                     }
+                     
+                     if (data.data.afterKaizenImagePath) {
+                         document.getElementById('currentAfterImage').style.display = 'block';
+                         document.getElementById('currentAfterImagePreview').src = data.data.afterKaizenImagePath;
+                     }
+                     
+                     // Show modal
+                     const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                     modal.show();
+                 } else {
+                     showToast('Error: ' + data.message, 'error');
+                 }
+             })
+             .catch(error => {
+                 console.error('Error:', error);
+                 showToast('An error occurred while loading the kaizen data.', 'error');
+             });
+     }
+
+
+     // Function to save edit
+     function saveEdit() {
+         const kaizenId = document.getElementById('editKaizenId').value;
+         
+         // Validate form
+         const employeeName = document.getElementById('editEmployeeName').value.trim();
+         const employeeNo = document.getElementById('editEmployeeNo').value.trim();
+         const suggestionDescription = document.getElementById('editSuggestionDescription').value.trim();
+         const dateSubmitted = document.getElementById('editDateSubmitted').value;
+         
+         if (!employeeName) {
+             showToast('Please enter employee name.', 'error');
+             document.getElementById('editEmployeeName').focus();
+             return;
          }
+         
+         if (!employeeNo) {
+             showToast('Please enter employee number.', 'error');
+             document.getElementById('editEmployeeNo').focus();
+             return;
+         }
+         
+         if (!suggestionDescription) {
+             showToast('Please enter suggestion description.', 'error');
+             document.getElementById('editSuggestionDescription').focus();
+             return;
+         }
+         
+         if (!dateSubmitted) {
+             showToast('Please select date submitted.', 'error');
+             document.getElementById('editDateSubmitted').focus();
+             return;
+         }
+
+         // Show loading state
+         const saveBtn = document.querySelector('#editModal .btn-primary');
+         const originalText = saveBtn.innerHTML;
+         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+         saveBtn.disabled = true;
+
+         // Prepare form data
+         const formData = new FormData();
+         
+         // Add basic fields
+         formData.append('Id', kaizenId);
+         formData.append('KaizenNo', document.getElementById('editKaizenNo').value);
+         formData.append('EmployeeName', employeeName);
+         formData.append('EmployeeNo', employeeNo);
+         formData.append('Department', document.getElementById('editDepartment').value);
+         formData.append('Plant', document.getElementById('editPlant').value);
+         formData.append('SuggestionDescription', suggestionDescription);
+         formData.append('DateSubmitted', dateSubmitted);
+         
+         const dateImplemented = document.getElementById('editDateImplemented').value;
+         if (dateImplemented) {
+             formData.append('DateImplemented', dateImplemented);
+         }
+         
+         // Add cost saving fields
+         const costSavingType = document.querySelector('input[name="CostSavingType"]:checked')?.value;
+         if (costSavingType) {
+             formData.append('CostSavingType', costSavingType);
+         }
+         
+         if (costSavingType === 'HasCostSaving') {
+             const costSaving = document.getElementById('editCostSaving').value;
+             const dollarRate = document.getElementById('editDollarRate').value;
+             if (costSaving) formData.append('CostSaving', costSaving);
+             if (dollarRate) formData.append('DollarRate', dollarRate);
+         }
+         
+         formData.append('OtherBenefits', document.getElementById('editOtherBenefits').value);
+         
+         // Add image files if selected
+         const beforeImage = document.getElementById('editBeforeKaizenImage').files[0];
+         if (beforeImage) {
+             formData.append('BeforeKaizenImage', beforeImage);
+         }
+         
+         const afterImage = document.getElementById('editAfterKaizenImage').files[0];
+         if (afterImage) {
+             formData.append('AfterKaizenImage', afterImage);
+         }
+         
+         formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+         // Send the data to the server
+         fetch(`/Kaizen/Edit/${kaizenId}`, {
+             method: 'POST',
+             body: formData
+         })
+         .then(response => response.json())
+         .then(data => {
+             if (data.success) {
+                 showSubmissionToast('Kaizen suggestion updated successfully!', 'success');
+                 bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                 location.reload();
+             } else {
+                 showToast('Error: ' + data.message, 'error');
+             }
+         })
+         .catch(error => {
+             console.error('Error:', error);
+             showToast('An error occurred while saving the changes.', 'error');
+         })
+         .finally(() => {
+             saveBtn.innerHTML = originalText;
+             saveBtn.disabled = false;
+         });
      }
 </script>

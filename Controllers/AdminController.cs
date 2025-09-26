@@ -223,7 +223,7 @@ namespace KaizenWebApp.Controllers
             return View(viewModel);
         }
 
-        public IActionResult AwardTracking(string startDate, string endDate, string department, string awardStatus)
+        public IActionResult AwardTracking(string startDate, string endDate, string department, string plant, string awardStatus)
         {
             // Check if user is admin
             var username = User.Identity?.Name;
@@ -255,6 +255,11 @@ namespace KaizenWebApp.Controllers
                 query = query.Where(k => k.Department == department);
             }
 
+            // Apply plant filter
+            if (!string.IsNullOrEmpty(plant))
+            {
+                query = query.Where(k => k.Plant == plant);
+            }
 
             // Note: Award status filtering will be applied after dynamic calculation
 
@@ -851,7 +856,7 @@ namespace KaizenWebApp.Controllers
 
 
         // New action for viewing all kaizens with comprehensive filters
-        public IActionResult ViewAllKaizens(string searchString, string department, string status, 
+        public IActionResult ViewAllKaizens(string searchString, string department, string plant, string status, 
             string startDate, string endDate, string engineerStatus, string managerStatus, 
             string costSavingRange, string employeeName, string employeeNo, string kaizenNo)
         {
@@ -899,6 +904,11 @@ namespace KaizenWebApp.Controllers
                 query = query.Where(k => k.Department == department);
             }
 
+            // Apply plant filter
+            if (!string.IsNullOrEmpty(plant))
+            {
+                query = query.Where(k => k.Plant == plant);
+            }
 
             // Apply engineer status filter
             if (!string.IsNullOrEmpty(engineerStatus))
@@ -1006,6 +1016,7 @@ namespace KaizenWebApp.Controllers
             ViewBag.CurrentFilters = new
             {
                 Department = department,
+                Plant = plant,
                 Status = status,
                 StartDate = startDate,
                 EndDate = endDate,
@@ -1814,7 +1825,7 @@ namespace KaizenWebApp.Controllers
 
         // GET: /Admin/ExportAwardTrackingToExcel
         [HttpGet]
-        public IActionResult ExportAwardTrackingToExcel(string startDate, string endDate, string department, string awardStatus)
+        public IActionResult ExportAwardTrackingToExcel(string startDate, string endDate, string department, string plant, string awardStatus)
         {
             // Check if user is admin
             var username = User.Identity?.Name;
@@ -1848,6 +1859,11 @@ namespace KaizenWebApp.Controllers
                     query = query.Where(k => k.Department == department);
                 }
 
+                // Apply plant filter
+                if (!string.IsNullOrEmpty(plant))
+                {
+                    query = query.Where(k => k.Plant == plant);
+                }
 
                 // Apply award status filter
                 if (!string.IsNullOrEmpty(awardStatus))

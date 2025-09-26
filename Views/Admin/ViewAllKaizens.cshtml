@@ -18,7 +18,7 @@
                 <form id="advancedSearchForm" method="get">
                     <div class="row">
                         <!-- Department Filter -->
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="department" class="form-label">
                                 <i class="fas fa-building me-2"></i>Department
                             </label>
@@ -37,6 +37,32 @@
                                             <option value="@dept">@dept</option>
                                         }
                                     }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Plant Filter -->
+                        <div class="col-md-3 mb-3">
+                            <label for="plant" class="form-label">
+                                <i class="fas fa-industry me-2"></i>Plant
+                            </label>
+                            <select id="plant" name="plant" class="form-select">
+                                <option value="">All Plants</option>
+                                @if (ViewBag.CurrentFilters?.Plant == "KTY")
+                                {
+                                    <option value="KTY" selected>KTY</option>
+                                }
+                                else
+                                {
+                                    <option value="KTY">KTY</option>
+                                }
+                                @if (ViewBag.CurrentFilters?.Plant == "KOG")
+                                {
+                                    <option value="KOG" selected>KOG</option>
+                                }
+                                else
+                                {
+                                    <option value="KOG">KOG</option>
                                 }
                             </select>
                         </div>

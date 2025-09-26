@@ -387,13 +387,6 @@
                                                     <i class="fas fa-eye me-1"></i>
                                                     View Details
                                                 </a>
-                                                @if (((item.EngineerStatus ?? "Pending") == "Approved" || (item.EngineerStatus ?? "Pending") == "Rejected") && 
-                                                     (string.IsNullOrEmpty(item.Category) && string.IsNullOrEmpty(item.Comments) && string.IsNullOrEmpty(item.CanImplementInOtherFields)))
-                                                {
-                                                    <button class="btn btn-sm btn-executive" onclick="executiveFilling(@item.Id)">
-                                                        <i class="fas fa-user-tie me-1"></i>Add Review
-                                                    </button>
-                                                }
                                                 @if ((item.EngineerStatus ?? "Pending") == "Pending")
                                                 {
                                                     <button class="btn btn-sm btn-warning" onclick="showApprovalPopup(@item.Id)">
@@ -674,10 +667,10 @@
                     <p class="text-muted">Please select your decision below</p>
                 </div>
                 <div class="d-flex justify-content-center gap-3">
-                    <button type="button" class="btn btn-approve btn-lg" onclick="showNameInput('approve')">
+                    <button type="button" class="btn btn-success btn-lg px-4 py-3" onclick="approveKaizenDirect()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);">
                         <i class="fas fa-check me-2"></i>Approve
                     </button>
-                    <button type="button" class="btn btn-reject btn-lg" onclick="showNameInput('reject')">
+                    <button type="button" class="btn btn-danger btn-lg px-4 py-3" onclick="rejectKaizenDirect()" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; color: white; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);">
                         <i class="fas fa-times me-2"></i>Reject
                     </button>
                 </div>
@@ -1193,6 +1186,72 @@
         currentKaizenId = id;
         const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
         modal.show();
+    }
+
+    function approveKaizenDirect() {
+        if (!currentKaizenId) return;
+        
+        // Get the logged-in user's employee name from the page
+        const loggedInUserEmployeeName = '@ViewBag.CurrentUserEmployeeName' || 'Engineer';
+        
+        if (confirm(`Are you sure you want to approve this Kaizen suggestion?`)) {
+            fetch(`/Kaizen/UpdateEngineerStatus/${currentKaizenId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ engineerStatus: 'Approved', engineerApprovedBy: loggedInUserEmployeeName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSubmissionToast('Kaizen suggestion approved successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                    
+                    // Automatically show the Add Review popup after approval
+                    setTimeout(() => {
+                        executiveFilling(currentKaizenId);
+                    }, 1000); // Small delay to ensure the approval is processed
+                } else {
+                    showToast('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred while approving the suggestion.', 'error');
+            });
+        }
+    }
+
+    function rejectKaizenDirect() {
+        if (!currentKaizenId) return;
+        
+        // Get the logged-in user's employee name from the page
+        const loggedInUserEmployeeName = '@ViewBag.CurrentUserEmployeeName' || 'Engineer';
+        
+        if (confirm(`Are you sure you want to reject this Kaizen suggestion?`)) {
+            fetch(`/Kaizen/UpdateEngineerStatus/${currentKaizenId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ engineerStatus: 'Rejected', engineerApprovedBy: loggedInUserEmployeeName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSubmissionToast('Kaizen suggestion rejected successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                    location.reload();
+                } else {
+                    showToast('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred while rejecting the suggestion.', 'error');
+            });
+        }
     }
 
     function showNameInput(action) {

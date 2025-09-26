@@ -1330,6 +1330,7 @@ namespace KaizenWebApp.Controllers
                     DateSubmitted = kaizen.DateSubmitted,
                     DateImplemented = kaizen.DateImplemented,
                     Department = kaizen.Department,
+                    Plant = kaizen.Plant,
                     EmployeeName = kaizen.EmployeeName,
                     EmployeeNo = kaizen.EmployeeNo,
                     SuggestionDescription = kaizen.SuggestionDescription,
@@ -1366,7 +1367,7 @@ namespace KaizenWebApp.Controllers
         // POST: /Kaizen/Edit/{id}
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, KaizenFormViewModel viewModel)
+        public async Task<IActionResult> Edit(int id, [FromForm] KaizenFormViewModel viewModel)
         {
             // Check for direct URL access and end session if detected
             if (await CheckAndEndSessionIfDirectAccess())
@@ -1382,22 +1383,31 @@ namespace KaizenWebApp.Controllers
 
             try
             {
+                // Debug logging for form data
+                Console.WriteLine($"=== EDIT KAIZEN DEBUG ===");
+                Console.WriteLine($"Route ID: {id}");
+                Console.WriteLine($"ViewModel ID: {viewModel.Id}");
+                Console.WriteLine($"EmployeeName: {viewModel.EmployeeName}");
+                Console.WriteLine($"EmployeeNo: {viewModel.EmployeeNo}");
+                Console.WriteLine($"SuggestionDescription: {viewModel.SuggestionDescription}");
+                Console.WriteLine($"Department: {viewModel.Department}");
+                Console.WriteLine($"KaizenNo: {viewModel.KaizenNo}");
+                Console.WriteLine($"DateSubmitted: {viewModel.DateSubmitted}");
+                Console.WriteLine($"DateImplemented: {viewModel.DateImplemented}");
+                Console.WriteLine($"BeforeKaizenImagePath: {viewModel.BeforeKaizenImagePath}");
+                Console.WriteLine($"AfterKaizenImagePath: {viewModel.AfterKaizenImagePath}");
+                Console.WriteLine($"OtherBenefits: {viewModel.OtherBenefits}");
+                Console.WriteLine($"CostSaving: {viewModel.CostSaving}");
+                Console.WriteLine($"CostSavingType: {viewModel.CostSavingType}");
+                Console.WriteLine($"DollarRate: {viewModel.DollarRate}");
+                Console.WriteLine($"=== END EDIT KAIZEN DEBUG ===");
+
                 // For editing existing records, we don't need to validate file uploads as required
                 // since they might already have values. Only validate if new files are uploaded.
                 var errors = new List<string>();
                 
                 // Check if this is an edit operation (Id > 0)
                 bool isEditOperation = viewModel.Id > 0;
-                
-                // Debug logging
-                Console.WriteLine($"Edit operation - Id: {viewModel.Id}, isEditOperation: {isEditOperation}");
-                Console.WriteLine($"EmployeeName: {viewModel.EmployeeName}");
-                Console.WriteLine($"EmployeeNo: {viewModel.EmployeeNo}");
-                Console.WriteLine($"SuggestionDescription: {viewModel.SuggestionDescription}");
-                Console.WriteLine($"EmployeePhoto: {(viewModel.EmployeePhoto != null ? "Has file" : "No file")}");
-                Console.WriteLine($"BeforeKaizenImage: {(viewModel.BeforeKaizenImage != null ? "Has file" : "No file")}");
-                Console.WriteLine($"AfterKaizenImage: {(viewModel.AfterKaizenImage != null ? "Has file" : "No file")}");
-                Console.WriteLine($"OtherBenefits: {viewModel.OtherBenefits}");
                 
                 // Only validate required fields for new records, not for edits
                 if (!isEditOperation)
@@ -1463,6 +1473,20 @@ namespace KaizenWebApp.Controllers
                     }
                 }
 
+                // Additional validation for required fields
+                if (string.IsNullOrWhiteSpace(viewModel.EmployeeName))
+                {
+                    return Json(new { success = false, message = "Employee Name is required." });
+                }
+                if (string.IsNullOrWhiteSpace(viewModel.EmployeeNo))
+                {
+                    return Json(new { success = false, message = "Employee Number is required." });
+                }
+                if (string.IsNullOrWhiteSpace(viewModel.SuggestionDescription))
+                {
+                    return Json(new { success = false, message = "Suggestion Description is required." });
+                }
+
                 var kaizen = await _context.KaizenForms.FindAsync(id);
                 if (kaizen == null)
                 {
@@ -1510,6 +1534,11 @@ namespace KaizenWebApp.Controllers
                     }
                     kaizen.BeforeKaizenImagePath = "/" + beforePath.Replace("\\", "/");
                 }
+                else if (!string.IsNullOrEmpty(viewModel.BeforeKaizenImagePath))
+                {
+                    // Preserve existing image path if no new file is uploaded
+                    kaizen.BeforeKaizenImagePath = viewModel.BeforeKaizenImagePath;
+                }
 
                 // Handle file uploads for AfterKaizenImage
                 if (viewModel.AfterKaizenImage != null && viewModel.AfterKaizenImage.Length > 0)
@@ -1530,6 +1559,36 @@ namespace KaizenWebApp.Controllers
                     }
                     kaizen.AfterKaizenImagePath = "/" + afterPath.Replace("\\", "/");
                 }
+                else if (!string.IsNullOrEmpty(viewModel.AfterKaizenImagePath))
+                {
+                    // Preserve existing image path if no new file is uploaded
+                    kaizen.AfterKaizenImagePath = viewModel.AfterKaizenImagePath;
+                }
+
+                // Handle file uploads for EmployeePhoto
+                if (viewModel.EmployeePhoto != null && viewModel.EmployeePhoto.Length > 0)
+                {
+                    if (!IsValidImage(viewModel.EmployeePhoto))
+                    {
+                        return Json(new { success = false, message = "Invalid employee photo file. Only PNG, JPG, JPEG, WebP up to 5MB allowed." });
+                    }
+
+                    string employeeFileName = $"{Guid.NewGuid()}{Path.GetExtension(viewModel.EmployeePhoto.FileName)}";
+                    string employeePath = Path.Combine("employee-photos", employeeFileName);
+                    string fullEmployeePath = Path.Combine(_env.WebRootPath, employeePath);
+
+                    Directory.CreateDirectory(Path.GetDirectoryName(fullEmployeePath));
+                    using (var stream = new FileStream(fullEmployeePath, FileMode.Create))
+                    {
+                        await viewModel.EmployeePhoto.CopyToAsync(stream);
+                    }
+                    kaizen.EmployeePhotoPath = "/" + employeePath.Replace("\\", "/");
+                }
+                else if (!string.IsNullOrEmpty(viewModel.EmployeePhotoPath))
+                {
+                    // Preserve existing employee photo path if no new file is uploaded
+                    kaizen.EmployeePhotoPath = viewModel.EmployeePhotoPath;
+                }
 
                 _context.KaizenForms.Update(kaizen);
                 await _context.SaveChangesAsync();
@@ -1538,6 +1597,10 @@ namespace KaizenWebApp.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"=== EDIT KAIZEN ERROR ===");
+                Console.WriteLine($"Error: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                Console.WriteLine($"=== END EDIT KAIZEN ERROR ===");
                 return Json(new { success = false, message = $"An error occurred while updating the Kaizen suggestion: {ex.Message}" });
             }
         }
@@ -2687,6 +2750,13 @@ namespace KaizenWebApp.Controllers
                 
                 Console.WriteLine($"=== END KAIZENLISTENGINEER DEBUG ===");
 
+                // Get current user's employee name
+                var currentUser = await GetCurrentUserAsync();
+                var currentUserEmployeeName = currentUser?.EmployeeName ?? "Engineer";
+
+                // Pass both kaizens and current user info to view
+                ViewBag.CurrentUserEmployeeName = currentUserEmployeeName;
+
                 return View("~/Views/Kaizen/KaizenListEngineer.cshtml", kaizens);
             }
             catch (Exception ex)
@@ -2844,6 +2914,13 @@ namespace KaizenWebApp.Controllers
                 }
                 
                 Console.WriteLine($"=== END KAIZENLISTMANAGER DEBUG ===");
+
+                // Get current user's employee name
+                var currentUser = await GetCurrentUserAsync();
+                var currentUserEmployeeName = currentUser?.EmployeeName ?? "Manager";
+
+                // Pass current user info to view
+                ViewBag.CurrentUserEmployeeName = currentUserEmployeeName;
 
                 return View("~/Views/Kaizen/KaizenListManager.cshtml", kaizens);
             }
@@ -3768,6 +3845,10 @@ namespace KaizenWebApp.Controllers
                 // Update manager status
                 kaizen.ManagerStatus = request.ManagerStatus;
                 kaizen.ManagerApprovedBy = request.ManagerApprovedBy;
+                kaizen.ManagerComments = request.ManagerComments;
+                
+                // Debug: Log the manager name being saved
+                Console.WriteLine($"Saving manager approval - Status: {request.ManagerStatus}, Manager: {request.ManagerApprovedBy}, Comments: {request.ManagerComments}");
                 
                 await _context.SaveChangesAsync();
 
@@ -4543,7 +4624,7 @@ namespace KaizenWebApp.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> KaizenTeam(string searchString, string department, string status, 
+        public async Task<IActionResult> KaizenTeam(string searchString, string department, string plant, string status, 
             string startDate, string endDate, string category, 
             string costSavingRange, string employeeName, string employeeNo, string kaizenNo, string quarter)
         {
@@ -4624,6 +4705,12 @@ namespace KaizenWebApp.Controllers
                     Console.WriteLine($"Applied department filter: {department}");
                 }
 
+                // Apply plant filter
+                if (!string.IsNullOrEmpty(plant))
+                {
+                    query = query.Where(k => k.Plant == plant);
+                    Console.WriteLine($"Applied plant filter: {plant}");
+                }
 
                 // Engineer status and manager status filters removed as requested
 
@@ -4750,6 +4837,7 @@ namespace KaizenWebApp.Controllers
                 {
                     SearchString = searchString,
                     Department = department,
+                    Plant = plant,
                     Status = status,
                     StartDate = startDate,
                     EndDate = endDate,
@@ -7360,7 +7448,7 @@ namespace KaizenWebApp.Controllers
         }
 
         // Award Tracking action for Kaizen Team
-        public IActionResult AwardTracking(string startDate, string endDate, string department, string category, string awardStatus)
+        public IActionResult AwardTracking(string startDate, string endDate, string department, string plant, string category, string awardStatus)
         {
             // Check if user is kaizen team
             if (!IsKaizenTeamRole())
@@ -7389,6 +7477,12 @@ namespace KaizenWebApp.Controllers
             if (!string.IsNullOrEmpty(department))
             {
                 query = query.Where(k => k.Department == department);
+            }
+
+            // Apply plant filter
+            if (!string.IsNullOrEmpty(plant))
+            {
+                query = query.Where(k => k.Plant == plant);
             }
 
             // Apply category filter
@@ -7493,7 +7587,7 @@ namespace KaizenWebApp.Controllers
 
         // GET: /Kaizen/ExportAwardTrackingToExcel
         [HttpGet]
-        public IActionResult ExportAwardTrackingToExcel(string startDate, string endDate, string department, string awardStatus)
+        public IActionResult ExportAwardTrackingToExcel(string startDate, string endDate, string department, string plant, string awardStatus)
         {
             // Check if user is kaizen team
             if (!IsKaizenTeamRole())
@@ -7526,6 +7620,11 @@ namespace KaizenWebApp.Controllers
                     query = query.Where(k => k.Department == department);
                 }
 
+                // Apply plant filter
+                if (!string.IsNullOrEmpty(plant))
+                {
+                    query = query.Where(k => k.Plant == plant);
+                }
 
                 // Note: Award status filtering will be applied after dynamic calculation
 
@@ -7697,6 +7796,7 @@ namespace KaizenWebApp.Controllers
     {
         public string ManagerStatus { get; set; }
         public string ManagerApprovedBy { get; set; }
+        public string ManagerComments { get; set; }
     }
 
 

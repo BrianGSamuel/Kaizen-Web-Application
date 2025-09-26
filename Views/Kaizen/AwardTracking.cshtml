@@ -163,6 +163,19 @@
                                         </select>
                                     </div>
                                 </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="plant" class="form-label fw-bold">Plant</label>
+                                        <select class="form-select" id="plant" name="plant">
+                                            <option value="">All Plants</option>
+                                            @{
+                                                var selectedPlant = Context.Request.Query["plant"].ToString();
+                                            }
+                                            <option value="KTY" selected="@(selectedPlant == "KTY")">KTY</option>
+                                            <option value="KOG" selected="@(selectedPlant == "KOG")">KOG</option>
+                                        </select>
+                                    </div>
+                                </div>
 
                             </div>
                             <div class="row">
@@ -403,12 +416,14 @@
             var startDate = document.getElementById('startDate').value;
             var endDate = document.getElementById('endDate').value;
             var department = document.getElementById('department').value;
+            var plant = document.getElementById('plant').value;
             
             // Build URL with parameters
             var params = new URLSearchParams();
             if (startDate) params.append('startDate', startDate);
             if (endDate) params.append('endDate', endDate);
             if (department) params.append('department', department);
+            if (plant) params.append('plant', plant);
             
             var url = '/Kaizen/ExportAwardTrackingToExcel?' + params.toString();
             
