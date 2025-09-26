@@ -126,6 +126,30 @@
                         </div>
                         <div class="col-md-2">
                             <div class="mb-3">
+                                <label for="plant" class="form-label fw-bold">Plant</label>
+                                <select id="plant" name="plant" class="form-select">
+                                    <option value="">All Plants</option>
+                                    @if (ViewBag.CurrentFilters?.Plant == "KTY")
+                                    {
+                                        <option value="KTY" selected="@true">KTY</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="KTY">KTY</option>
+                                    }
+                                    @if (ViewBag.CurrentFilters?.Plant == "KOG")
+                                    {
+                                        <option value="KOG" selected="@true">KOG</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="KOG">KOG</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="mb-3">
                                 <label for="searchString" class="form-label fw-bold">Search</label>
                                 <input type="text" id="searchString" name="searchString" class="form-control"
                                        placeholder="Search by Kaizen No, Employee Name, or Employee No..."

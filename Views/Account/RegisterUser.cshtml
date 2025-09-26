@@ -50,19 +50,17 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Department" class="form-label">Department *</label>
-                                    <input asp-for="Department" class="form-control" required />
+                                    <input asp-for="Department" class="form-control" readonly />
                                     <span asp-validation-for="Department" class="text-danger"></span>
+                                    <small class="form-text text-muted">Auto-filled with your department</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Plant" class="form-label">Plant *</label>
-                                    <select asp-for="Plant" class="form-select" required>
-                                        <option value="">Select Plant</option>
-                                        <option value="KTY">KTY</option>
-                                        <option value="KGG">KGG</option>
-                                    </select>
+                                    <input asp-for="Plant" class="form-control" readonly />
                                     <span asp-validation-for="Plant" class="text-danger"></span>
+                                    <small class="form-text text-muted">Auto-filled with your plant</small>
                                 </div>
                             </div>
                         </div>
@@ -171,8 +169,8 @@
                 usernameField.value = employeeNumber + 'user';
             }
             
-            // Validate required fields
-            const requiredFields = ['EmployeeName', 'EmployeeNumber', 'Department', 'Plant', 'Password', 'ConfirmPassword'];
+            // Validate required fields (Department and Plant are auto-filled, so not included in validation)
+            const requiredFields = ['EmployeeName', 'EmployeeNumber', 'Password', 'ConfirmPassword'];
             let isValid = true;
             
             requiredFields.forEach(fieldName => {

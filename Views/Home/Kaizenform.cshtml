@@ -517,12 +517,15 @@
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label asp-for="DateSubmitted" class="form-label">@Localizer["DateSubmitted"]</label>
-                                <input asp-for="DateSubmitted" type="date" class="form-control" />
+                                <input asp-for="DateSubmitted" type="date" class="form-control" readonly />
                                 <span asp-validation-for="DateSubmitted" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Auto-set to current date
+                                </small>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                                 <label asp-for="DateImplemented" class="form-label">@Localizer["DateImplemented"] *</label>
                                 <input asp-for="DateImplemented" type="date" class="form-control" required />
                                 <span asp-validation-for="DateImplemented" class="text-danger"></span>

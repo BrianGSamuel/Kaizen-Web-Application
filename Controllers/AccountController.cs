@@ -233,7 +233,9 @@ namespace KaizenWebApp.Controllers
 
             var model = new RegisterViewModel
             {
-                Role = "User" // Supervisors can only register regular users
+                Role = "User", // Supervisors can only register regular users
+                Department = user.DepartmentName, // Auto-fill with supervisor's department
+                Plant = user.Plant // Auto-fill with supervisor's plant
             };
 
             return View("RegisterUser", model);

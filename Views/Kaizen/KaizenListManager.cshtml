@@ -353,19 +353,13 @@
                                                     View Details
                                                 </a>
                                                 @{
-                                                    // Only show approval and comment buttons for approved engineer status
+                                                    // Only show approval button for approved engineer status
                                                     if (engineerStatus == "Approved")
                                                     {
                                                         if ((item.ManagerStatus ?? "Pending") == "Pending")
                                                         {
                                                             <button class="btn btn-sm btn-warning" onclick="showApprovalPopup(@item.Id)">
                                                                 <i class="fas fa-gavel me-1"></i>Approval
-                                                            </button>
-                                                        }
-                                                        if ((item.ManagerStatus ?? "Pending") != "Pending" && string.IsNullOrEmpty(item.ManagerComments))
-                                                        {
-                                                            <button class="btn btn-sm btn-info" onclick="showManagerCommentModal(@item.Id)">
-                                                                <i class="fas fa-comments me-1"></i>Comment
                                                             </button>
                                                         }
                                                     }
@@ -632,7 +626,7 @@
 
 <!-- Approval Popup Modal -->
 <div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="approvalModalLabel">
@@ -640,17 +634,34 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center">
-                <div class="mb-4">
+            <div class="modal-body">
+                <div class="text-center mb-4">
                     <i class="fas fa-question-circle fa-3x text-primary mb-3"></i>
                     <h5>What would you like to do with this Kaizen suggestion?</h5>
-                    <p class="text-muted">Please select your decision below</p>
+                    <p class="text-muted">Please provide your decision and comments below</p>
                 </div>
+                
+                
+                <!-- Comment Field -->
+                <div class="mb-4">
+                    <label for="managerCommentInput" class="form-label">
+                        <i class="fas fa-comments me-2"></i>Comments & Recommendations
+                    </label>
+                    <textarea id="managerCommentInput" class="form-control" rows="4" 
+                              placeholder="Enter your comments and recommendations..." required></textarea>
+                    <div class="invalid-feedback">
+                        Please provide comments and recommendations.
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
                 <div class="d-flex justify-content-center gap-3">
-                    <button type="button" class="btn btn-approve btn-lg" onclick="showNameInput('approve')">
+                    <button type="button" class="btn btn-success btn-lg px-4 py-3" onclick="approveKaizenDirect()" 
+                            style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);">
                         <i class="fas fa-check me-2"></i>Approve
                     </button>
-                    <button type="button" class="btn btn-reject btn-lg" onclick="showNameInput('reject')">
+                    <button type="button" class="btn btn-danger btn-lg px-4 py-3" onclick="rejectKaizenDirect()" 
+                            style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; color: white; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);">
                         <i class="fas fa-times me-2"></i>Reject
                     </button>
                 </div>
@@ -664,38 +675,6 @@
     </div>
 </div>
 
-<!-- Name Input Modal -->
-<div class="modal fade" id="nameInputModal" tabindex="-1" aria-labelledby="nameInputModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="nameInputModalLabel">
-                    <i class="fas fa-user me-2"></i>Enter Your Name
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="userNameInput" class="form-label">
-                        <i class="fas fa-signature me-2"></i>Your Name
-                    </label>
-                    <input type="text" id="userNameInput" class="form-control" placeholder="Enter your full name" required />
-                    <div class="invalid-feedback">
-                        Please enter your name.
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancel
-                </button>
-                <button type="button" class="btn btn-primary" id="confirmActionBtn" onclick="confirmAction()">
-                    <i class="fas fa-check me-2"></i>Confirm
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Manager Comment Modal -->
 <div class="modal fade" id="managerCommentModal" tabindex="-1" aria-labelledby="managerCommentModalLabel" aria-hidden="true">
@@ -1138,50 +1117,40 @@
 
     function showApprovalPopup(id) {
         currentKaizenId = id;
+        // Clear the comment field
+        document.getElementById('managerCommentInput').value = '';
         const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
         modal.show();
     }
 
-    function showNameInput(action) {
-        // Clear the input field
-        document.getElementById('userNameInput').value = '';
+    // Direct approval function with comments
+    function approveKaizenDirect() {
+        if (!currentKaizenId) return;
         
-        const modal = new bootstrap.Modal(document.getElementById('nameInputModal'));
-        modal.show();
+        const managerName = '@ViewBag.CurrentUserEmployeeName' || 'Manager';
+        const comments = document.getElementById('managerCommentInput').value.trim();
         
-        // Set the onclick handler for the confirm button
-        document.getElementById('confirmActionBtn').onclick = function() {
-            const name = document.getElementById('userNameInput').value.trim();
-            if (name) {
-                if (action === 'approve') {
-                    approveKaizen(currentKaizenId, name);
-                } else if (action === 'reject') {
-                    rejectKaizen(currentKaizenId, name);
-                }
-                modal.hide();
-            } else {
-                showToast('Please enter your name to confirm the action.', 'error');
-                document.getElementById('userNameInput').focus();
-            }
-        };
-    }
-
-    function confirmAction() {
-        // This function is now handled by the onclick attribute of confirmActionBtn
-        // It will be called when the user clicks the confirm button in the nameInputModal
-    }
-
-
-    function approveKaizen(id, name) {
-        if (!id) return;
-
+        if (!comments) {
+            showToast('Please provide comments and recommendations.', 'error');
+            document.getElementById('managerCommentInput').focus();
+            return;
+        }
+        
+        // Debug: Log the manager name being sent
+        console.log('Manager name being sent:', managerName);
+        console.log('Comments being sent:', comments);
+        
         if (confirm(`Are you sure you want to approve this Kaizen suggestion?`)) {
-            fetch(`/Kaizen/UpdateManagerStatus/${id}`, {
+            fetch(`/Kaizen/UpdateManagerStatus/${currentKaizenId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ managerStatus: 'Approved', managerApprovedBy: name })
+                body: JSON.stringify({ 
+                    managerStatus: 'Approved', 
+                    managerApprovedBy: managerName,
+                    managerComments: comments
+                })
             })
             .then(response => response.json())
             .then(data => {
@@ -1200,16 +1169,34 @@
         }
     }
 
-    function rejectKaizen(id, name) {
-        if (!id) return;
-
+    // Direct rejection function with comments
+    function rejectKaizenDirect() {
+        if (!currentKaizenId) return;
+        
+        const managerName = '@ViewBag.CurrentUserEmployeeName' || 'Manager';
+        const comments = document.getElementById('managerCommentInput').value.trim();
+        
+        if (!comments) {
+            showToast('Please provide comments and recommendations.', 'error');
+            document.getElementById('managerCommentInput').focus();
+            return;
+        }
+        
+        // Debug: Log the manager name being sent
+        console.log('Manager name being sent:', managerName);
+        console.log('Comments being sent:', comments);
+        
         if (confirm(`Are you sure you want to reject this Kaizen suggestion?`)) {
-            fetch(`/Kaizen/UpdateManagerStatus/${id}`, {
+            fetch(`/Kaizen/UpdateManagerStatus/${currentKaizenId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ managerStatus: 'Rejected', managerApprovedBy: name })
+                body: JSON.stringify({ 
+                    managerStatus: 'Rejected', 
+                    managerApprovedBy: managerName,
+                    managerComments: comments
+                })
             })
             .then(response => response.json())
             .then(data => {

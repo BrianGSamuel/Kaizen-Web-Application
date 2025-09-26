@@ -70,7 +70,11 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Plant" class="form-label">Plant *</label>
-                                    <input asp-for="Plant" class="form-control" required />
+                                    <select asp-for="Plant" class="form-select" required>
+                                        <option value="">Select Plant</option>
+                                        <option value="KTY">KTY</option>
+                                        <option value="KOG">KOG</option>
+                                    </select>
                                     <span asp-validation-for="Plant" class="text-danger"></span>
                                 </div>
                             </div>
