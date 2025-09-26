@@ -482,6 +482,19 @@
                     </div>
                 }
 
+                <!-- Manager Action Buttons -->
+                @if ((Model.Kaizen.ManagerStatus ?? "Pending") == "Pending")
+                {
+                    <div class="info-section">
+                        <h5><i class="fas fa-gavel me-2"></i>Manager Action</h5>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-success btn-lg px-4 py-3" onclick="showApprovalPopup(@Model.Kaizen.Id)" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);">
+                                <i class="fas fa-gavel me-2"></i>Approval Decision
+                            </button>
+                        </div>
+                    </div>
+                }
+
                 <!-- Award Information -->
                 <div class="info-section">
                     <h5><i class="fas fa-trophy me-2"></i>Award Information</h5>
@@ -548,3 +561,191 @@
         </div>
     </div>
 </div>
+
+<!-- Approval Popup Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalModalLabel">
+                    <i class="fas fa-gavel me-2"></i>Kaizen Approval
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-question-circle fa-3x text-primary mb-3"></i>
+                    <h5>What would you like to do with this Kaizen suggestion?</h5>
+                    <p class="text-muted">Please provide your decision and comments below</p>
+                </div>
+                
+                <!-- Comment Field -->
+                <div class="mb-4">
+                    <label for="managerCommentInput" class="form-label">
+                        <i class="fas fa-comments me-2"></i>Comments & Recommendations
+                    </label>
+                    <textarea id="managerCommentInput" class="form-control" rows="4" 
+                              placeholder="Enter your comments and recommendations..." required></textarea>
+                    <div class="invalid-feedback">
+                        Please provide comments and recommendations.
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-success btn-lg px-4 py-3" onclick="approveKaizenDirect()" 
+                            style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);">
+                        <i class="fas fa-check me-2"></i>Approve
+                    </button>
+                    <button type="button" class="btn btn-danger btn-lg px-4 py-3" onclick="rejectKaizenDirect()" 
+                            style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; color: white; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);">
+                        <i class="fas fa-times me-2"></i>Reject
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentKaizenId = null;
+
+    function showApprovalPopup(id) {
+        currentKaizenId = id;
+        // Clear the comment field
+        document.getElementById('managerCommentInput').value = '';
+        const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+        modal.show();
+    }
+
+    function approveKaizenDirect() {
+        if (!currentKaizenId) return;
+        
+        const managerName = '@ViewBag.CurrentUserEmployeeName' || 'Manager'; // Get name from ViewBag
+        const comments = document.getElementById('managerCommentInput').value.trim();
+        
+        if (!comments) {
+            showToast('Please provide comments and recommendations.', 'error');
+            document.getElementById('managerCommentInput').focus();
+            return;
+        }
+        
+        // Debug: Log the manager name being sent
+        console.log('Manager name being sent:', managerName);
+        console.log('Comments being sent:', comments);
+        
+        if (confirm(`Are you sure you want to approve this Kaizen suggestion?`)) {
+            fetch(`/Kaizen/UpdateManagerStatus/${currentKaizenId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    managerStatus: 'Approved', 
+                    managerApprovedBy: managerName,
+                    managerComments: comments // Include comments
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSubmissionToast('Kaizen suggestion approved successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                    location.reload();
+                } else {
+                    showToast('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred while approving the suggestion.', 'error');
+            });
+        }
+    }
+
+    function rejectKaizenDirect() {
+        if (!currentKaizenId) return;
+        
+        const managerName = '@ViewBag.CurrentUserEmployeeName' || 'Manager'; // Get name from ViewBag
+        const comments = document.getElementById('managerCommentInput').value.trim();
+        
+        if (!comments) {
+            showToast('Please provide comments and recommendations.', 'error');
+            document.getElementById('managerCommentInput').focus();
+            return;
+        }
+        
+        // Debug: Log the manager name being sent
+        console.log('Manager name being sent:', managerName);
+        console.log('Comments being sent:', comments);
+        
+        if (confirm(`Are you sure you want to reject this Kaizen suggestion?`)) {
+            fetch(`/Kaizen/UpdateManagerStatus/${currentKaizenId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    managerStatus: 'Rejected', 
+                    managerApprovedBy: managerName,
+                    managerComments: comments // Include comments
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSubmissionToast('Kaizen suggestion rejected successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                    location.reload();
+                } else {
+                    showToast('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred while rejecting the suggestion.', 'error');
+            });
+        }
+    }
+
+    // Toast notification functions
+    function showToast(message, type) {
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : 'success'} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        // Add to page
+        document.body.appendChild(toast);
+        
+        // Show toast
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        
+        // Remove from DOM after hiding
+        toast.addEventListener('hidden.bs.toast', () => {
+            document.body.removeChild(toast);
+        });
+    }
+
+    function showSubmissionToast(message, type) {
+        showToast(message, type);
+    }
+</script>
