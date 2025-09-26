@@ -231,18 +231,20 @@
     <div class="row">
         <!-- Pending Reviews -->
         <div class="col-lg-4 col-md-6">
-            <div class="summary-card pending-reviews">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="metric-value text-danger">@Model.PendingReviews</div>
-                        <div class="metric-label">Pending Reviews</div>
-                        <div class="text-muted">Requires your attention</div>
-                    </div>
-                    <div class="text-danger">
-                        <i class="fas fa-clock fa-2x"></i>
+            <a href="@Url.Action("KaizenListEngineer", "Kaizen")" class="text-decoration-none">
+                <div class="summary-card pending-reviews" style="cursor: pointer;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="metric-value text-danger">@Model.PendingReviews</div>
+                            <div class="metric-label">Pending Reviews</div>
+                            <div class="text-muted">Requires your attention</div>
+                        </div>
+                        <div class="text-danger">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- Fully Implemented Kaizens -->
