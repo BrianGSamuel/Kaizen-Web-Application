@@ -5371,6 +5371,13 @@ namespace KaizenWebApp.Controllers
                 // Get award information based on percentage
                 var awardInfo = GetAwardForPercentage(percentage);
                 
+                // Get current user's employee name
+                var currentUser = await GetCurrentUserAsync();
+                var currentUserEmployeeName = currentUser?.EmployeeName ?? "Manager";
+
+                // Pass current user info to view
+                ViewBag.CurrentUserEmployeeName = currentUserEmployeeName;
+
                 // Create a view model to pass both kaizen and marking criteria
                 var viewModel = new AwardDetailsViewModel
                 {
@@ -7426,7 +7433,16 @@ namespace KaizenWebApp.Controllers
                 kaizen.InterDeptApprovedDepartments = string.Join(",", approvedDepartments);
                 kaizen.InterDeptRejectedDepartments = string.Join(",", rejectedDepartments);
                 kaizen.InterDeptApprovedBy = currentUser.EmployeeName;
-                kaizen.InterDeptStatus = "Processed";
+                
+                // Set the inter-department status based on action
+                if (request.Action.ToLower() == "approve")
+                {
+                    kaizen.InterDeptStatus = "inter-dept approved";
+                }
+                else if (request.Action.ToLower() == "reject")
+                {
+                    kaizen.InterDeptStatus = "inter-dept reject";
+                }
 
                 await _context.SaveChangesAsync();
 

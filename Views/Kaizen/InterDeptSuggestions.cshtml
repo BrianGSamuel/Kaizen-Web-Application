@@ -152,6 +152,7 @@
                                         <th>Cost Saving</th>
                                         <th>Engineer Status</th>
                                         <th>Manager Status</th>
+                                        <th>Inter-Dept Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -248,6 +249,22 @@
                                                         @managerStatusDisplay
                                                     </span>
                                                 }
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var interDeptStatus = item.InterDeptStatus ?? "Pending";
+                                                    var interDeptStatusClass = interDeptStatus switch
+                                                    {
+                                                        "inter-dept approved" => "badge bg-success",
+                                                        "inter-dept reject" => "badge bg-danger",
+                                                        "Processed" => "badge bg-info",
+                                                        _ => "badge bg-warning text-dark"
+                                                    };
+                                                }
+                                                <span class="@interDeptStatusClass">
+                                                    <i class="fas fa-@(interDeptStatus == "inter-dept approved" ? "check" : interDeptStatus == "inter-dept reject" ? "times" : "clock") me-1"></i>
+                                                    @interDeptStatus
+                                                </span>
                                             </td>
                                             <td>
                                                 <div class="btn-group" role="group">
@@ -382,12 +399,13 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showSubmissionToast('Inter-department approval submitted successfully!', 'success');
+                        showSubmissionToast('Inter-department approval submitted successfully! Status saved as "inter-dept approved".', 'success');
                         const modal = bootstrap.Modal.getInstance(document.getElementById('interDeptApprovalModal'));
                         modal.hide();
-                        // Remove the button right away
-                        const btn = document.getElementById(`interdept-btn-${kaizenId}`);
-                        if (btn) btn.remove();
+                        // Reload page to show updated status
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
                     } else {
                         showToast('Error: ' + data.message, 'error');
                     }
@@ -401,7 +419,7 @@
 
         // Function to reject inter-department suggestion directly
         function rejectInterDeptDirect(kaizenId, department) {
-            if (confirm(`Are you sure you want to reject this Kaizen suggestion for ${department}?`)) {
+            if (confirm(`Are you sure you want to reject this Kaizen suggestion for ${department}? This will remove the department from the implementation area.`)) {
                 fetch('/Kaizen/InterDeptApproval', {
                     method: 'POST',
                     headers: {
@@ -417,11 +435,13 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showSubmissionToast('Inter-department rejection submitted successfully!', 'success');
+                        showSubmissionToast('Inter-department rejection submitted successfully! Status saved as "inter-dept reject" and department removed from implementation area.', 'success');
                         const modal = bootstrap.Modal.getInstance(document.getElementById('interDeptApprovalModal'));
                         modal.hide();
                         // Reload to reflect ImplementationArea change
-                        location.reload();
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
                     } else {
                         showToast('Error: ' + data.message, 'error');
                     }
