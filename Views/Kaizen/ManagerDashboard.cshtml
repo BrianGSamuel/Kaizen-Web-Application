@@ -232,18 +232,20 @@
     <div class="row">
         <!-- Pending Approvals -->
         <div class="col-lg-4 col-md-6">
-            <div class="summary-card approvals">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="metric-value text-danger">@Model.PendingApprovals</div>
-                        <div class="metric-label">Pending Approvals</div>
-                        <div class="text-muted">Requires your attention</div>
-                    </div>
-                    <div class="text-danger">
-                        <i class="fas fa-clock fa-2x"></i>
+            <a href="@Url.Action("KaizenListManager", "Kaizen")" class="text-decoration-none">
+                <div class="summary-card approvals" style="cursor: pointer;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="metric-value text-danger">@Model.PendingApprovals</div>
+                            <div class="metric-label">Pending Approvals</div>
+                            <div class="text-muted">Requires your attention</div>
+                        </div>
+                        <div class="text-danger">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- Completed Kaizens -->
